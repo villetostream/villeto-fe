@@ -1,18 +1,17 @@
+
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 
 interface DashboardLayoutProps {
     children: ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+
 
     return (
         <div className="flex h-screen bg-dashboard">
             <DashboardSidebar
-                isCollapsed={isSidebarCollapsed}
-                onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             />
             <main className="flex-1 overflow-auto">
                 {children}

@@ -1,16 +1,19 @@
+
+
+"use client"
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { z } from "zod";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
 import {
     Form,
     FormControl,
@@ -48,6 +51,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
 
 const expenseFormSchema = z.object({
     merchant: z.string().min(1, "Merchant name is required"),
@@ -160,22 +164,22 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
     );
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+        <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
                 {trigger || defaultTrigger}
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-dashboard-text-primary">
+            </SheetTrigger>
+            <SheetContent side="right" className="w-fit sm:w-fit overflow-y-auto">
+                <SheetHeader>
+                    <SheetTitle className="text-xl font-semibold text-dashboard-text-primary">
                         Submit New Expense
-                    </DialogTitle>
-                    <DialogDescription className="text-dashboard-text-secondary">
+                    </SheetTitle>
+                    <SheetDescription className="text-dashboard-text-secondary">
                         Fill out the details below to submit your expense for approval.
-                    </DialogDescription>
-                </DialogHeader>
+                    </SheetDescription>
+                </SheetHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4">
                         {/* Basic Information */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-medium text-dashboard-text-primary flex items-center gap-2">
@@ -502,7 +506,7 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                         </div>
                     </form>
                 </Form>
-            </DialogContent>
-        </Dialog>
+            </SheetContent>
+        </Sheet>
     );
 }

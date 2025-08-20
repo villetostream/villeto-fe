@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, AlertTriangle, Plus } from "lucide-react";
 import { ExpenseForm } from "./ExpenseForm";
+import { PaymentDetails } from "./PaymentDetails";
 
 export function DashboardHeader() {
   return (
@@ -14,16 +15,14 @@ export function DashboardHeader() {
             Monitor and manage your company card expenses
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <ExpenseForm />
           <Badge variant="secondary" className="bg-status-warning text-white">
             Reminders 1.1K
           </Badge>
           <Button variant="outline">Statements</Button>
-          <Button className="bg-dashboard-accent hover:bg-dashboard-accent/90">
-            Payments
-          </Button>
+          <PaymentDetails />
         </div>
       </div>
 
