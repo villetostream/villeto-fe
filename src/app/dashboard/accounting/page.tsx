@@ -115,7 +115,7 @@ export default function Accounting() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {accountingData.monthlyTotals.map((month, index) => (
+                            {accountingData.monthlyTotals.map((month) => (
                                 <div key={month.month} className="p-4 bg-dashboard-hover rounded-lg">
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="font-medium text-dashboard-text-primary">{month.month} 2024</h3>
@@ -151,7 +151,7 @@ export default function Accounting() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {accountingData.categories.map((category, index) => (
+                            {accountingData.categories.map((category) => (
                                 <div key={category.name} className="flex items-center justify-between">
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between mb-1">
