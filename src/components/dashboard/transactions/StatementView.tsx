@@ -126,7 +126,7 @@ export function StatementView({ children, open, onOpenChange }: StatementViewPro
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className="space-y-6 mt-6">
+                <div className="space-y-6 mt-6 px-6">
                     {/* Month Selection */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export function StatementView({ children, open, onOpenChange }: StatementViewPro
                     </div>
 
                     {/* Statement Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-6">
                         <Card className="bg-dashboard-card border-dashboard-border">
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
