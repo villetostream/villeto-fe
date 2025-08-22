@@ -11,6 +11,9 @@ import {
     Building,
     HelpCircle,
     ChevronLeft,
+    Inbox,
+    LucideLightbulb,
+    Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -23,6 +26,8 @@ const navigationItems = [
         label: "Dashboard",
         href: "/dashboard",
     },
+    { icon: Inbox, label: "Inbox", href: "/dashboard/cards" },
+    { icon: LucideLightbulb, label: "Insights", href: "/dashboard/cards" },
     {
         icon: CreditCard,
         label: "Expenses",
@@ -38,11 +43,12 @@ const navigationItems = [
     { icon: Building, label: "Procurement", href: "/dashboard/procurement" },
     { icon: FileText, label: "Bill Pay", href: "/dashboard/bill-pay" },
     { icon: Settings, label: "Accounting", href: "/dashboard/accounting" },
+    { icon: Building, label: "Business Account", href: "/dashboard/business-account", badge: "New" },
+    { icon: Users, label: "People", href: "/dashboard/people" },
+    { icon: Store, label: "Vendors", href: "/dashboard/cards" },
 ];
 
 const bottomItems = [
-    { icon: Building, label: "Business Account", href: "/dashboard/business-account", badge: "New" },
-    { icon: Users, label: "People", href: "/dashboard/people" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
     { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help" },
 ];
@@ -119,6 +125,11 @@ export function DashboardSidebar({
                                 >
                                     <item.icon className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
                                     {!isCollapsed && item.label}
+                                    {item.badge && (
+                                        <span className="ml-auto px-2 py-1 text-xs bg-dashboard-accent text-white rounded-full">
+                                            {item.badge}
+                                        </span>
+                                    )}
                                 </Button>
                             </Link>
 
@@ -140,6 +151,7 @@ export function DashboardSidebar({
                                                     )}
                                                 >
                                                     {subItem.label}
+
                                                 </Button>
                                             </Link>
                                         );
@@ -170,11 +182,7 @@ export function DashboardSidebar({
                                 {!isCollapsed && (
                                     <>
                                         {item.label}
-                                        {item.badge && (
-                                            <span className="ml-auto px-2 py-1 text-xs bg-dashboard-accent text-white rounded-full">
-                                                {item.badge}
-                                            </span>
-                                        )}
+
                                     </>
                                 )}
                             </Button>

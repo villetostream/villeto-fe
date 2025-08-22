@@ -18,6 +18,9 @@ import {
     Download,
     Trash2
 } from "lucide-react";
+//settings have sub menu like expense policy, company settings, entities, apps, personal settings 
+// under the expense policy, its page content should be approvals, submitting expsenses,spend guidelines,uploading/replacng and deleting of policy with pictural display of the document
+//under the submitting expenses, ther will be a trigger button for sheet called expense requirements with contents like 
 
 export default function Settings() {
     return (

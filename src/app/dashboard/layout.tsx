@@ -1,6 +1,6 @@
 
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { ReactNode } from "react";
+import { ReactNode, unstable_ViewTransition as ViewTransition } from "react";
 
 interface DashboardLayoutProps {
     children: ReactNode;
@@ -13,9 +13,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex h-screen bg-dashboard">
             <DashboardSidebar
             />
-            <main className="flex-1 overflow-auto">
-                {children}
-            </main>
+            <ViewTransition>
+                <main className="flex-1 overflow-auto">
+                    {children}
+                </main>
+            </ViewTransition>
         </div>
     );
 }

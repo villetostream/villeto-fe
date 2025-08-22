@@ -20,8 +20,12 @@ import {
     AlertTriangle,
     TrendingUp,
     Calendar,
-    DollarSign
+    DollarSign,
+    FileText,
+    Zap
 } from "lucide-react";
+import { AutoPaySetup } from "./transactions/AutoPay";
+import { StatementView } from "./transactions/StatementView";
 
 const paymentStats = {
     totalAmount: 125420.50,
@@ -69,9 +73,12 @@ const recentPayments = [
         employee: "Emma Thompson"
     }
 ];
-
+// in the payment details add setup early auto-pay with sheet slider for auto selecting amount and a dropdown of amount (either adjusting the slider or selecting a dropdown to acheive the same putpose)
+//create a staement sheet just to show the statement of the month(custom select) with a download button 
 export function PaymentDetails() {
     const [open, setOpen] = useState(false);
+    const [autoPayOpen, setAutoPayOpen] = useState(false);
+    const [statementOpen, setStatementOpen] = useState(false);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -263,18 +270,47 @@ export function PaymentDetails() {
                         </CardContent>
                     </Card>
 
+                    {/* Auto-Pay Setup */}
+                    <Card className="bg-dashboard-card border-dashboard-border">
+                        <CardHeader>
+                            <CardTitle className="text-lg text-dashboard-text-primary flex items-center gap-2">
+                                <Zap className="w-5 h-5" />
+                                Auto-Pay Setup
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-dashboard-text-primary">Setup Early Auto-Pay</p>
+                                    <p className="text-sm text-dashboard-text-secondary">
+                                        Automatically process payments before due dates
+                                    </p>
+                                </div>
+                                <AutoPaySetup open={autoPayOpen} onOpenChange={setAutoPayOpen}>
+                                    <Button variant="outline">
+                                        <Zap className="w-4 h-4 mr-2" />
+                                        Setup
+                                    </Button>
+                                </AutoPaySetup>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Quick Actions */}
                     <div className="flex gap-2">
                         <Button variant="outline" className="flex-1">
                             <Calendar className="w-4 h-4 mr-2" />
                             Schedule Payment
                         </Button>
-                        <Button variant="outline" className="flex-1">
-                            Export Report
-                        </Button>
+                        <StatementView open={statementOpen} onOpenChange={setStatementOpen}>
+                            <Button variant="outline" className="flex-1">
+                                <FileText className="w-4 h-4 mr-2" />
+                                View Statement
+                            </Button>
+                        </StatementView>
                     </div>
                 </div>
             </SheetContent>
-        </Sheet>
+        </Sheet >
     );
 }
