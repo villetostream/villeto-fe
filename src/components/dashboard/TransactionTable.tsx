@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -75,12 +74,12 @@ const transactions = [
     }
 ];
 
-const statusColors = {
-    approved: "bg-status-success text-white",
-    flagged: "bg-status-error text-white",
-    pending: "bg-status-warning text-white",
-    declined: "bg-status-error text-white"
-};
+// const statusColors = {
+//     approved: "bg-status-success text-white",
+//     flagged: "bg-status-error text-white",
+//     pending: "bg-status-warning text-white",
+//     declined: "bg-status-error text-white"
+// };
 
 type SortField = 'merchant' | 'date' | 'cardholder' | 'department' | 'location' | 'amount';
 type SortDirection = 'asc' | 'desc';

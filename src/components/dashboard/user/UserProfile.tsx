@@ -160,7 +160,7 @@ export function UserProfile({ employee, children, open, onOpenChange }: UserProf
                                     <CreditCard className="w-12 h-12 text-dashboard-text-secondary mx-auto" />
                                     <div>
                                         <h3 className="text-lg font-medium text-dashboard-text-primary">No Card Assigned</h3>
-                                        <p className="text-dashboard-text-secondary">This employee doesn't have a corporate card yet.</p>
+                                        <p className="text-dashboard-text-secondary">This employee doesn&apos;t have a corporate card yet.</p>
                                     </div>
                                     <Button className="bg-dashboard-accent hover:bg-dashboard-accent/90">
                                         Issue Card

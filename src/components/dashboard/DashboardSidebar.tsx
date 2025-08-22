@@ -4,7 +4,7 @@ import {
     Home,
     CreditCard,
     Receipt,
-    Plane,
+
     Settings,
     Users,
     FileText,

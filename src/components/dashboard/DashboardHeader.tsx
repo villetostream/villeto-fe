@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, AlertTriangle, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { ExpenseForm } from "./ExpenseForm";
 import { PaymentDetails } from "./PaymentDetails";
 

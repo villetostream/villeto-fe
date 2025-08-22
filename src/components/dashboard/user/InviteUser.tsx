@@ -19,7 +19,6 @@ import {
     Upload,
     FileSpreadsheet,
     Mail,
-    MapPin,
     Building,
     CreditCard,
     Users,

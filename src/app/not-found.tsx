@@ -65,7 +65,7 @@ const NotFound = () => {
 
             <div className="text-center relative z-20">
                 {/* Main 404 Display */}
-        
+
 
                 {/* Interactive Card */}
                 <Card
@@ -77,10 +77,10 @@ const NotFound = () => {
                         {/* Animated title */}
                         <div className="space-y-2">
                             <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                                Oops! You've discovered the void
+                                Oops! You&apos;ve discovered the void
                             </h1>
                             <p className="text-muted-foreground">
-                                The page you're looking for seems to have wandered off into the digital wilderness.
+                                The page you&apos;re looking for seems to have wandered off into the digital wilderness.
                             </p>
                         </div>
 
@@ -118,7 +118,7 @@ const NotFound = () => {
                             </div>
                         </div>
 
-                      
+
                     </CardContent>
                 </Card>
 
