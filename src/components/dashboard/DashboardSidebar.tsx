@@ -50,7 +50,7 @@ const navigationItems = [
 
 const bottomItems = [
     { icon: Building, label: "Business Account", href: "/dashboard/business-account", badge: "New" },
-    { icon: Users, label: "People", href: "/people" },
+    { icon: Users, label: "People", href: "/dashboard/people" },
     {
         icon: Settings,
         label: "Settings",
