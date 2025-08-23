@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
   },
-    typescript: {
-    ignoreBuildErrors: true,
-  },  typescript: {
+  typescript: {
     ignoreBuildErrors: true,
   },
 };
