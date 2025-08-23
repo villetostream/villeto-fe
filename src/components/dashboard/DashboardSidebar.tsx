@@ -49,8 +49,6 @@ const navigationItems = [
 ];
 
 const bottomItems = [
-    { icon: Building, label: "Business Account", href: "/dashboard/business-account", badge: "New" },
-    { icon: Users, label: "People", href: "/dashboard/people" },
     {
         icon: Settings,
         label: "Settings",
@@ -233,11 +231,7 @@ export function DashboardSidebar({ isCollapsed = false, onToggle }: DashboardSid
                                     {!isCollapsed && (
                                         <>
                                             {item.label}
-                                            {item.badge && (
-                                                <span className="ml-auto px-2 py-1 text-xs bg-dashboard-accent text-white rounded-full">
-                                                    {item.badge}
-                                                </span>
-                                            )}
+
                                         </>
                                     )}
                                 </Link>
