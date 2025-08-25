@@ -1,4 +1,3 @@
-"use client";
 
 import React, { Suspense } from "react";
 import { unstable_ViewTransition as ViewTransition } from "react";

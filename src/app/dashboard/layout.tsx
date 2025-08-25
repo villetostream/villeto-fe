@@ -1,23 +1,19 @@
+import DashboardLayoutContent from "@/components/dashboard/layout/DashboardLayoutContent";
+import { cookies } from "next/headers";
 
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { ReactNode, unstable_ViewTransition as ViewTransition } from "react";
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const cookieStore = await cookies();
+    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-interface DashboardLayoutProps {
-    children: ReactNode;
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-
+    // In a real app, you would get user data from your auth system (session, JWT, etc.)
+    const userRole = "employee"; // This would come from your authentication system
 
     return (
-        <div className="flex h-screen bg-dashboard">
-            <DashboardSidebar
-            />
-            <ViewTransition>
-                <main className="flex-1 overflow-auto">
-                    {children}
-                </main>
-            </ViewTransition>
-        </div>
+        <DashboardLayoutContent
+            defaultOpen={defaultOpen}
+            initialUserRole={userRole}
+        >
+            {children}
+        </DashboardLayoutContent>
     );
 }
