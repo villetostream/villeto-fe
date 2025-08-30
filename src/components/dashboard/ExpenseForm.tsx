@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ReceiptScanner from "../uploads/ReceiptScanner";
 
 
 const expenseFormSchema = z.object({
@@ -418,75 +419,7 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                         </div>
 
                         {/* File Upload */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-dashboard-text-primary flex items-center gap-2">
-                                <Upload className="w-5 h-5 text-dashboard-accent" />
-                                Receipt & Documents
-                            </h3>
-
-                            <div className="border-2 border-dashed border-dashboard-border rounded-lg p-6">
-                                <div className="text-center">
-                                    <Upload className="mx-auto h-12 w-12 text-dashboard-text-secondary" />
-                                    <div className="mt-4">
-                                        <label htmlFor="file-upload" className="cursor-pointer">
-                                            <span className="mt-2 block text-sm font-medium text-dashboard-text-primary">
-                                                Upload receipt or document
-                                            </span>
-                                            <span className="mt-1 block text-sm text-dashboard-text-secondary">
-                                                PNG, JPG, PDF up to 10MB
-                                            </span>
-                                        </label>
-                                        <input
-                                            id="file-upload"
-                                            name="file-upload"
-                                            type="file"
-                                            multiple
-                                            accept=".png,.jpg,.jpeg,.pdf"
-                                            className="sr-only"
-                                            onChange={handleFileUpload}
-                                        />
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="mt-4"
-                                        onClick={() => document.getElementById('file-upload')?.click()}
-                                    >
-                                        Choose Files
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Uploaded Files */}
-                            {uploadedFiles.length > 0 && (
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium text-dashboard-text-primary">
-                                        Uploaded Files ({uploadedFiles.length})
-                                    </p>
-                                    <div className="space-y-2">
-                                        {uploadedFiles.map((file, index) => (
-                                            <div key={index} className="flex items-center justify-between p-2 bg-dashboard-hover rounded-md">
-                                                <div className="flex items-center gap-2">
-                                                    <Receipt className="w-4 h-4 text-dashboard-accent" />
-                                                    <span className="text-sm text-dashboard-text-primary">{file.name}</span>
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {(file.size / 1024).toFixed(1)} KB
-                                                    </Badge>
-                                                </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => removeFile(index)}
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        <ReceiptScanner />
 
                         {/* Form Actions */}
                         <div className="flex justify-end space-x-4 pt-6 border-t border-dashboard-border">
