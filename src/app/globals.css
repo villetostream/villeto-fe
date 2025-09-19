@@ -53,6 +53,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --color-navy: var(--navy);
+  --color-navy-light: var(--navy-light);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-primary-glow: var(--primary-glow);
+
+  --color-gradient-primary: var(--gradient-primary);
+  --color-gradient-navy: var(--gradient-navy);
+  --color-gradient-hero: var(--gradient-hero);
 }
 
 :root {
@@ -63,7 +72,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.766 0.103 192.7);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -100,6 +109,32 @@
   --status-warning: oklch(0.759 0.438 21);
   --status-error: oklch(0.535 0.912 0);
   --status-pending: oklch(0.517 0.943 193);
+
+  --navy: oklch(0.141 0 0); /* hsl(223 84% 11%) */
+  --navy-light: oklch(0.356 0.075 276.2); /* hsl(223 47% 25%) */
+  --navy-foreground: oklch(1 0 0); /* hsl(0 0% 100%) */
+
+  /* Glow / Accent */
+  --primary-glow: oklch(0.849 0.12 175.6); /* hsl(174 72% 76%) */
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    135deg,
+    oklch(0.705 0.182 175.6),
+    /* hsl(174 72% 56%) */ oklch(0.849 0.12 175.6) /* hsl(174 72% 76%) */
+  );
+
+  --gradient-navy: linear-gradient(
+    135deg,
+    oklch(0.236 0.058 274.32),
+    /* navy */ oklch(0.356 0.075 276.2) /* navy-light */
+  );
+
+  --gradient-hero: linear-gradient(
+    180deg,
+    oklch(1 0 0) 0%,
+    /* white */ oklch(0.985 0.004 249) 100% /* hsl(220 13% 98%) */
+  );
 }
 
 .dark {
@@ -134,6 +169,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --navy: oklch(0.165 0.05 274.32); /* darkened navy */
+  --navy-light: oklch(0.265 0.06 276.2); /* darker navy-light */
+  --navy-foreground: oklch(0.985 0 0); /* light text */
+  --primary-glow: oklch(0.78 0.15 175.6); /* slightly dimmed glow */
 }
 
 @layer base {
@@ -141,6 +181,24 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
+}
+
+/* Added custom animations for marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

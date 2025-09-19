@@ -30,10 +30,16 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
 
 export function middleware(request: NextRequest) {
     const token = request.cookies.get('auth-storage')?.value;
+    const pathname = request.nextUrl.pathname;
 
-    // Redirect to login if no token is present
-    if (!token) {
+    // Check if path contains "dashboard" and no token is present
+    if (pathname.includes('/dashboard') && !token) {
         return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    // If no token but path doesn't contain dashboard, allow access
+    if (!token) {
+        return NextResponse.next();
     }
 
     type UserRole = keyof typeof ROLE_PERMISSIONS;
@@ -43,16 +49,21 @@ export function middleware(request: NextRequest) {
         const user = authState.state?.user;
 
         if (!user || !user.role) {
-            return NextResponse.redirect(new URL('/login', request.url));
+            // If user doesn't exist but path contains dashboard, redirect to login
+            if (pathname.includes('/dashboard')) {
+                return NextResponse.redirect(new URL('/login', request.url));
+            }
+            return NextResponse.next();
         }
 
         userRole = user.role as UserRole;
     } catch (error) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        // If token parsing fails but path contains dashboard, redirect to login
+        if (pathname.includes('/dashboard')) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+        return NextResponse.next();
     }
-
-    const pathname = request.nextUrl.pathname;
-    const requiredPermission = ROUTE_PERMISSIONS[pathname];
 
     // Allow access to root if user has VIEW_DASHBOARD permission
     if (pathname === '/' && ROLE_PERMISSIONS[userRole].includes(PERMISSIONS.VIEW_DASHBOARD)) {
@@ -60,9 +71,10 @@ export function middleware(request: NextRequest) {
     }
 
     console.log('User Role:', userRole);
-    console.log('Required Permission for route', pathname, ':', requiredPermission);
 
     // Check if user has the required permission for the route
+    const requiredPermission = ROUTE_PERMISSIONS[pathname];
+    console.log('Required Permission for route', pathname, ':', requiredPermission);
     if (!requiredPermission || !ROLE_PERMISSIONS[userRole].includes(requiredPermission)) {
         return NextResponse.redirect(new URL('/login', request.url));
     }

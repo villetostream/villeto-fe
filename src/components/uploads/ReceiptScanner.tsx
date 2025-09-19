@@ -18,10 +18,6 @@ import ReceiptDataExtractor from './ReceiptExtractor';
 // Types
 import { FileWithPreview, ScanResult, ProcessingOptions as ProcessingOptionsType } from '@/lib/types/receipt';
 
-
-
-
-
 const ReceiptScanner = () => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
