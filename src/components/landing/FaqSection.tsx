@@ -37,8 +37,8 @@ export default function FAQSection() {
         <section className="p-[6.9544%]">
             <SectionTitle text="ENQUIRIES" />
             <div className={divTitleStyle}>
-                <h2 className={titleStyle}>Frequently Asked Questions</h2>
-                <p className={cn(subTitleStyle, "max-w-11/12")}>
+                <h2 className={cn(titleStyle, "text-black")}>Frequently Asked Questions</h2>
+                <p className={cn(subTitleStyle, "max-w-11/12, text-black")}>
                     Lorem ipsum dolor sit amet consectetur. Odio diam nulla massa metus dignissim nibh urna mauris. Ut amet risus
                     malesuada orci bibendum. A volutpat maecenas nunc urna vel commodo.
                 </p>

@@ -203,7 +203,7 @@ export const ProcessSection = () => {
         return () => ctx.revert();
     }, []);
     useGSAP(() => {
-        gsap.registerPlugin(ScrollTrigger);
+
         const ctx = gsap.context(() => {
             // Timeline card animations
             gsap.utils.toArray('.timeline-card').forEach((card: any) => {
