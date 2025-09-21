@@ -5,6 +5,7 @@ import heroDashboard from '../../../public/images/tech-glow-1.webp'
 import { Input } from '../ui/input'
 import MaxWidth from '@/lib/constants/MaxWidth'
 import SocialProof from './shared/SocialProof'
+import { FadeIn } from './shared/AnimatedLanding'
 
 export const HeroSection = () => {
     return (
@@ -14,7 +15,7 @@ export const HeroSection = () => {
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     {/* Left Content */}
                     <div className="space-y-5">
-                        <div className="hero-animate flex">
+                        <FadeIn className="flex">
                             <h1 className="text-4xl md:text-5xl font-semibold text-foreground leading-16">
                                 <span>
 
@@ -29,25 +30,25 @@ export const HeroSection = () => {
 
 
                             </h1>
-                        </div>
+                        </FadeIn>
 
-                        <div className="hero-animate">
+                        <FadeIn>
                             <p className="text-xl text-muted-foreground ">
                                 Corporate cards, automated spend tracking, and vendor payments all under one intelligent platform.
                             </p>
-                        </div>
+                        </FadeIn>
 
-                        <div className="hero-animate flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
+                        <FadeIn className="flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
                             <Input className='!border-none focus-visible:border-0 focus-visible:ring-0 !shadow-none' placeholder='What is yout work email' />
                             <Button variant="hero" size="lg">
                                 Watch Demo
                             </Button>
-                        </div>
+                        </FadeIn>
                         <SocialProof  />
                     </div>
 
                     {/* Right Content - Dashboard Preview */}
-                    <div className="hero-animate relative">
+                    <FadeIn className="relative">
                         <div className="relative rounded-xl overflow-hidden shadow-2xl">
                             <img
                                 src={heroDashboard.src}
@@ -67,7 +68,7 @@ export const HeroSection = () => {
                             <div className="text-sm font-medium text-foreground">Real-time Sync</div>
                             <div className="text-xs text-muted-foreground">Across all platforms</div>
                         </div>
-                    </div>
+                    </FadeIn>
                 </div>
             </div>
         </section>

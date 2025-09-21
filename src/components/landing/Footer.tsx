@@ -5,6 +5,7 @@ import { Send, Twitter, Instagram, Linkedin, Facebook, Youtube } from 'lucide-re
 
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Rocket01Icon, TwitterSquareIcon } from '@hugeicons/core-free-icons';
+import { FadeIn } from './shared/AnimatedLanding';
 
 const Footer = () => {
     const footerSections = {
@@ -86,13 +87,13 @@ const Footer = () => {
                             <p className="text-white font-normal text-sm mb-4">
                                 We will send you updates from time to time. No spam
                             </p>
-                            <div className="hero-animate flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
+                            <FadeIn className="flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
                                 <Input className='!border-none focus-visible:border-0 focus-visible:ring-0 !shadow-none !placeholder-white' placeholder='Enter your email address' />
                                 <Button variant="hero" size="lg">
                                     Subscribe
                                     <HugeiconsIcon icon={Rocket01Icon} />
                                 </Button>
-                            </div>
+                            </FadeIn>
                         </div>
                     </div>
                 </div>

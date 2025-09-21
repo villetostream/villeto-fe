@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,13 +11,8 @@ import {
 } from 'lucide-react'
 import SectionTitle from './shared/SectionTitle'
 import { divTitleStyle, subTitleStyle, titleStyle } from '@/lib/constants/styles'
-import { useGSAP } from "@gsap/react";
-
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 import { cn } from '@/lib/utils'
-
-gsap.registerPlugin(ScrollTrigger);
 
 const description = [
     "           Lorem ipsum dolor sit amet consectetu pellentesque in donec eu. ",
@@ -120,187 +115,108 @@ const timelineData: TimelineStep[] = [
     }
 ];
 
+const TimelineStep = ({ step, index }: { step: TimelineStep; index: number }) => {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "-20% 0px -20% 0px" });
+    const isLeft = step.position === 'left';
+
+    return (
+        <motion.div
+            ref={ref}
+            className={`relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-7 items-center ${isLeft ? 'lg:text-right' : ''}`}
+            initial={{ opacity: 0, x: isLeft ? -100 : 100, y: 50 }}
+            animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: isLeft ? -100 : 100, y: 50 }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+        >
+            {/* Timeline Dot & Badge */}
+            <div className="absolute left-1/2 top-8 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                <div className="w-6 h-6 bg-timeline-teal rounded-full border-4 border-background shadow-lg" />
+                <motion.div
+                    className="day-badge absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -mt-8"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                    transition={{ duration: 0.3, ease: 'backOut', delay: 0.1 }}
+                >
+                    <div className="bg-timeline-teal text-white px-6 py-2 rounded-full font-semibold text-sm shadow-lg whitespace-nowrap">
+                        {step.day}
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Content */}
+            <motion.div
+                className={`${isLeft ? 'lg:order-1 text-left' : 'lg:order-2 text-left ml-16'}`}
+                initial={{ opacity: 0, x: isLeft ? -50 : 50 }}
+                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: isLeft ? -50 : 50 }}
+                transition={{ duration: 5, ease: 'easeOut', delay: 0.1 }}
+            >
+                <h2 className="text-[26px] font-semibold leading-[100%] tracking-[0%] text-black mb-5">
+                    {step.title}
+                </h2>
+
+                <ul className="space-y-3 p-5 list-disc list-inside">
+                    {step.points.map((point, pointIndex) => (
+                        <motion.li
+                            key={pointIndex}
+                            className="text-[15px] leading-[23px] font-normal bullet-point"
+                            initial={{ opacity: 0, x: isLeft ? -30 : 30 }}
+                            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: isLeft ? -30 : 30 }}
+                            transition={{
+                                duration: 0.6,
+                                ease: 'easeOut',
+                                delay: 0.2 + (pointIndex * 0.1)
+                            }}
+                        >
+                            {point}
+                        </motion.li>
+                    ))}
+                </ul>
+            </motion.div>
+
+            {/* Image */}
+            <motion.div
+                className={`${isLeft ? 'lg:order-2' : 'lg:order-1'} flex justify-center`}
+                initial={{ opacity: 0, x: isLeft ? 100 : -100 }}
+                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: isLeft ? 100 : -100 }}
+                transition={{ duration: 1, ease: 'easeOut', delay: 0.4 }}
+            >
+                <div className="relative group">
+                    <div className={`${step.position === "right" ? "left-full" : "left-0"} absolute transform -translate-x-1/2 translate-y-1/6 -mt-8`}>
+                        <div className="bg-gradient-to-r from-[#006F] via-[#00B8A9] to-[#00B8A9] text-white px-[30px] py-5 w-[148px] rounded-full font-semibold text-[26px] whitespace-nowrap">
+                            {step.day}
+                        </div>
+                    </div>
+
+                    <img
+                        src={step.image}
+                        alt={`${step.title} illustration`}
+                        className="size-[241px] aspect-square object-cover rounded-full bg-gray-300"
+                    />
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 export const ProcessSection = () => {
     const timelineRef = useRef<HTMLDivElement>(null);
     const lineRef = useRef<HTMLDivElement>(null);
-    const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [timelineProgress, setTimelineProgress] = useState(0);
+
+    // Scroll-based timeline line animation
+    const { scrollYProgress } = useScroll({
+        target: timelineRef,
+        offset: ["start center", "end center"]
+    });
+
+    const lineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            // Animate the timeline line based on scroll
-            gsap.to(lineRef.current, {
-                height: '100%',
-                ease: 'none',
-                scrollTrigger: {
-                    trigger: timelineRef.current,
-                    start: 'top center',
-                    end: 'bottom center',
-                    scrub: 1,
-                }
-            });
-
-            // Animate each timeline step
-            stepRefs.current.forEach((step, index) => {
-                if (!step) return;
-
-                const isLeft = timelineData[index].position === 'left';
-
-                gsap.fromTo(step, {
-                    opacity: 0,
-                    x: isLeft ? -100 : 100,
-                    y: 50
-                }, {
-                    opacity: 1,
-                    x: 0,
-                    y: 0,
-                    duration: 1,
-                    ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: step,
-                        start: 'top 80%',
-                        end: 'bottom 20%',
-                        toggleActions: 'play none none reverse'
-                    }
-                });
-
-                // Animate the day badge separately for extra emphasis
-                const dayBadge = step.querySelector('.day-badge');
-                if (dayBadge) {
-                    gsap.fromTo(dayBadge, {
-                        scale: 0,
-                        rotation: -180
-                    }, {
-                        scale: 1,
-                        rotation: 0,
-                        duration: 0.8,
-                        ease: 'back.out(1.7)',
-                        scrollTrigger: {
-                            trigger: step,
-                            start: 'top 70%',
-                        }
-                    });
-                }
-
-                // Stagger animate the bullet points
-                const bulletPoints = step.querySelectorAll('.bullet-point');
-                gsap.fromTo(bulletPoints, {
-                    opacity: 0,
-                    x: isLeft ? -30 : 30
-                }, {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.6,
-                    stagger: 0.1,
-                    ease: 'power2.out',
-                    scrollTrigger: {
-                        trigger: step,
-                        start: 'top 60%',
-                    }
-                });
-            });
-        }, timelineRef);
-
-        return () => ctx.revert();
-    }, []);
-    useGSAP(() => {
-
-        const ctx = gsap.context(() => {
-            // Timeline card animations
-            gsap.utils.toArray('.timeline-card').forEach((card: any) => {
-                gsap.from(card, {
-                    xPercent: -100,
-                    opacity: 0,
-                    duration: 1,
-                    ease: 'power2.inOut',
-                    scrollTrigger: {
-                        trigger: card,
-                        start: 'top 80%'
-                    }
-                });
-            });
-
-            gsap.to('.timeline', {
-                transformOrigin: 'bottom bottom',
-                ease: 'power1.inOut',
-                scrollTrigger: {
-                    trigger: ".timeline",
-                    start: "top center",
-                    end: "70% center",
-                    onUpdate: (self) => {
-                        gsap.to(".timeline", {
-                            scaleY: 1 - self.progress
-                        });
-                    }
-                }
-            });
-
-            // Slide-in animations for images
-            gsap.utils.toArray('.slide-in-image').forEach((img: any) => {
-                const direction = img.classList.contains('slide-from-left') ? -100 : 100;
-                gsap.from(img, {
-                    x: direction,
-                    opacity: 0,
-                    duration: 1,
-                    ease: 'power2.out',
-                    scrollTrigger: {
-                        trigger: img,
-                        start: 'top 80%',
-                        end: 'bottom 20%',
-                        toggleActions: 'play none none reverse'
-                    }
-                });
-            });
-
-            // Slide-in animations for text
-            gsap.utils.toArray('.slide-in-text').forEach((text: any) => {
-                const direction = text.classList.contains('slide-from-left') ? -50 : 50;
-                gsap.from(text, {
-                    x: direction,
-                    opacity: 0,
-                    duration: 1,
-                    ease: 'power2.out',
-                    scrollTrigger: {
-                        trigger: text,
-                        start: 'top 70%',
-                        end: 'bottom 30%',
-                        toggleActions: 'play none none reverse'
-                    }
-                });
-            });
-
-            // Dynamic color change for timeline logos based on timeline progress
-            const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']; // Blue, Green, Yellow, Red
-            gsap.utils.toArray('.timeline-logo div').forEach((logo: any, index: number) => {
-                gsap.set(logo, { backgroundColor: '#6b7280' }); // Initial grey
-                gsap.to(logo, {
-                    backgroundColor: colorPalette[index % colorPalette.length],
-                    ease: 'none',
-                    scrollTrigger: {
-                        trigger: logo,
-                        start: 'top center',
-                        end: 'bottom center',
-                        scrub: true
-                    }
-                });
-            });
-
-            // Text animations
-            gsap.utils.toArray('.expText').forEach((text: any) => {
-                gsap.from(text, {
-                    xPercent: 0,
-                    opacity: 0,
-                    duration: 1,
-                    ease: 'power2.inOut',
-                    scrollTrigger: {
-                        trigger: text,
-                        start: 'top 60%'
-                    }
-                });
-            });
+        const unsubscribe = scrollYProgress.on("change", (latest) => {
+            setTimelineProgress(latest);
         });
-
-        return () => ctx.revert(); // Cleans up ALL animations and ScrollTriggers
-    }, []);
+        return unsubscribe;
+    }, [scrollYProgress]);
     return (
         <section id="process" className="p-[6.9544%] bg-background">
             <SectionTitle text={"YOUR JOURNEY"} />
@@ -320,71 +236,20 @@ export const ProcessSection = () => {
                 <div ref={timelineRef} className="relative">
                     {/* Timeline Line */}
                     <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-black h-full">
-                        <div
-                            ref={lineRef}
-                            className="w-full bg-gradient-to-b from-primary to-primary h-0 transition-all duration-300"
+                        <motion.div
+                            className="w-full bg-gradient-to-b from-primary to-primary"
+                            style={{ height: lineHeight }}
                         />
                     </div>
 
                     {/* Timeline Steps */}
                     <div className="space-y-32">
                         {timelineData.map((step, index) => (
-                            <div
+                            <TimelineStep
                                 key={step.day}
-                                ref={el => stepRefs.current[index] = el}
-                                className={`relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-7 items-center ${step.position === 'left' ? 'lg:text-right' : ''
-                                    }`}
-                            >
-                                {/* Timeline Dot & Badge */}
-                                <div className="absolute left-1/2 top-8 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                                    <div className="w-6 h-6 bg-timeline-teal rounded-full border-4 border-background shadow-lg" />
-                                    <div className="day-badge absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -mt-8">
-                                        <div className="bg-timeline-teal text-white px-6 py-2 rounded-full font-semibold text-sm shadow-lg whitespace-nowrap">
-                                            {step.day}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className={`${step.position === 'left' ? 'lg:order-1 text-left' : 'lg:order-2 text-left ml-16'}`}>
-
-                                    <h2 className="text-[26px] font-semibold leading-[100%] tracking-[0%]  text-black mb-5">
-                                        {step.title}
-                                    </h2>
-
-
-
-                                    <ul className="space-y-3 p-5 list-disc list-inside">
-                                        {step.points.map((point, pointIndex) => (
-                                            <li
-                                                key={pointIndex}
-                                                className="  text-[15px] leading-[23px] font-normal"
-                                            >
-                                                {point}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Image */}
-                                <div className={`${step.position === 'left' ? 'lg:order-2' : 'lg:order-1'} flex justify-center`}>
-                                    <div className="relative group">
-
-
-                                        <div className={`${step.position === "right" ? "left-full" : "left-0"} absolute transform -translate-x-1/2 translate-y-1/6 -mt-8`}>
-                                            <div className="bg-gradient-to-r from-[#006F] via-[#00B8A9] to-[#00B8A9] text-white px-[30px] py-5 w-[148px] rounded-full font-semibold text-[26px] whitespace-nowrap">
-                                                {step.day}
-                                            </div>
-                                        </div>
-
-                                        <img
-                                            src={step.image}
-                                            alt={`${step.title} illustration`}
-                                            className=" size-[241px] aspect-square object-cover rounded-full bg-gray-300"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                step={step}
+                                index={index}
+                            />
                         ))}
                     </div>
                 </div>

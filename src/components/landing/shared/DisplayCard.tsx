@@ -55,21 +55,21 @@ const CardCarousel = () => {
         {
             id: 1,
             image: "/images/tech-glow.webp",
-            title: "Mountain Vista",
+            title: "Mountain ",
             subtitle: "Breathtaking alpine landscapes",
             badge: "Nature"
         },
         {
             id: 2,
             image: "/images/tech-glow.webp",
-            title: "Forest Path",
+            title: "Forest",
             subtitle: "Peaceful woodland adventures",
             badge: "Adventure"
         },
         {
             id: 3,
             image: "/images/tech-glow.webp",
-            title: "Golden Shore",
+            title: "Golden ",
             subtitle: "Serene evening moments",
             badge: "Relax"
         },
@@ -143,7 +143,7 @@ const CardCarousel = () => {
                     >
                         <CarouselContent>
                             {cards.map((card) => (
-                                <CarouselItem key={card.id} className="pl-2 basis-full md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                                <CarouselItem key={`${card.title}-${card.id}`} className="pl-2 basis-full md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
                                     <div className="flex justify-center">
                                         <Card {...card} />
                                     </div>

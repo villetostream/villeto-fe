@@ -3,6 +3,8 @@ import SectionTitle from "./shared/SectionTitle"
 import { divTitleStyle, subTitleStyle, titleStyle } from "@/lib/constants/styles"
 import { cn } from "@/lib/utils"
 import { Plus, Minus } from "lucide-react"
+import { motion } from "framer-motion"
+import { FadeIn } from "./shared/AnimatedLanding"
 
 const faqs = [
     {
@@ -33,40 +35,72 @@ const faqs = [
 ]
 
 export default function FAQSection() {
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.2,
+                delayChildren: 0.3
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 30 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.6,
+                ease: [0.25, 0.46, 0.45, 0.94]
+            }
+        }
+    };
+
     return (
         <section className="p-[6.9544%]">
             <SectionTitle text="ENQUIRIES" />
-            <div className={divTitleStyle}>
+            <FadeIn className={divTitleStyle}>
                 <h2 className={cn(titleStyle, "text-black")}>Frequently Asked Questions</h2>
                 <p className={cn(subTitleStyle, "max-w-11/12, text-black")}>
                     Lorem ipsum dolor sit amet consectetur. Odio diam nulla massa metus dignissim nibh urna mauris. Ut amet risus
                     malesuada orci bibendum. A volutpat maecenas nunc urna vel commodo.
                 </p>
-            </div>
+            </FadeIn>
 
-            <Accordion type="single" collapsible className="w-full space-y-5 mt-10">
-                {faqs.map((faq, index) => (
-                    <AccordionItem
-                        key={index}
-                        value={`item-${index}`}
-                        className={cn(
-                            "group rounded-lg border overflow-hidden bg-[#F6F6F6] transition-colors duration-300",
-                            "data-[state=open]:bg-primary data-[state=open]:text-white"
-                        )}
-                    >
-                        <AccordionTrigger className="flex items-center justify-between w-full text-left text-lg leading-[100%] tracking-[0%] font-semibold px-7 py-7">
-                            {faq.question}
-                            <span className="ml-4 transition-transform duration-300  bg-primary size-5 flex justify-center items-center text-white rounded-full">
-                                <Plus className="h-3 w-3 group-data-[state=open]:hidden" /> {/* plus when closed */}
-                                <Minus className="h-3 w-3 hidden group-data-[state=open]:block" /> {/* minus when open */}
-                            </span>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-7 pb-7 text-sm leading-[23px] tracking-[0%] font-normal">
-                            {faq.answer}
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+                className="w-full space-y-5 mt-10"
+            >
+                <Accordion type="single" collapsible>
+                    {faqs.map((faq, index) => (
+                        <motion.div key={index} variants={itemVariants}>
+                            <AccordionItem
+                                value={`item-${index}`}
+                                className={cn(
+                                    "group rounded-lg border overflow-hidden bg-[#F6F6F6] transition-colors duration-300",
+                                    "data-[state=open]:bg-primary data-[state=open]:text-white"
+                                )}
+                            >
+                                <AccordionTrigger className="flex items-center justify-between w-full text-left text-lg leading-[100%] tracking-[0%] font-semibold px-7 py-7">
+                                    {faq.question}
+                                    <span className="ml-4 transition-transform duration-300  bg-primary size-5 flex justify-center items-center text-white rounded-full">
+                                        <Plus className="h-3 w-3 group-data-[state=open]:hidden" /> {/* plus when closed */}
+                                        <Minus className="h-3 w-3 hidden group-data-[state=open]:block" /> {/* minus when open */}
+                                    </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-7 pb-7 text-sm leading-[23px] tracking-[0%] font-normal">
+                                    {faq.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </motion.div>
+                    ))}
+                </Accordion>
+            </motion.div>
         </section>
     )
 }

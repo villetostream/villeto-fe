@@ -1,125 +1,81 @@
 "use client"
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { motion, useInView } from 'framer-motion'
 
 interface AnimatedLandingProps {
     children: React.ReactNode
 }
 
 const AnimatedLanding = ({ children }: AnimatedLandingProps) => {
-    const containerRef = useRef<HTMLDivElement>(null)
     const [hasInitialized, setHasInitialized] = useState(false)
 
     useEffect(() => {
-        // Only import and run GSAP if not already initialized
-        if (!hasInitialized) {
-            import('gsap').then(({ gsap }) => {
-                import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
-                    gsap.registerPlugin(ScrollTrigger)
-
-                    // Initial page load animation - runs only once
-                    const tl = gsap.timeline({
-                        onComplete: () => setHasInitialized(true)
-                    })
-
-                    tl.from('.header-animate', {
-                        y: -100,
-                        opacity: 0,
-                        duration: 1,
-                        ease: 'power3.out'
-                    })
-                        .from('.hero-animate', {
-                            y: 50,
-                            opacity: 0,
-                            duration: 1.2,
-                            stagger: 0.2,
-                            ease: 'power3.out'
-                        }, '-=0.5')
-
-                    // Scroll-triggered animations - run only once per element
-                    const setupScrollAnimations = () => {
-                        gsap.utils.toArray('.fade-in').forEach((element: any, index: number) => {
-                            gsap.fromTo(element,
-                                {
-                                    opacity: 0,
-                                    y: 60
-                                },
-                                {
-                                    opacity: 1,
-                                    y: 0,
-                                    duration: 1.2,
-                                    ease: 'power3.out',
-                                    scrollTrigger: {
-                                        trigger: element,
-                                        start: 'top 85%',
-                                        end: 'bottom 15%',
-                                        toggleActions: 'play none none none', // Only play, never reverse
-                                        once: true // Critical: ensures animation only happens once
-                                    }
-                                }
-                            )
-                        })
-
-                        gsap.utils.toArray('.slide-left').forEach((element: any) => {
-                            gsap.fromTo(element,
-                                {
-                                    x: 100,
-                                    opacity: 0
-                                },
-                                {
-                                    x: 0,
-                                    opacity: 1,
-                                    duration: 1.2,
-                                    ease: 'power3.out',
-                                    scrollTrigger: {
-                                        trigger: element,
-                                        start: 'top 85%',
-                                        toggleActions: 'play none none none',
-                                        once: true
-                                    }
-                                }
-                            )
-                        })
-
-                        gsap.utils.toArray('.slide-right').forEach((element: any) => {
-                            gsap.fromTo(element,
-                                {
-                                    x: -100,
-                                    opacity: 0
-                                },
-                                {
-                                    x: 0,
-                                    opacity: 1,
-                                    duration: 1.2,
-                                    ease: 'power3.out',
-                                    scrollTrigger: {
-                                        trigger: element,
-                                        start: 'top 85%',
-                                        toggleActions: 'play none none none',
-                                        once: true
-                                    }
-                                }
-                            )
-                        })
-                    }
-
-                    // Small delay to ensure DOM is ready
-                    setTimeout(setupScrollAnimations, 100)
-                })
-            })
-        }
-
-        // Cleanup function
-        return () => {
-            import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
-                ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-            })
-        }
-    }, [hasInitialized])
+        // Set initialized after a short delay to allow initial animation
+        const timer = setTimeout(() => setHasInitialized(true), 100)
+        return () => clearTimeout(timer)
+    }, [])
 
     return (
-        <div ref={containerRef} className="overflow-hidden relative w-full">
+        <motion.div
+            className="overflow-hidden relative w-full"
+            initial={{ opacity: 0 }}
+            animate={hasInitialized ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+        >
             {children}
-        </div>
+        </motion.div>
+    )
+}
+
+// Scroll animation components
+export const FadeIn = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    const ref = React.useRef(null)
+    const isInView = useInView(ref, { once: true, margin: "-15% 0px -15% 0px" })
+
+    return (
+        <motion.div
+            ref={ref}
+            className={className}
+            initial={{ opacity: 0, y: 60 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+        >
+            {children}
+        </motion.div>
+    )
+}
+
+export const SlideLeft = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    const ref = React.useRef(null)
+    const isInView = useInView(ref, { once: true, margin: "-15% 0px" })
+
+    return (
+        <motion.div
+            ref={ref}
+            className={className}
+            initial={{ x: 100, opacity: 0 }}
+            animate={isInView ? { x: 0, opacity: 1 } : { x: 100, opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+        >
+            {children}
+        </motion.div>
+    )
+}
+
+export const SlideRight = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    const ref = React.useRef(null)
+    const isInView = useInView(ref, { once: true, margin: "-15% 0px" })
+
+    return (
+        <motion.div
+            ref={ref}
+            className={className}
+            initial={{ x: -100, opacity: 0 }}
+            animate={isInView ? { x: 0, opacity: 1 } : { x: -100, opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+        >
+            {children}
+        </motion.div>
     )
 }
 

@@ -15,6 +15,7 @@ import { Button } from '../ui/button';
 import { TbCreditCardFilled } from 'react-icons/tb';
 import { divTitleStyle, subTitleStyle, titleStyle } from '@/lib/constants/styles';
 import SectionTitle from './shared/SectionTitle';
+import { FadeIn } from './shared/AnimatedLanding';
 
 
 const features = [
@@ -59,7 +60,7 @@ const features = [
 export const FeaturesSection = () => {
   return (
     <section id="features" className="py-20 bg-background">
-      <div className="text-center mb-16 fade-in ">
+      <FadeIn className="text-center mb-16">
         <SectionTitle text="PRODUCT SUITE" />
         <div className='flex gap-6 items-center justify-between'>
           <div className={divTitleStyle}>
@@ -73,14 +74,13 @@ export const FeaturesSection = () => {
           </div>
           <Button variant={"hero"}> See All Features <ArrowUpRightFromSquareIcon /></Button>
         </div>
-      </div>
+      </FadeIn>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <FadeIn className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {features.map((feature, index) => (
           <Card
             key={feature.title}
-            className={`fade-in group hover:shadow-lg transition-all duration-300 cursor-pointer border-border hover:border-primary/20  !p-5 rounded-3xl !gap-[14px]`}
-            style={{ animationDelay: `${index * 0.1}s` }}
+            className={`group hover:shadow-lg transition-all duration-300 cursor-pointer border-border hover:border-primary/20  !p-5 rounded-3xl !gap-[14px]`}
           >
             <CardHeader className='flex items-center gap-2.5 !p-0'>
               <div className="size-[50px] flex justify-center items-center rounded-full bg-[#EAEAEA] group-hover:bg-[#EAEAEA]/80 transition-colors">
@@ -99,7 +99,7 @@ export const FeaturesSection = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </FadeIn>
 
     </section>
   )

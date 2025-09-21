@@ -7,6 +7,7 @@ import techGlow3 from '../../../public/images/tech-glow-2.webp'
 import { divTitleStyle, subTitleStyle, titleStyle } from '@/lib/constants/styles'
 import SectionTitle from './shared/SectionTitle'
 import { HiOutlineArrowUpRight } from 'react-icons/hi2';
+import { SlideRight, SlideLeft, FadeIn } from './shared/AnimatedLanding'
 
 const techFeatures = [
     {
@@ -40,7 +41,7 @@ export const TechSection = () => {
         <section id="solutions" className=" bg-navy p-[6.944%]">
             <SectionTitle text={"BENEFIT & VALUES"} className="text-white" />
             {/* Section Header */}
-            <div className={`${divTitleStyle} fade-in text-white !max-w-11/12`}>
+            <FadeIn className={`${divTitleStyle} text-white !max-w-11/12`}>
                 <h2 className={titleStyle}>
                     Empowering Finance, Enabling Growth.
                 </h2>
@@ -49,7 +50,7 @@ export const TechSection = () => {
                     and stay in control. With smarter tools and automated workflows, your team gains the clarity,
                     efficiency, and confidence to make better decisions and drive sustainable growth.
                 </p>
-            </div>
+            </FadeIn>
 
             {/* Tech Features */}
             <div className="space-y-[12.5%] mt-[6.944%] w-full">
@@ -60,7 +61,7 @@ export const TechSection = () => {
                     >
                         {/* Content */}
                         <div className={` ${feature.reverse ? 'lg:col-start-2' : ''}`}>
-                            <div className="slide-right">
+                            <SlideRight>
                                 <h3 className="text-[28px] leading-[100%] font-semibold text-navy-foreground tracking-[0%] mb-5">
                                     {feature.title}
                                 </h3>
@@ -71,22 +72,24 @@ export const TechSection = () => {
                                     Learn More
                                     <HiOutlineArrowUpRight className="size-[22px] group-hover:translate-x-1 transition-transform" />
                                 </Button>
-                            </div>
+                            </SlideRight>
                         </div>
 
                         {/* Image */}
                         <div className={`relative ${feature.reverse ? 'lg:col-start-1' : ''}`}>
-                            <div className="slide-left relative rounded-xl overflow-hidden shadow-2xl">
-                                <img
-                                    src={feature.image}
-                                    alt={feature.title}
-                                    className="w-full h-auto"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-                            </div>
+                            <SlideLeft>
+                                <div className="relative rounded-xl overflow-hidden shadow-2xl">
+                                    <img
+                                        src={feature.image}
+                                        alt={feature.title}
+                                        className="w-full h-auto"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+                                </div>
 
-                            {/* Glow Effect */}
-                            <div className="absolute -inset-4 bg-primary/20 rounded-xl blur-xl opacity-30" />
+                                {/* Glow Effect */}
+                                <div className="absolute -inset-4 bg-primary/20 rounded-xl blur-xl opacity-30" />
+                            </SlideLeft>
                         </div>
                     </div>
                 ))}
