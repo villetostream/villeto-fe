@@ -6,6 +6,7 @@ import { Input } from '../ui/input'
 import MaxWidth from '@/lib/constants/MaxWidth'
 import SocialProof from './shared/SocialProof'
 import { FadeIn } from './shared/AnimatedLanding'
+import Link from 'next/link'
 
 export const HeroSection = () => {
     return (
@@ -40,11 +41,13 @@ export const HeroSection = () => {
 
                         <FadeIn className="flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
                             <Input className='!border-none focus-visible:border-0 focus-visible:ring-0 !shadow-none' placeholder='What is yout work email' />
-                            <Button variant="hero" size="lg">
-                                Watch Demo
+                            <Button variant="hero" size="lg" asChild>
+                                <Link href="/onboarding" className='flex items-center'>
+                                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                                </Link>
                             </Button>
                         </FadeIn>
-                        <SocialProof  />
+                        <SocialProof />
                     </div>
 
                     {/* Right Content - Dashboard Preview */}

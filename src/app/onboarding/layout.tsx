@@ -1,32 +1,22 @@
 import Link from "next/link";
 import { steps } from "@/components/onboarding/stepsConfig";
+import { Metadata } from "next";
+import { OnboardingSidebar } from "@/components/onboarding/_shared/OnboardingSidebar";
+export const metadata: Metadata = {
+  title: "Onboarding ",
+  description: "Company onboarding process",
+};
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   // Determine current step from pathname if needed, or let each page handle
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Company Onboarding</h1>
+    <div className="flex p-5 gap-5 bg-background h-screen overflow-hidden">
+      <OnboardingSidebar />
+      <div className="flex-1  p-8 px-[5.43777%] w-full h-full bg-white overflow-y-auto">
 
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4">
-          {steps.map((s) => (
-            <Link key={s.id} href={`/onboarding/step/${s.id}`} className="flex-1 text-center">
-              <div
-                className={`rounded-full w-8 h-8 mx-auto flex items-center justify-center ${
-                  // You can style active step based on pathname
-                  "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {s.id}
-              </div>
-              <div className="text-xs mt-1">{s.label}</div>
-            </Link>
-          ))}
-        </div>
+        {children}
+
       </div>
-
-      <div className="bg-white rounded shadow-sm p-6">{children}</div>
     </div>
   );
 }
