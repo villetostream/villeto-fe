@@ -31,15 +31,8 @@ export default function Welcome() {
                 </p>
             </div>
 
-            <div className="pt-8 flex w-full items-center gap-4">
-                <Button
-                    onClick={handleStart}
-                    variant={"glass"}
-                    className="px-8 py-6 text-lg font-medium min-w-[250px]"
-                >
-                    Continue from last time
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+            <div className="pt-8 flex w-full items-center  justify-end gap-4">
+
                 <Button
                     onClick={handleStart}
                     variant={"hero"}

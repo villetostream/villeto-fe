@@ -21,7 +21,7 @@ export const OnboardingSidebar = () => {
     return (
         <div className="flex-1 bg-navy h-full p-8 flex flex-col rounded-[30px]">
             {/* Logo */}
-            <div className="mb-12">
+            <div className="mb-10">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
                         <span className="text-white font-bold text-lg">V</span>
@@ -45,7 +45,7 @@ export const OnboardingSidebar = () => {
                             <div className="flex flex-col items-center gap-1.5">
                                 <div
                                     className={cn(
-                                        "w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-colors border border-gray-600",
+                                        "w-11 h-11 rounded-full flex items-center justify-center text-sm font-medium transition-colors border border-gray-600",
                                         {
                                             "bg-primary text-white border-0": isCompleted,
                                             "bg-transparent text-white border border-primary ": isUpcoming === step.id,
@@ -62,7 +62,7 @@ export const OnboardingSidebar = () => {
                                 </div>
                                 {/* Connector line */}
                                 {index < steps.length - 1 && (
-                                    <div className="w-px h-8 bg-gray-500 mt-2" />
+                                    <div className="w-px h-9 bg-gray-500 mt-2" />
                                 )}
                             </div>
 
