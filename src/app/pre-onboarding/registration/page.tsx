@@ -41,7 +41,7 @@ export default function GetStarted() {
         // Store email for next steps
         localStorage.setItem("userEmail", `${data.firstName.toLowerCase()}${data.lastName.toLowerCase()}@xyztechnologies.com`);
         localStorage.setItem("userName", data.firstName);
-        router.push("/verify-otp");
+        router.push("/onboarding");
     };
 
     return (

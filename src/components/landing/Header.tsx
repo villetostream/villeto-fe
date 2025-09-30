@@ -1,6 +1,7 @@
 import React, { useState, useCallback, createContext, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Menu, MousePointer2Icon, SquareArrowOutUpRightIcon, X } from 'lucide-react';
+import { ArrowRight, ChevronDown, Menu, MousePointer2Icon, SquareArrowOutUpRightIcon, X } from 'lucide-react';
+import Link from 'next/link';
 
 type ScrollContextType = {
     handleSectionEnter: (entry: IntersectionObserverEntry) => void;
@@ -170,9 +171,10 @@ export const Header = () => {
                                         Learn More
                                         <MousePointer2Icon className="ml-1 h-4 w-4" />
                                     </Button>
-                                    <Button variant="hero" size="sm" className={textColor}>
-                                        See A Demo
-                                        <SquareArrowOutUpRightIcon className="ml-1 h-4 w-4" />
+                                    <Button variant="hero" size="lg" asChild className={textColor}>
+                                        <Link href="/pre-onboarding" className='flex items-center'>
+                                            See A demo <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
+                                        </Link>
                                     </Button>
                                 </div>
                             </nav>
