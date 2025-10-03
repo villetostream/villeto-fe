@@ -102,8 +102,8 @@ export const Header = () => {
     ];
 
     return (
-        <header className="fixed top-3 left-0 right-0 z-50 w-[calc(100%-2rem)] mx-auto max-w-[1440px]">
-            <div className="bg-white/10 backdrop-blur-md rounded-4xl border border-border/60 shadow-sm xl:mx-[100px] xl:py-[25px]">
+        <header className="fixed top-0 left-0 w-[calc(100%-2rem)] mx-auto max-w-[1440px] mt-10">
+            <div className="bg-white/10 backdrop-blur-md rounded-4xl border border-border/60 shadow-sm xl:mx-[100px] xl:py-[12px]">
                 <div className={`px-6 h-16 flex items-center justify-between ${textColor}`}>
                     {/* Logo */}
                     <div className="flex items-center space-x-2">

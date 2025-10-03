@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getCookie, setCookie, clearOnboardingCookies } from '@/lib/cookies';
 
 export interface UserProfile {
     id: string;
@@ -78,40 +79,19 @@ const initialState: OnboardingState = {
     connectedAccounts: [],
     showConnectModal: false,
     businessSnapshot: {
-        businessName: 'XYZ Corporation',
-        countryOfRegistration: 'United States of America',
-        contactNumber: '+1 256 890 123 45',
-        website: 'xyzcorporation.com',
+        businessName: '',
+        countryOfRegistration: '',
+        contactNumber: '',
+        website: '',
     },
-    userProfiles: [
-        {
-            id: '1',
-            name: 'James Doe',
-            role: 'Beneficial Owner A',
-            percentage: 10,
-            avatar: '👨‍💼',
-        },
-        {
-            id: '2',
-            name: 'Anita Doe',
-            role: 'Beneficial Owner B',
-            percentage: 25,
-            avatar: '👩‍💼',
-        },
-        {
-            id: '3',
-            name: 'James Doe',
-            role: 'Chief Executive Officer',
-            avatar: '👨‍💼',
-        },
-    ],
+    userProfiles: [],
     financialPulse: {
-        monthlySpend: '$10k-$50k',
-        bankConnection: 'Bank Statement.pdf',
-        integrations: ['QuickBooks', 'Xero'],
+        monthlySpend: '',
+        bankConnection: '',
+        integrations: [],
     },
     villetoProducts: [
-        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 text-purple-700', selected: true },
+        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 text-purple-700', selected: false },
         { id: '2', name: 'Expense Management', color: 'bg-green-100 text-green-700', selected: false },
         { id: '3', name: 'Vendor Payments', color: 'bg-blue-100 text-blue-700', selected: false },
         { id: '4', name: 'Payroll Automation', color: 'bg-pink-100 text-pink-700', selected: false },
@@ -119,9 +99,33 @@ const initialState: OnboardingState = {
     ],
 };
 
-export const useOnboardingStore = create<VilletoState & OnboardingState>((set) => ({
+// Load initial state from cookies
+const loadFromCookies = (): Partial<OnboardingState> => {
+    const businessData = getCookie('onboarding_business');
+    const leadershipData = getCookie('onboarding_leadership');
+    const financialData = getCookie('onboarding_financial');
+    const productsData = getCookie('onboarding_products');
+
+    return {
+        ...(businessData && { businessSnapshot: businessData.businessSnapshot }),
+        ...(leadershipData && { userProfiles: leadershipData.userProfiles }),
+        ...(financialData && {
+            monthlySpend: financialData.monthlySpend,
+            spendRange: financialData.spendRange,
+            bankConnected: financialData.bankConnected,
+            bankProcessing: financialData.bankProcessing,
+            connectedAccounts: financialData.connectedAccounts,
+            showConnectModal: financialData.showConnectModal,
+            financialPulse: financialData.financialPulse
+        }),
+        ...(productsData && { villetoProducts: productsData.villetoProducts }),
+    };
+};
+
+export const useOnboardingStore = create<VilletoState & OnboardingState>((set, get) => ({
     currentStep: 5, // Starting at Choose Products for demo
     ...initialState,
+    ...loadFromCookies(),
     showCongratulations: false,
 
     setCurrentStep: (step) => set({ currentStep: step }),
@@ -129,6 +133,16 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set) =
     setMonthlySpend: (spend: number) => {
         const ranges = ['<$10k', '$10k-$50k', '$50k-$200k', '$200k+'];
         set({ monthlySpend: spend, spendRange: ranges[spend] });
+        const state = get();
+        setCookie('onboarding_financial', {
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+            financialPulse: state.financialPulse,
+        });
     },
 
     setSpendRange: (range: string) => set({ spendRange: range }),
@@ -149,28 +163,46 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set) =
 
     setShowConnectModal: (show: boolean) => set({ showConnectModal: show }),
 
-    updateBusinessSnapshot: (data) =>
+    updateBusinessSnapshot: (data) => {
         set((state) => ({
             businessSnapshot: { ...state.businessSnapshot, ...data },
-        })),
+        }));
+        const state = get();
+        setCookie('onboarding_business', {
+            businessSnapshot: state.businessSnapshot,
+        });
+    },
 
-    updateUserProfiles: (profiles) => set({ userProfiles: profiles }),
+    updateUserProfiles: (profiles) => {
+        set({ userProfiles: profiles });
+        setCookie('onboarding_leadership', {
+            userProfiles: profiles,
+        });
+    },
 
     updateFinancialPulse: (data) =>
         set((state) => ({
             financialPulse: { ...state.financialPulse, ...data },
         })),
 
-    toggleProduct: (productId) =>
+    toggleProduct: (productId) => {
         set((state) => ({
             villetoProducts: state.villetoProducts.map((product) =>
                 product.id === productId
                     ? { ...product, selected: !product.selected }
                     : product
             ),
-        })),
+        }));
+        const state = get();
+        setCookie('onboarding_products', {
+            villetoProducts: state.villetoProducts,
+        });
+    },
 
-    submitApplication: () => set({ showCongratulations: true }),
+    submitApplication: () => {
+        set({ showCongratulations: true });
+        clearOnboardingCookies();
+    },
 
     closeCongratulations: () => set({ showCongratulations: false }),
     reset: () => set(initialState)

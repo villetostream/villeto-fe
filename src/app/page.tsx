@@ -46,7 +46,7 @@ const LandingContent = () => {
       dataBgColor: '#FFFFFF', // White
       content: (
         <>
-          <ProcessSection />
+          {/* <ProcessSection /> */}
           <Testimonials />
           <CardsSection />
         </>
@@ -81,7 +81,7 @@ const LandingContent = () => {
         <InView
           key={section.id}
           threshold={0}
-          rootMargin="-100px 0px -100px 0px"
+          rootMargin="0px 0px 0px 0px"
           onChange={(inView, entry) => inView && handleSectionEnter(entry)}
         >
           {({ ref }) => (

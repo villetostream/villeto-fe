@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { AddBeneficialOwnerModal } from "@/components/onboarding/AddBeneficialOwner";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 
 interface Person {
     id: string;
@@ -190,53 +191,53 @@ export function ActionButtons({
 
 export default function Leadership() {
     const router = useRouter();
-    const [beneficialOwners, setBeneficialOwners] = useState<BeneficialOwner[]>([]);
-    const [officers, setOfficers] = useState<Officer[]>([]);
+    const { userProfiles, updateUserProfiles } = useOnboardingStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTab, setSelectedTab] = useState<"beneficial" | "officer">("beneficial");
     const [editingPerson, setEditingPerson] = useState<{ id: string; type: "beneficial" | "officer" } | null>(null);
 
+    // Separate profiles into beneficial owners and officers
+    const beneficialOwners = userProfiles.filter(profile => profile.percentage !== undefined) as BeneficialOwner[];
+    const officers = userProfiles.filter(profile => profile.percentage === undefined) as Officer[];
+
     const handleAddPerson = (person: Omit<BeneficialOwner, "id"> | Omit<Officer, "id">) => {
         console.log({ person })
-        if (selectedTab === "beneficial") {
-            const newOwner: BeneficialOwner = {
-                ...person as BeneficialOwner,
-                id: Date.now().toString(),
-            };
-            setBeneficialOwners([...beneficialOwners, newOwner]);
+
+        if (editingPerson) {
+            // Editing existing person
+            const updatedProfiles = userProfiles.map(p =>
+                p.id === editingPerson.id
+                    ? { ...p, ...person, avatar: `${person.name.split(' ').map(n => n[0]).join('')}` }
+                    : p
+            );
+            updateUserProfiles(updatedProfiles);
         } else {
-            const newOfficer: Officer = {
-                ...person as Officer,
+            // Adding new person
+            const newPerson = {
+                ...person,
                 id: Date.now().toString(),
+                avatar: `${person.name.split(' ').map(n => n[0]).join('')}`,
             };
-            setOfficers([...officers, newOfficer]);
+            const updatedProfiles = [...userProfiles, newPerson];
+            updateUserProfiles(updatedProfiles);
         }
+
         setIsModalOpen(false);
         setEditingPerson(null);
     };
 
     const handleEditPerson = (id: string) => {
-        if (selectedTab === "beneficial") {
-            const owner = beneficialOwners.find(o => o.id === id);
-            if (owner) {
-                setEditingPerson({ id, type: "beneficial" });
-                setIsModalOpen(true);
-            }
-        } else {
-            const officer = officers.find(o => o.id === id);
-            if (officer) {
-                setEditingPerson({ id, type: "officer" });
-                setIsModalOpen(true);
-            }
+        const person = userProfiles.find(p => p.id === id);
+        if (person) {
+            const type = person.percentage !== undefined ? "beneficial" : "officer";
+            setEditingPerson({ id, type });
+            setIsModalOpen(true);
         }
     };
 
     const handleDeletePerson = (id: string) => {
-        if (selectedTab === "beneficial") {
-            setBeneficialOwners(beneficialOwners.filter(owner => owner.id !== id));
-        } else {
-            setOfficers(officers.filter(officer => officer.id !== id));
-        }
+        const updatedProfiles = userProfiles.filter(profile => profile.id !== id);
+        updateUserProfiles(updatedProfiles);
     };
 
     const handleContinue = () => {
@@ -302,11 +303,7 @@ export default function Leadership() {
                     onAdd={handleAddPerson}
                     mode={type}
                     isOwner={type == "beneficial" ? true : false}
-                    editingPerson={editingPerson ? {
-                        ...(selectedTab === "beneficial"
-                            ? beneficialOwners.find(o => o.id === editingPerson.id)
-                            : officers.find(o => o.id === editingPerson.id))
-                    } as BeneficialOwner | Officer : undefined}
+                    editingPerson={editingPerson ? userProfiles.find(p => p.id === editingPerson.id) : undefined}
                 />
             </div>
         );

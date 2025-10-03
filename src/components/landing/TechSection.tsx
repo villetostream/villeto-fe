@@ -1,9 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import techGlow1 from '../../../public/images/tech-glow-1.webp'
-import techGlow2 from '../../../public/images/tech-glow.webp'
-import techGlow3 from '../../../public/images/tech-glow-2.webp'
+
 import { divTitleStyle, subTitleStyle, titleStyle } from '@/lib/constants/styles'
 import SectionTitle from './shared/SectionTitle'
 import { HiOutlineArrowUpRight } from 'react-icons/hi2';
@@ -13,25 +10,25 @@ const techFeatures = [
     {
         title: 'Speed up expense process',
         description: 'Villeto accelerates the entire expense cycle; from submission to approval and reimbursement. Employees capture receipts instantly, policies are enforced automatically, and managers approve with a click. With faster turnaround times and fewer bottlenecks, your organization saves time, reduces errors, and keeps teams focused on what matters most.',
-        image: techGlow1.src,
+        image: "/images/benefit-1.webp",
         reverse: true
     },
     {
         title: 'Reduce Policy Breaches',
         description: 'Villeto embeds compliance into every stage of the expense process. Automated checks flag out-of-policy spend instantly, while spending limits and approval workflows keep teams aligned with company guidelines. With real-time visibility and transparent reporting, finance leaders can reduce violations, strengthen accountability, and protect the organization from unnecessary risk.',
-        image: techGlow2.src,
+        image: "/images/benefit-2.webp",
         reverse: false
     },
     {
         title: 'Automate Approvals',
         description: 'Villeto streamlines approval workflows by automating every step of the process. Expenses and payments are routed to the right managers instantly, with built-in policy checks to ensure compliance. Approvals happen faster, bottlenecks are eliminated, and finance teams gain real-time visibility; freeing leaders to focus on strategy, not paperwork.',
-        image: techGlow3.src,
+        image: "/images/benefit-3.webp",
         reverse: true
     },
     {
         title: 'Accurate month-end close',
         description: 'Villeto speeds up the close process by automating reconciliations, consolidating data, and ensuring accuracy every ledger. With real-time syncing and built-in compliance, finance teams can eliminate manual errors, reduce delays, and finalize reports faster. The result: a smooth, more efficient month-end close that gives leaders timely insights and peace of mind.',
-        image: techGlow3.src,
+        image: "/images/benefit-4.webp",
         reverse: false
     }
 ]
@@ -95,7 +92,7 @@ export const TechSection = () => {
                 ))}
             </div>
 
-  
+
 
         </section>
     )

@@ -54,23 +54,14 @@ export const HeroSection = () => {
                     <FadeIn className="relative">
                         <div className="relative rounded-xl overflow-hidden shadow-2xl">
                             <img
-                                src={heroDashboard.src}
+                                src={"/images/hero-image.png"}
                                 alt="SpendFlow Dashboard"
                                 className="w-full h-auto"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
                         </div>
 
-                        {/* Floating Elements */}
-                        <div className="absolute -top-4 -left-4 bg-white rounded-lg shadow-lg p-4 animate-pulse">
-                            <div className="text-sm font-medium text-foreground">+47% Cost Savings</div>
-                            <div className="text-xs text-muted-foreground">vs manual processes</div>
-                        </div>
 
-                        <div className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg p-4 animate-pulse delay-75">
-                            <div className="text-sm font-medium text-foreground">Real-time Sync</div>
-                            <div className="text-xs text-muted-foreground">Across all platforms</div>
-                        </div>
                     </FadeIn>
                 </div>
             </div>

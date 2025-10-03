@@ -28,53 +28,36 @@ const testimonials = [
     },
 ];
 
-const leftImages = [
-    { src: "/images/tech-glow.webp", height: 200 },
-    { src: "/images/tech-glow.webp", height: 250 },
-    { src: "/images/tech-glow.webp", height: 180 },
-    { src: "/images/tech-glow.webp", height: 220 },
-    { src: "/images/tech-glow.webp", height: 190 },
-];
 
 const centerImages = [
-    { src: "/images/tech-glow.webp", height: 300 },
-    { src: "/images/tech-glow.webp", height: 300 },
-    { src: "/images/tech-glow.webp", height: 300 },
-    { src: "/images/tech-glow.webp", height: 300 },
+    { src: "/images/testimonial-6.webp", height: 300 },
+    { src: "/images/testimonial-7.webp", height: 300 },
+    { src: "/images/testimonial-8.webp", height: 300 },
+    { src: "/images/testimonial-9.webp", height: 300 },
 ];
-
-const rightImages = [
-    { src: "/images/tech-glow.webp", height: 190 },
-    { src: "/images/tech-glow.webp", height: 230 },
-    { src: "/images/tech-glow.webp", height: 170 },
-    { src: "/images/tech-glow.webp", height: 210 },
-    { src: "/images/tech-glow.webp", height: 200 },
-];
-
-const business1 = "/images/tech-glow.webp";
 
 // Define masonry image layouts with proper heights to match reference
 const leftColumnImages = [
-    { src: business1, height: 180 },
-    { src: business1, height: 180 },
+    { src: "/images/testimonial-1.jpg", height: 180 },
+    { src: "/images/testimonial-2.jpg", height: 180 },
 
 ];
 
 const leftColumnImagesSecond = [
-    { src: business1, height: 150 },
-    { src: business1, height: 150 },
-    { src: business1, height: 150 },
+    { src: "/images/testimonial-3.jpg", height: 150 },
+    { src: "/images/testimonial-4.jpg", height: 150 },
+    { src: "/images/testimonial-5.jpg", height: 150 },
 ];
 
 const rightColumnImages = [
-    { src: business1, height: 150 },
-    { src: business1, height: 150 },
-    { src: business1, height: 150 },
+    { src: "/images/testimonial-10.webp", height: 150 },
+    { src: "/images/testimonial-11.webp", height: 150 },
+    { src: "/images/testimonial-12.webp", height: 150 },
 ];
 
 const rightColumnImagesSecond = [
-    { src: business1, height: 180 },
-    { src: business1, height: 180 },
+    { src: "/images/testimonial-13.webp", height: 180 },
+    { src: "/images/testimonial-14.webp", height: 180 },
 ];
 
 export default function Testimonials() {

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getCookie, setCookie } from '@/lib/cookies';
 
 export interface ConnectedAccount {
     id: string;
@@ -39,33 +40,131 @@ const initialState: OnboardingState = {
     showConnectModal: false,
 };
 
-export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set) => ({
-    ...initialState,
+// Load initial state from cookies
+const loadFromCookies = (): OnboardingState => {
+    const cookieData = getCookie<OnboardingState>('onboarding_financial');
+    return cookieData ? { ...initialState, ...cookieData } : initialState;
+};
 
-    setCurrentStep: (step: number) => set({ currentStep: step }),
+export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set, get) => ({
+    ...loadFromCookies(),
+
+    setCurrentStep: (step: number) => {
+        set({ currentStep: step });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
     setMonthlySpend: (spend: number) => {
         const ranges = ['<$10k', '$10k-$50k', '$50k-$200k', '$200k+'];
         set({ monthlySpend: spend, spendRange: ranges[spend] });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
     },
 
-    setSpendRange: (range: string) => set({ spendRange: range }),
+    setSpendRange: (range: string) => {
+        set({ spendRange: range });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
-    setBankConnected: (connected: boolean) => set({ bankConnected: connected }),
+    setBankConnected: (connected: boolean) => {
+        set({ bankConnected: connected });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
-    setBankProcessing: (processing: boolean) => set({ bankProcessing: processing }),
+    setBankProcessing: (processing: boolean) => {
+        set({ bankProcessing: processing });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
-    addConnectedAccount: (account: ConnectedAccount) =>
+    addConnectedAccount: (account: ConnectedAccount) => {
         set((state) => ({
             connectedAccounts: [...state.connectedAccounts, account]
-        })),
+        }));
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
-    removeConnectedAccount: (id: string) =>
+    removeConnectedAccount: (id: string) => {
         set((state) => ({
             connectedAccounts: state.connectedAccounts.filter(acc => acc.id !== id)
-        })),
+        }));
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
-    setShowConnectModal: (show: boolean) => set({ showConnectModal: show }),
+    setShowConnectModal: (show: boolean) => {
+        set({ showConnectModal: show });
+        const state = get();
+        setCookie('onboarding_financial', {
+            currentStep: state.currentStep,
+            monthlySpend: state.monthlySpend,
+            spendRange: state.spendRange,
+            bankConnected: state.bankConnected,
+            bankProcessing: state.bankProcessing,
+            connectedAccounts: state.connectedAccounts,
+            showConnectModal: state.showConnectModal,
+        });
+    },
 
     reset: () => set(initialState),
 }));

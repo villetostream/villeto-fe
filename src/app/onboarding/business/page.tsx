@@ -10,6 +10,7 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 
 const schema = z.object({
     business_name: z.string().min(1, "Company name is required").min(2, "Must be at least 2 characters").max(100),
@@ -24,32 +25,28 @@ const schema = z.object({
 
 export default function Business() {
     const router = useRouter();
+    const { businessSnapshot, updateBusinessSnapshot } = useOnboardingStore();
 
     const form = useForm({
         resolver: zodResolver(schema), mode: 'onChange',
         defaultValues: {
-            business_name: "",
-            contact_number: "",
-            // admin_email: "",
-            // password: "",
-            country: "",
-            business_website: "",
-            // estimated_monthly_spend: ""
+            business_name: businessSnapshot.businessName || "",
+            contact_number: businessSnapshot.contactNumber || "",
+            country: businessSnapshot.countryOfRegistration || "",
+            business_website: businessSnapshot.website || "",
         }
     });
 
     async function onSubmit(data: any) {
         try {
+            // Update the store with form data
+            updateBusinessSnapshot({
+                businessName: data.business_name,
+                contactNumber: data.contact_number,
+                countryOfRegistration: data.country,
+                website: data.business_website,
+            });
 
-            // const res = await apiPost("/api/onboard/start", {
-            //     company_name: data.company_name,
-            //     admin_name: data.admin_name,
-            //     admin_email: data.admin_email,
-            //     country_of_operation: data.country,
-            //     preferred_currency: data.currency,
-            //     estimated_monthly_spend: data.estimated_monthly_spend,
-            // });
-            // if (res?.onboarding_id) Cookies.set("onboarding_id", res.onboarding_id);
             router.push("/onboarding/leadership");
         }
         catch (e) {
