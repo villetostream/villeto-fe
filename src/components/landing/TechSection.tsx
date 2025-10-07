@@ -75,7 +75,7 @@ export const TechSection = () => {
                         {/* Image */}
                         <div className={`relative ${feature.reverse ? 'lg:col-start-1' : ''}`}>
                             <SlideLeft>
-                                <div className="relative rounded-xl overflow-hidden shadow-2xl">
+                                <div className="relative rounded-xl overflow-hidden shadow-2xl z-10">
                                     <img
                                         src={feature.image}
                                         alt={feature.title}

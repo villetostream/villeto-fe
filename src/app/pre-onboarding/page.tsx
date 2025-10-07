@@ -33,7 +33,6 @@ const page = () => {
   }
 
   return (
-
     <div className=" flex-col flex justify-center h-full">
       <div className="mb-8">
         <img

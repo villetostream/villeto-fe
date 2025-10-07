@@ -18,7 +18,6 @@ import AnimatedLanding from '@/components/landing/shared/AnimatedLanding';
 import { LoadingFallback } from '@/components/landing/shared/LoadingFallback';
 
 const LandingContent = () => {
-  const { handleSectionEnter } = useScrollContext();
 
   // Define sections with their background classes
   const sections = [
@@ -82,7 +81,6 @@ const LandingContent = () => {
           key={section.id}
           threshold={0}
           rootMargin="0px 0px 0px 0px"
-          onChange={(inView, entry) => inView && handleSectionEnter(entry)}
         >
           {({ ref }) => (
             <MaxWidth
