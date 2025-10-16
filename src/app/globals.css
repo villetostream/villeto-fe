@@ -62,6 +62,12 @@
   --color-gradient-primary: var(--gradient-primary);
   --color-gradient-navy: var(--gradient-navy);
   --color-gradient-hero: var(--gradient-hero);
+
+  --color-chart-spend: var(--chart-spend);
+  --color-chart-budget: var(--chart-budget);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: var(--warning);
 }
 
 :root {
@@ -77,7 +83,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.55 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -113,6 +119,12 @@
   --navy: oklch(0.141 0 0); /* hsl(223 84% 11%) */
   --navy-light: oklch(0.356 0.075 276.2); /* hsl(223 47% 25%) */
   --navy-foreground: oklch(1 0 0); /* hsl(0 0% 100%) */
+
+  --chart-spend: oklch(61.8% 0.2 301);
+  --chart-budget: oklch(75.7% 0.28 29);
+  --success: oklch(0.715 0.204 140.61);
+  --warning: oklch(77.5% 0.2 82);
+  --info: oklch(60.5% 0.21 233);
 
   /* Glow / Accent */
   --primary-glow: oklch(0.849 0.12 175.6); /* hsl(174 72% 76%) */

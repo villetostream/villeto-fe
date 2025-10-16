@@ -75,7 +75,13 @@ const LandingContent = () => {
 
   return (
     <>
-      <Header />
+      <MaxWidth
+        className={''}
+
+        data-bg-color={""}
+      >
+        <Header />
+      </MaxWidth>
       {sections.map((section) => (
         <InView
           key={section.id}

@@ -2,18 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
-    Home,
-    CreditCard,
-    Receipt,
-    Settings,
-    Users,
-    FileText,
-    Building,
-    HelpCircle,
-    Inbox,
-    LucideLightbulb,
-    Store,
-    ChevronRight
+    ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,17 +14,19 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSubButton,
-    SidebarSeparator
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useAuthStore } from "@/stores/auth-stores";
+import { Menu, Cards, Moneys, Profile2User, WalletMoney, Shop, LampOn, StatusUp, Messages, Setting2, Logout } from 'iconsax-reactjs';
 
 interface NavItem {
     icon: any;
@@ -44,6 +35,7 @@ interface NavItem {
     permission?: string;
     subItems?: SubItem[];
     badge?: string;
+    section: string
 }
 
 interface SubItem {
@@ -53,34 +45,34 @@ interface SubItem {
 }
 
 const navigationItems: NavItem[] = [
-    { icon: Home, label: "Dashboard", href: "/dashboard", permission: PERMISSIONS.VIEW_DASHBOARD },
-    { icon: Inbox, label: "Inbox", href: "/dashboard/inbox", permission: PERMISSIONS.VIEW_INBOX },
-    { icon: LucideLightbulb, label: "Insights", href: "/dashboard/insights", permission: PERMISSIONS.VIEW_INSIGHTS },
+    { icon: Menu, label: "Dashboard", href: "/dashboard", permission: PERMISSIONS.VIEW_DASHBOARD, section: "MAIN MENU" },
     {
-        icon: CreditCard,
+        icon: Moneys,
         label: "Expenses",
         permission: PERMISSIONS.VIEW_EXPENSES,
-        subItems: [
-            { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
-            { label: "Reimbursements", href: "/dashboard/expenses/reimbursements", permission: PERMISSIONS.VIEW_REIMBURSEMENTS },
-            { label: "Travel", href: "/dashboard/expenses/travel", permission: PERMISSIONS.VIEW_TRAVEL_EXPENSES },
-        ],
+        href: "/dashboard/expenses/card-transactions",
+        section: "MAIN MENU",
+        // subItems: [
+        //     { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
+        //     { label: "Reimbursements", href: "/dashboard/expenses/reimbursements", permission: PERMISSIONS.VIEW_REIMBURSEMENTS },
+        //     { label: "Travel", href: "/dashboard/expenses/travel", permission: PERMISSIONS.VIEW_TRAVEL_EXPENSES },
+        // ],
     },
-    { icon: Receipt, label: "Cards", href: "/dashboard/cards", permission: PERMISSIONS.VIEW_CARDS },
-    { icon: Users, label: "Spend programs", href: "/dashboard/spend-programs", permission: PERMISSIONS.VIEW_SPEND_PROGRAMS },
-    { icon: Building, label: "Procurement", href: "/dashboard/procurement", permission: PERMISSIONS.VIEW_PROCUREMENT },
-    { icon: FileText, label: "Bill Pay", href: "/dashboard/bill-pay", permission: PERMISSIONS.VIEW_BILL_PAY },
-    { icon: Settings, label: "Accounting", href: "/dashboard/accounting", permission: PERMISSIONS.VIEW_ACCOUNTING },
-    { icon: Building, label: "Business Account", href: "/dashboard/business-account", permission: PERMISSIONS.VIEW_BUSINESS_ACCOUNT, badge: "New" },
-    { icon: Users, label: "People", href: "/dashboard/people", permission: PERMISSIONS.VIEW_PEOPLE },
-    { icon: Store, label: "Vendors", href: "/dashboard/vendors", permission: PERMISSIONS.VIEW_VENDORS },
-];
-
-const bottomItems: NavItem[] = [
+    { icon: Cards, label: "Cards", href: "/dashboard/cards", permission: PERMISSIONS.VIEW_CARDS, section: "MAIN MENU" },
+    { icon: WalletMoney, label: "Accounting", href: "/dashboard/accounting", permission: PERMISSIONS.VIEW_ACCOUNTING, section: "MANAGEMENT" },
+    { icon: Profile2User, label: "People", href: "/dashboard/people", permission: PERMISSIONS.VIEW_PEOPLE, section: "MANAGEMENT" },
+    { icon: Shop, label: "Vendors", href: "/dashboard/vendors", permission: PERMISSIONS.VIEW_VENDORS, section: "MANAGEMENT" },
+    { icon: LampOn, label: "Insights", href: "/dashboard/insights", permission: PERMISSIONS.VIEW_INSIGHTS, section: "ANALYTICS" },
+    { icon: StatusUp, label: "Analytics", href: "/dashboard/insights", permission: PERMISSIONS.VIEW_INSIGHTS, section: "ANALYTICS" },
+    // { icon: Users, label: "Spend programs", href: "/dashboard/spend-programs", permission: PERMISSIONS.VIEW_SPEND_PROGRAMS },
+    // { icon: Building, label: "Procurement", href: "/dashboard/procurement", permission: PERMISSIONS.VIEW_PROCUREMENT },
+    // { icon: FileText, label: "Bill Pay", href: "/dashboard/bill-pay", permission: PERMISSIONS.VIEW_BILL_PAY },
+    { icon: Messages, label: "Inbox", href: "/dashboard/inbox", permission: PERMISSIONS.VIEW_INBOX, section: "OTHERS" },
     {
-        icon: Settings,
+        icon: Setting2,
         label: "Settings",
         permission: PERMISSIONS.VIEW_SETTINGS,
+        section: "OTHERS",
         subItems: [
             { label: "Expense Policy", href: "/dashboard/settings/expense-policy", permission: PERMISSIONS.MANAGE_EXPENSE_POLICY },
             { label: "Company Settings", href: "/dashboard/settings/company-settings", permission: PERMISSIONS.MANAGE_COMPANY_SETTINGS },
@@ -89,8 +81,12 @@ const bottomItems: NavItem[] = [
             { label: "Personal Settings", href: "/dashboard/settings/personal-settings", permission: PERMISSIONS.MANAGE_PERSONAL_SETTINGS },
         ],
     },
-    { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help", permission: PERMISSIONS.VIEW_HELP },
+    // { icon: Building, label: "Business Account", href: "/dashboard/business-account", permission: PERMISSIONS.VIEW_BUSINESS_ACCOUNT, badge: "New" },
 ];
+
+// const bottomItems: NavItem[] = [
+//     { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help", permission: PERMISSIONS.VIEW_HELP },
+// ];
 
 interface DashboardSidebarProps {
     userRole: UserRole;
@@ -111,6 +107,7 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
     };
 
     const isActive = (href: string) => location === href;
+    let currentSection = "";
 
     const filterItems = (items: NavItem[]): NavItem[] => {
         return items
@@ -128,9 +125,10 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
     };
 
     const filteredNavigationItems = filterItems(navigationItems);
-    const filteredBottomItems = filterItems(bottomItems);
+    // const filteredBottomItems = filterItems(bottomItems);
     const renderItem = (item: NavItem) => {
-
+        const showSection = currentSection !== item.section;
+        if (showSection) currentSection = item.section;
 
         if (item.subItems) {
 
@@ -175,7 +173,12 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
 
         if (!item.href) return null;
 
-        return (
+        return (<>
+            {showSection && (
+                <div className="text-xs font-semibold text-muted-foreground mb-3 px-3">
+                    {item.section}
+                </div>
+            )}
             <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
                     isActive={isActive(item.href)}
@@ -194,40 +197,64 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+        </>
         );
     };
-
+    const groupedItems = navigationItems.reduce((acc, item) => {
+        if (!acc[item.section]) {
+            acc[item.section] = [];
+        }
+        acc[item.section].push(item);
+        return acc;
+    }, {} as Record<string, typeof navigationItems>);
 
     return (
-        <Sidebar
-            collapsible="icon"
-            className="py-5"
-        >
-
-
+        <Sidebar collapsible="icon">
+            <SidebarHeader className="border-b border-sidebar-border">
+                <div className="flex items-center gap-2 px-2">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <span className="text-primary-foreground font-bold text-sm">V</span>
+                    </div>
+                    <span className="font-semibold text-sidebar-foreground">Villeto</span>
+                </div>
+            </SidebarHeader>
 
             <SidebarContent>
+                {Object.entries(groupedItems).map(([section, items]) => (
+                    <SidebarGroup key={section}>
+                        <SidebarGroupLabel className="text-[#7F7F7F] font-medium text-base mb-1">{section}</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {items.map((item) => {
+                                    const isActive = location === item.href;
+
+                                    return <SidebarMenuItem key={item.label}>
+                                        <SidebarMenuButton
+                                            isActive={isActive}
+                                            tooltip={item.label}
+                                            className="font-normal text-sm text-[#7F7F7F]"
+                                        >
+                                            <item.icon />
+                                            <span>{item.label}</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                })}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                ))}
+            </SidebarContent>
+
+            <SidebarFooter className="border-t border-sidebar-border">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton className="flex items-center space-x-2 p-4">
-                            <CreditCard className="text-dashboard-accent" />
-                            <span className="text-xl font-bold">ExpenseFlow</span>
+                        <SidebarMenuButton tooltip="Log Out">
+                            <Logout />
+                            <span>Log Out</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                <Separator />
-                <SidebarMenu className="space-y-1">
-
-
-                    {filteredNavigationItems.map(renderItem)}
-
-                </SidebarMenu>
-
-                <SidebarMenu className="space-y-1 mt-auto">
-
-                    {filteredBottomItems.map(renderItem)}
-                </SidebarMenu>
-            </SidebarContent>
+            </SidebarFooter>
         </Sidebar>
     );
 }

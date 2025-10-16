@@ -43,9 +43,9 @@ export const Header = () => {
     ];
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-[999] bg-white">
-            <div className="bg-white shadow-2xl border-b border-border/60 xl:py-[12px]">
-                <div className={`px-6 h-16 flex items-center justify-between bg-white`}>
+        <header className="fixed top-0 left-0 right-0 z-[999] max-w-[1560px] mx-auto bg-white">
+            <div className="bg-white  border-b border-border/60 xl:py-[12px]">
+                <div className={`px-6  flex items-center justify-between bg-white`}>
                     {/* Logo */}
                     <div className="flex items-center space-x-2">
                         <span className={`font-bold text-xl `}>Villeto</span>

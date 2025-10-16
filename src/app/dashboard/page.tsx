@@ -12,233 +12,159 @@ import {
     Users,
     DollarSign,
     TrendingUp,
-    AlertTriangle
+    Calendar,
+    AlertTriangle,
+    Info,
+    Search,
+    Bell
 } from 'lucide-react';
 import { RoleBadge } from '@/components/role-badge';
 import { useAuthStore } from '@/stores/auth-stores';
 import { ProtectedComponent } from '@/components/Protected Component/ProtectedPage';
+import { Button } from '@/components/ui/button';
+import { StatsCard } from '@/components/dashboard/landing/StatCard';
+import { RecentActivity } from '@/components/dashboard/landing/RecentActivity';
+import { ExpenseChart } from '@/components/dashboard/landing/ExpenseChart';
+import { PolicyAlertsTable } from '@/components/dashboard/landing/PolicyAlertTable';
+import { Input } from '@/components/ui/input';
+import { ChartUpIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
     const user = useAuthStore(state => state.user);
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <p className="text-muted-foreground">
-                    Welcome back, {user?.name}. Here's what's happening with your expenses today.
-                </p>
+        <div className="p-5 space-y-5">
+            {/* Header */}
+            {/* Apply Banner */}
+            <Card className="bg-gradient-to-r from-primary/20 to-primary/10 border-primary/50 !p-0">
+                <div className="p-5 flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center text-white">
+                            i
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">Apply for Villeto</h3>
+                            <p className="text-sm text-muted-foreground">This is a demo environment. Apply now to unlock your company's full environment.</p>
+                        </div>
+                    </div>
+                    <Button size={"sm"} className='!h-10'>Apply Now</Button>
+                </div>
+            </Card>
+
+            {/* Welcome Section */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-lg font-semibold">Welcome Back, XYZ Corporation!</h2>
+                    <p className="text-muted-foreground text-sm font-normal">Here's what's happening with your expenses today.</p>
+                </div>
+                <div className="relative w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input placeholder="Search by transaction etc" className="pl-9 h-12" />
+                </div>
             </div>
 
-            <ProtectedComponent requiredPermission={PERMISSIONS.VIEW_DASHBOARD}>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">$24,563</div>
-                            <p className="text-xs text-muted-foreground">
-                                <TrendingUp className="inline h-3 w-3 text-green-500" /> +12% from last month
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Card Transactions</CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">142</div>
-                            <p className="text-xs text-muted-foreground">
-                                +8% from last month
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">12</div>
-                            <p className="text-xs text-muted-foreground">
-                                Requires your attention
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">24</div>
-                            <p className="text-xs text-muted-foreground">
-                                +2 since last month
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-4">
-                    <Card className="col-span-4">
-                        <CardHeader>
-                            <CardTitle>Expense Overview</CardTitle>
-                        </CardHeader>
-                        <CardContent className="pl-2">
-                            <div className="h-80 bg-muted/50 rounded-lg flex items-center justify-center">
-                                <BarChart3 className="h-12 w-12 text-muted-foreground" />
-                                <span className="ml-2 text-muted-foreground">Expense chart visualization</span>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-[19.2px]">
+                <StatsCard
+                    title="Total Spend"
+                    value="$24,536.00"
+                    subtitle={<>
+                        This month you spent $3,000
+                    </>
+                    }
+                    trend="up"
+                    icon={
+                        <div className="p-1 rounded bg-success/5 border-[0.5px] border-success text-success font-normal text-[8px] flex items-center justify-center gap-0.5">
+                            <div className="w-3 h-3  flex items-center justify-center">
+                                <HugeiconsIcon icon={ChartUpIcon} className="w-3 h-3 text-success" />
                             </div>
-                        </CardContent>
-                    </Card>
+                            +10%
+                        </div>
+                    }
+                />
+                <StatsCard
+                    title="Overall Budget Utilization"
+                    value="40%"
+                    subtitle={<span className=''>
+                        Your budget utilization is <span className='text-success'>
+                            40%
+                        </span>
 
-                    <Card className="col-span-3">
-                        <CardHeader>
-                            <CardTitle>Recent Activity</CardTitle>
-                            <CardDescription>
-                                Your latest expense submissions
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[1, 2, 3, 4, 5].map((item) => (
-                                    <div key={item} className="flex items-center">
-                                        <div className="ml-4 space-y-1">
-                                            <p className="text-sm font-medium leading-none">Expense #{item}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                ${(150 + item * 25).toFixed(2)} • 2 days ago
-                                            </p>
-                                        </div>
-                                        <div className="ml-auto font-medium">Pending</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    </span>
+                    }
+                    trend="neutral"
+                />
+                <StatsCard
+                    title="Overall Budget Utilization"
+                    value="40%"
+                    subtitle="You have 10 accounts to pay"
+                />
+                <StatsCard
+                    title="Total Accounts Payable"
+                    value="$24,536.00"
+                    subtitle={<>
+                        You have 10 accounts to pay</>}
+                />
+                <StatsCard
+                    title="Open Approvals"
+                    value="20"
+                    subtitle={<Link href="" className='text-success underline'>
+                        Authorize Approvals
+                    </Link>
+                    }
+                    trend="up"
+                />
+                <StatsCard
+                    title="Critical Policy Alerts"
+                    value="10"
+                    subtitle={<Link href="" className='text-error underline'>
+                        Authorize Policy Alerts
+                    </Link>}
+                    trend="down"
+                />
+            </div>
+
+            {/* Chart */}
+            <ExpenseChart />
+
+            {/* Table and Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <PolicyAlertsTable />
                 </div>
+                <div>
+                    <RecentActivity />
+                </div>
+            </div>
 
-                {/* Role-specific content */}
-                {user?.role === 'owner' && (
-                    <Card className="mt-6 border-l-4 border-l-purple-500">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                Owner Dashboard
-                                <RoleBadge role="owner" className="ml-2" />
-                            </CardTitle>
-                            <CardDescription>
-                                Special insights and controls for business owners
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>As an owner, you have access to all financial data and company settings.</p>
-                            <ul className="mt-4 list-disc list-inside space-y-2">
-                                <li>Company financial performance metrics</li>
-                                <li>Departmental spending breakdowns</li>
-                                <li>Executive reports and analytics</li>
-                                <li>Full administrative controls</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
+            {/* Owner Dashboard Section */}
+            <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Owner Dashboard</h3>
+                <p className="text-sm text-muted-foreground mb-4">Special insights and controls for business owners</p>
 
-                {user?.role === 'admin' && (
-                    <Card className="mt-6 border-l-4 border-l-red-500">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                Administrator Dashboard
-                                <RoleBadge role="admin" className="ml-2" />
-                            </CardTitle>
-                            <CardDescription>
-                                Administrative controls and system management
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>As an administrator, you can manage system settings and user accounts.</p>
-                            <ul className="mt-4 list-disc list-inside space-y-2">
-                                <li>User management and permissions</li>
-                                <li>System configuration</li>
-                                <li>Expense policy enforcement</li>
-                                <li>Integration management</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
+                <p className="mb-4">As an owner, you have access to all financial data and company settings.</p>
 
-                {user?.role === 'manager' && (
-                    <Card className="mt-6 border-l-4 border-l-blue-500">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                Manager Dashboard
-                                <RoleBadge role="manager" className="ml-2" />
-                            </CardTitle>
-                            <CardDescription>
-                                Team management and approval workflows
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>As a manager, you can oversee your team's expenses and approvals.</p>
-                            <ul className="mt-4 list-disc list-inside space-y-2">
-                                <li>Team expense approvals</li>
-                                <li>Department budget tracking</li>
-                                <li>Spending reports for your team</li>
-                                <li>Expense policy enforcement for your team</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {user?.role === 'auditor' && (
-                    <Card className="mt-6 border-l-4 border-l-orange-500">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                Auditor Dashboard
-                                <RoleBadge role="auditor" className="ml-2" />
-                            </CardTitle>
-                            <CardDescription>
-                                Financial review and compliance monitoring
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>As an auditor, you can review financial records for compliance.</p>
-                            <ul className="mt-4 list-disc list-inside space-y-2">
-                                <li>Expense compliance reports</li>
-                                <li>Audit trail access</li>
-                                <li>Policy violation detection</li>
-                                <li>Financial record verification</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {user?.role === 'employee' && (
-                    <Card className="mt-6 border-l-4 border-l-green-500">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                Employee Dashboard
-                                <RoleBadge role="employee" className="ml-2" />
-                            </CardTitle>
-                            <CardDescription>
-                                Personal expense tracking and submission
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>As an employee, you can manage your expenses and reimbursements.</p>
-                            <ul className="mt-4 list-disc list-inside space-y-2">
-                                <li>Expense submission</li>
-                                <li>Reimbursement tracking</li>
-                                <li>Personal spending reports</li>
-                                <li>Company card transactions (if applicable)</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
-            </ProtectedComponent>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        Company financial performance metrics
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        Departmental spending breakdowns
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        Executive reports and analytics
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        Full administrative controls
+                    </li>
+                </ul>
+            </Card>
         </div>
     );
 }
