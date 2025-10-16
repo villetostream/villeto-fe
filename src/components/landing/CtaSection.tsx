@@ -32,7 +32,7 @@ export default function CTASection() {
                 </div>
             </div>
             <div className="flex-1">
-                <img src={"/images/tech-glow.webp"} className="w-full h-full object-cover" />
+                <img src={"/images/cta-image.webp"} className="w-full h-full object-cover" />
             </div>
         </section>
     )

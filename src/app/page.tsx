@@ -18,7 +18,6 @@ import AnimatedLanding from '@/components/landing/shared/AnimatedLanding';
 import { LoadingFallback } from '@/components/landing/shared/LoadingFallback';
 
 const LandingContent = () => {
-  const { handleSectionEnter } = useScrollContext();
 
   // Define sections with their background classes
   const sections = [
@@ -46,7 +45,7 @@ const LandingContent = () => {
       dataBgColor: '#FFFFFF', // White
       content: (
         <>
-          <ProcessSection />
+          {/* <ProcessSection /> */}
           <Testimonials />
           <CardsSection />
         </>
@@ -76,13 +75,18 @@ const LandingContent = () => {
 
   return (
     <>
-      <Header />
+      <MaxWidth
+        className={''}
+
+        data-bg-color={""}
+      >
+        <Header />
+      </MaxWidth>
       {sections.map((section) => (
         <InView
           key={section.id}
           threshold={0}
-          rootMargin="-100px 0px -100px 0px"
-          onChange={(inView, entry) => inView && handleSectionEnter(entry)}
+          rootMargin="0px 0px 0px 0px"
         >
           {({ ref }) => (
             <MaxWidth

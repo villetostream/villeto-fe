@@ -35,7 +35,7 @@ const Card = ({ image, title, subtitle, badge }: CardProps) => {
             <img
                 src={image}
                 alt={title}
-                className="w-full h-full object-cover rounded-2xl"
+                className="w-full h-full object-cover rounded-2xl bg-black"
             />
 
             {/* Text Content */}
@@ -54,56 +54,56 @@ const CardCarousel = () => {
     const cards = [
         {
             id: 1,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-1.webp",
             title: "Mountain ",
             subtitle: "Breathtaking alpine landscapes",
             badge: "Nature"
         },
         {
             id: 2,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-2.webp",
             title: "Forest",
             subtitle: "Peaceful woodland adventures",
             badge: "Adventure"
         },
         {
             id: 3,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-3.webp",
             title: "Golden ",
             subtitle: "Serene evening moments",
             badge: "Relax"
         },
         {
             id: 1,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-4.webp",
             title: "Mountain Vista",
             subtitle: "Breathtaking alpine landscapes",
             badge: "Nature"
         },
         {
             id: 2,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-5.webp",
             title: "Forest Path",
             subtitle: "Peaceful woodland adventures",
             badge: "Adventure"
         },
         {
             id: 3,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-1.webp",
             title: "Golden Shore",
             subtitle: "Serene evening moments",
             badge: "Relax"
         },
         {
             id: 4,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-2.webp",
             title: "Lake Reflection",
             subtitle: "Tranquil water scenes",
             badge: "Serene"
         },
         {
             id: 5,
-            image: "/images/tech-glow.webp",
+            image: "/images/tool-image-3.webp",
             title: "Wild Coast",
             subtitle: "Dramatic ocean views",
             badge: "Coastal"

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PiMapPinSimpleLight } from 'react-icons/pi';
 import {
@@ -9,7 +9,8 @@ import {
   Zap,
   Users,
   Globe,
-  ArrowUpRightFromSquareIcon
+  ArrowUpRightFromSquareIcon,
+  ArrowRight
 } from 'lucide-react'
 import { Button } from '../ui/button';
 import { TbCreditCardFilled } from 'react-icons/tb';
@@ -97,6 +98,9 @@ export const FeaturesSection = () => {
                 {feature.description}
               </p>
             </CardContent>
+            <CardFooter className='!p-0'>
+              <ArrowRight className='size-4 text-muted' />
+            </CardFooter>
           </Card>
         ))}
       </FadeIn>

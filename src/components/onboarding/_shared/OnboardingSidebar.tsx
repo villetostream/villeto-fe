@@ -48,8 +48,7 @@ export const OnboardingSidebar = () => {
                                         "w-11 h-11 rounded-full flex items-center justify-center text-sm font-medium transition-colors border border-gray-600",
                                         {
                                             "bg-primary text-white border-0": isCompleted,
-                                            "bg-transparent text-white border border-primary ": isUpcoming === step.id,
-                                            "bg-transparent text-white border border-primary ": currentStep === step.id,
+                                            "bg-transparent text-white border border-primary": isUpcoming === step.id || currentStep === step.id,
                                         }
                                     )}
                                 >
