@@ -31,7 +31,7 @@ const PaginationItem = React.forwardRef<
     HTMLLIElement,
     React.ComponentProps<"li">
 >(({ className, ...props }, ref) => (
-    <li ref={ref} className={cn("", className)} {...props} />
+    <li ref={ref} className={cn("", className, " rounded-md")} {...props} />
 ));
 PaginationItem.displayName = "PaginationItem";
 
@@ -57,7 +57,7 @@ const PaginationLink = ({
                 size,
             }),
             isDisabled && "pointer-events-none opacity-50",
-            className
+            className, "rounded-md"
         )}
         {...props}
     />

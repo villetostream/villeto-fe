@@ -33,51 +33,51 @@ export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     // Check if path contains "dashboard" and no token is present
-    if (pathname.includes('/dashboard') && !token) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
+    // if (pathname.includes('/dashboard') && !token) {
+    //     return NextResponse.redirect(new URL('/login', request.url));
+    // }
 
     // If no token but path doesn't contain dashboard, allow access
-    if (!token) {
-        return NextResponse.next();
-    }
+    // if (!token) {
+    //     return NextResponse.next();
+    // }
 
-    type UserRole = keyof typeof ROLE_PERMISSIONS;
-    let userRole: UserRole;
-    try {
-        const authState = JSON.parse(token);
-        const user = authState.state?.user;
+    // type UserRole = keyof typeof ROLE_PERMISSIONS;
+    // let userRole: UserRole;
+    // try {
+    //     const authState = JSON.parse(token);
+    //     const user = authState.state?.user;
 
-        if (!user || !user.role) {
-            // If user doesn't exist but path contains dashboard, redirect to login
-            if (pathname.includes('/dashboard')) {
-                return NextResponse.redirect(new URL('/login', request.url));
-            }
-            return NextResponse.next();
-        }
+    //     if (!user || !user.role) {
+    //         // If user doesn't exist but path contains dashboard, redirect to login
+    //         if (pathname.includes('/dashboard')) {
+    //             return NextResponse.redirect(new URL('/login', request.url));
+    //         }
+    //         return NextResponse.next();
+    //     }
 
-        userRole = user.role as UserRole;
-    } catch (error) {
-        // If token parsing fails but path contains dashboard, redirect to login
-        if (pathname.includes('/dashboard')) {
-            return NextResponse.redirect(new URL('/login', request.url));
-        }
-        return NextResponse.next();
-    }
+    //     userRole = user.role as UserRole;
+    // } catch (error) {
+    //     // If token parsing fails but path contains dashboard, redirect to login
+    //     if (pathname.includes('/dashboard')) {
+    //         return NextResponse.redirect(new URL('/login', request.url));
+    //     }
+    //     return NextResponse.next();
+    // }
 
-    // Allow access to root if user has VIEW_DASHBOARD permission
-    if (pathname === '/' && ROLE_PERMISSIONS[userRole].includes(PERMISSIONS.VIEW_DASHBOARD)) {
-        return NextResponse.next();
-    }
+    // // Allow access to root if user has VIEW_DASHBOARD permission
+    // if (pathname === '/' && ROLE_PERMISSIONS[userRole].includes(PERMISSIONS.VIEW_DASHBOARD)) {
+    //     return NextResponse.next();
+    // }
 
-    console.log('User Role:', userRole);
+    // console.log('User Role:', userRole);
 
-    // Check if user has the required permission for the route
-    const requiredPermission = ROUTE_PERMISSIONS[pathname];
-    console.log('Required Permission for route', pathname, ':', requiredPermission);
-    if (!requiredPermission || !ROLE_PERMISSIONS[userRole].includes(requiredPermission)) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
+    // // Check if user has the required permission for the route
+    // const requiredPermission = ROUTE_PERMISSIONS[pathname];
+    // console.log('Required Permission for route', pathname, ':', requiredPermission);
+    // if (!requiredPermission || !ROLE_PERMISSIONS[userRole].includes(requiredPermission)) {
+    //     return NextResponse.redirect(new URL('/login', request.url));
+    // }
 
     return NextResponse.next();
 }

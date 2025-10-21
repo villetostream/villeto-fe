@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback, useState, type JSX } from "react";
+import React, { useMemo, useCallback, useState, useEffect, type JSX } from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { FaSortDown, FaSortUp } from "react-icons/fa";
 import {
@@ -9,17 +9,23 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   type ColumnDef,
   type TableOptions,
   type PaginationState,
   type SortingState,
   type RowSelectionState,
+  type ColumnFiltersState,
+  type VisibilityState,
 } from "@tanstack/react-table";
 // import MyLoader from "../loader-components";
 import exportCSV from "@/lib/exportCSV";
 import { ITableHeader, TableHeader } from "./tableHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
+import { Checkbox } from "../ui/checkbox";
+import { Table, TableHeader as TableHead, TableBody, TableRow, TableCell } from "../ui/table";
+
 
 const PAGE_SIZE_OPTIONS = [
   { label: "5", value: "5" },
@@ -44,13 +50,21 @@ export type DataTableProps<Data extends object, Value = unknown> = {
   tableProps?: Partial<TableOptions<Data>>;
   isLoading?: boolean;
   manualPagination?: boolean;
+  manualSorting?: boolean;
+  manualFiltering?: boolean;
   initialSorting?: SortingState;
+  initialColumnFilters?: ColumnFiltersState;
   height?: string | number;
   tableHeader?: ITableHeader;
   selectedDataIds?: Set<string>;
   setSelectedDataIds?: (selection: Set<string>) => void;
   enableRowSelection?: boolean;
+  enableColumnVisibility?: boolean;
   getRowId?: (row: Data) => string;
+  onSortingChange?: (sorting: SortingState) => void;
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
+  onRowSelectionChange?: (selection: RowSelectionState) => void;
+  onColumnVisibilityChange?: (visibility: VisibilityState) => void;
 };
 
 function DataTable<Data extends object, Value = unknown>(
@@ -68,19 +82,58 @@ function DataTable<Data extends object, Value = unknown>(
     tableProps,
     isLoading,
     manualPagination = false,
+    manualSorting = false,
+    manualFiltering = false,
     height = "400px",
     initialSorting = [],
+    initialColumnFilters = [],
     tableHeader,
     selectedDataIds = new Set(),
     setSelectedDataIds,
     enableRowSelection = false,
+    enableColumnVisibility = false,
     getRowId = (row: any) => row.id || row._id,
+    onSortingChange,
+    onColumnFiltersChange,
+    onRowSelectionChange,
+    onColumnVisibilityChange,
   } = props;
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const memoizedColumns = useMemo(() => columns, [columns]);
   const memoizedData = useMemo(() => data, [data]);
+
+  // Create select column for multi-select
+  const selectColumn = enableRowSelection ? {
+    id: "select",
+    header: ({ table }: any) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }: any) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  } : null;
+
+  const allColumns = useMemo(() => {
+    return selectColumn ? [selectColumn, ...memoizedColumns] : memoizedColumns;
+  }, [selectColumn, memoizedColumns]);
 
   const pagination = useMemo<PaginationState>(
     () => ({
@@ -91,15 +144,44 @@ function DataTable<Data extends object, Value = unknown>(
   );
 
   const table = useReactTable({
-    columns: memoizedColumns,
+    columns: allColumns,
     data: memoizedData,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: { sorting, pagination },
+    getPaginationRowModel: getPaginationRowModel(),
+    state: {
+      sorting,
+      pagination,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
     manualPagination,
-    onSortingChange: setSorting,
-    enableRowSelection: false, // We'll handle this manually
+    manualSorting,
+    manualFiltering,
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
+      setSorting(newSorting);
+      onSortingChange?.(newSorting);
+    },
+    onColumnFiltersChange: (updater) => {
+      const newFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
+      setColumnFilters(newFilters);
+      onColumnFiltersChange?.(newFilters);
+    },
+    onColumnVisibilityChange: (updater) => {
+      const newVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+      setColumnVisibility(newVisibility);
+      onColumnVisibilityChange?.(newVisibility);
+    },
+    onRowSelectionChange: (updater) => {
+      const newSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+      setRowSelection(newSelection);
+      onRowSelectionChange?.(newSelection);
+    },
+    enableRowSelection: enableRowSelection,
+    enableColumnFilters: true,
     pageCount: paginationProps
       ? Math.ceil(paginationProps.total / pagination.pageSize)
       : -1,
@@ -112,6 +194,36 @@ function DataTable<Data extends object, Value = unknown>(
   const selectedData = useMemo(() => {
     return data.filter((row) => selectedDataIds.has(getRowId(row)));
   }, [data, selectedDataIds, getRowId]);
+
+  // Sync row selection with selectedDataIds
+  useEffect(() => {
+    const newSelection: RowSelectionState = {};
+    data.forEach((row, index) => {
+      if (selectedDataIds.has(getRowId(row))) {
+        newSelection[index] = true;
+      }
+    });
+    setRowSelection(newSelection);
+    console.log("selecteddataId,data,getRowId")
+
+  }, [data]);
+
+  // Update selectedDataIds when row selection changes
+  useEffect(() => {
+    if (enableRowSelection && setSelectedDataIds) {
+      const newSelectedIds = new Set<string>();
+      Object.keys(rowSelection).forEach((index) => {
+        if (rowSelection[parseInt(index)]) {
+          const row = data[parseInt(index)];
+          if (row) {
+            newSelectedIds.add(getRowId(row));
+          }
+        }
+      });
+      setSelectedDataIds(newSelectedIds);
+    }
+    console.log("rowselection,data,enableRowSelection,getRowId")
+  }, [data, enableRowSelection]);
 
   const handleRowChange = useCallback(
     (e: { value: string[] }) => {
@@ -157,13 +269,14 @@ function DataTable<Data extends object, Value = unknown>(
         handleExport={handleExport}
         selectedCount={selectedDataIds.size}
         selectedData={selectedData}
+        enableColumnVisibility={enableColumnVisibility}
+        table={table}
       />
       <div
         className="overflow-x-auto rounded-md border bg-white h-full "
-
       >
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+        <Table className="min-w-full divide-y divide-gray-200">
+          <TableHead className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="bg-gray-50">
                 {headerGroup.headers.map((header) => {
@@ -180,12 +293,24 @@ function DataTable<Data extends object, Value = unknown>(
                       className={`px-4 py-3 text-center text-xs font-semibold text-gray-700  tracking-wider cursor-${canSort ? "pointer" : "default"
                         } select-none`}
                     >
-                      <div className="flex items-center justify-center gap-1">
-                        {flexRender(
+                      <div className="flex items-center justify-start gap-1">
+                        {enableRowSelection && header.id === "select" && (
+                          <Checkbox
+                            checked={
+                              table.getIsAllPageRowsSelected() ||
+                              (table.getIsSomePageRowsSelected() && "indeterminate")
+                            }
+                            onCheckedChange={(value) =>
+                              table.toggleAllPageRowsSelected(!!value)
+                            }
+                            aria-label="Select all"
+                          />
+                        )}
+                        {header.id !== "select" && flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        {isSorted && (
+                        {isSorted && header.id !== "select" && (
                           <span className="ml-1">
                             {isSorted === "asc" ? <FaSortUp /> : <FaSortDown />}
                           </span>
@@ -196,44 +321,44 @@ function DataTable<Data extends object, Value = unknown>(
                 })}
               </tr>
             ))}
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          </TableHead>
+          <TableBody className="bg-white divide-y divide-gray-200">
             {!isLoading ? (
-              rowModel.rows.length > 0 ? (
-                rowModel.rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
+              table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-4 whitespace-nowrap text-center">
+                      <TableCell key={cell.id} className="px-4 py-4 whitespace-nowrap text-left">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
                         )}
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td
-                    colSpan={memoizedColumns.length}
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getVisibleFlatColumns().length}
                     className="text-center py-20 text-lg"
                   >
                     Oops, No data available!!!
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )
             ) : (
               <tr>
                 <td
-                  colSpan={memoizedColumns.length}
+                  colSpan={table.getVisibleFlatColumns().length}
                   className="text-center py-20"
                 >
                   <p>Loading...</p>
                 </td>
               </tr>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       {paginationProps?.total ? (
         <>

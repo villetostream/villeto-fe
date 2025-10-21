@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useDataPermission } from "@/context";
+import { useAuthStore, useHasPermission } from "@/stores/auth-stores";
 
 // Higher-Order Component
 const withPermissions = (
@@ -13,13 +13,14 @@ const withPermissions = (
     const router = useRouter();
     const pathName = usePathname();
 
-    const { userPermissions } = useDataPermission(); // Move the hook here
+    const userPermissions = useAuthStore(state => state.getUserPermissions());
+
 
     // Helper function to check for permission matches
     const hasPermissionForRoute = (permissions: string[]) => {
       return permissions?.some((permission) =>
         userPermissions?.some((userPermission) =>
-          userPermission?.permissionString.includes(permission)
+          userPermission.includes(permission)
         )
       );
     };

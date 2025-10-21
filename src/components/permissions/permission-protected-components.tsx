@@ -1,6 +1,6 @@
 "use client";
 
-import { useDataPermission } from "@/context";
+import { useAuthStore } from "@/stores/auth-stores";
 import React from "react";
 
 // PermissionGuard Component
@@ -15,13 +15,14 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   fallback = null,
   children,
 }) => {
-  const { userPermissions } = useDataPermission(); // Use the hook directly inside the component
+  const userPermissions = useAuthStore(state => state.getUserPermissions());
+
 
   // Helper function to check for exact permission matches
   const hasPermissionForRoute = (permissions: string[]) => {
     return permissions?.some((permission) =>
       userPermissions?.some(
-        (userPermission) => userPermission?.permissionString === permission
+        (userPermission) => userPermission === permission
       )
     );
   };

@@ -31,7 +31,7 @@ import { Menu, Cards, Moneys, Profile2User, WalletMoney, Shop, LampOn, StatusUp,
 interface NavItem {
     icon: any;
     label: string;
-    href?: string;
+    href: string;
     permission?: string;
     subItems?: SubItem[];
     badge?: string;
@@ -50,7 +50,7 @@ const navigationItems: NavItem[] = [
         icon: Moneys,
         label: "Expenses",
         permission: PERMISSIONS.VIEW_EXPENSES,
-        href: "/dashboard/expenses/card-transactions",
+        href: "/dashboard/expenses",
         section: "MAIN MENU",
         // subItems: [
         //     { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
@@ -71,6 +71,7 @@ const navigationItems: NavItem[] = [
     {
         icon: Setting2,
         label: "Settings",
+        href: "/dashboard/settings",
         permission: PERMISSIONS.VIEW_SETTINGS,
         section: "OTHERS",
         subItems: [
@@ -215,7 +216,7 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                         <span className="text-primary-foreground font-bold text-sm">V</span>
                     </div>
-                    <span className="font-semibold text-sidebar-foreground">Villeto</span>
+
                 </div>
             </SidebarHeader>
 
@@ -230,12 +231,15 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
 
                                     return <SidebarMenuItem key={item.label}>
                                         <SidebarMenuButton
+                                            asChild
                                             isActive={isActive}
                                             tooltip={item.label}
                                             className="font-normal text-sm text-[#7F7F7F]"
                                         >
-                                            <item.icon />
-                                            <span>{item.label}</span>
+                                            <Link href={item.href}>
+                                                <item.icon />
+                                                <span>{item.label}</span>
+                                            </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 })}

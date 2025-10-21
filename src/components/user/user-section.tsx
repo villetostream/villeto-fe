@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/stores/auth-stores";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Bell, Info } from "lucide-react";
@@ -12,6 +12,7 @@ export function UserSection() {
     const user = useAuthStore(state => state.user);
     const logout = useAuthStore(state => state.logout);
     const router = useRouter();
+    const pathname = usePathname()
 
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
