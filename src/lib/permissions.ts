@@ -4,6 +4,8 @@
 export const PERMISSIONS = {
   // Dashboard
   VIEW_DASHBOARD: 'view_dashboard',
+  VIEW_ADMIN_DASHBOARD: "view_admin_dashboard",
+  VIEW_EMPLOYEE_DASHBOARD: "view_employee_dashboard",
 
   // Expenses
   VIEW_EXPENSES: 'view_expenses',
@@ -69,6 +71,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.VIEW_HELP,
     PERMISSIONS.VIEW_INBOX,
     PERMISSIONS.VIEW_INSIGHTS,
+    PERMISSIONS.VIEW_ADMIN_DASHBOARD,
   ],
   admin: [
     PERMISSIONS.VIEW_DASHBOARD,
@@ -136,6 +139,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.MANAGE_PERSONAL_SETTINGS,
     PERMISSIONS.VIEW_HELP,
     PERMISSIONS.VIEW_INBOX,
+    PERMISSIONS.VIEW_EMPLOYEE_DASHBOARD
   ],
 };
 

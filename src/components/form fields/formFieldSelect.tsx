@@ -29,11 +29,12 @@ const FormFieldSelect = <T extends Record<string, any>>({
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
                         <Select
+
                             onValueChange={field.onChange}
                             value={field.value?.toString()} // Convert to string for consistent comparison
                             defaultValue={field.value?.toString()}
                         >
-                            <SelectTrigger className="input capitalize">
+                            <SelectTrigger className="input capitalize w-full">
                                 <SelectValue placeholder={placeholder} />
                             </SelectTrigger>
                             <SelectContent>

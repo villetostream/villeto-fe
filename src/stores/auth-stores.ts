@@ -19,6 +19,8 @@ interface AuthState {
     logout: () => void;
     hasPermission: (permission: Permission) => boolean;
     hydrate: () => void;
+    userPermissions: Permission[];
+    getUserPermissions: () => Permission[];
 }
 
 // Mock users for demonstration
@@ -35,6 +37,12 @@ export const useAuthStore = create<AuthState>()(
         (set, get) => ({
             user: null,
             isLoading: true,
+            userPermissions: [],
+
+            getUserPermissions: () => {
+                const { user } = get();
+                return user ? ROLE_PERMISSIONS[user.role as UserRole] : [];
+            },
 
             login: async (email: string, password: string): Promise<boolean> => {
                 set({ isLoading: true });

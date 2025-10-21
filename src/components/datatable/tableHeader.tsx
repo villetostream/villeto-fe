@@ -1,7 +1,11 @@
 import React, { JSX } from "react";
+import { Table } from "@tanstack/react-table";
 
 import { Filter, FilterData } from "./filter";
-import { Download, SearchIcon } from "lucide-react";
+import { Download, SearchIcon, Settings } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 
 export interface ITableHeader {
   isSearchable?: boolean;
@@ -17,6 +21,7 @@ export interface ITableHeader {
     onFilter: (data: Record<string, unknown>) => void;
   };
   bulkActions?: { label: string; onClick: () => void }[];
+  enableColumnVisibility?: boolean;
 }
 
 export function TableHeader({
@@ -24,11 +29,15 @@ export function TableHeader({
   handleExport,
   selectedCount = 0,
   selectedData = [],
+  enableColumnVisibility = false,
+  table,
 }: {
   tableHeader?: ITableHeader;
   handleExport: () => void;
   selectedCount?: number;
   selectedData?: any[];
+  enableColumnVisibility?: boolean;
+  table?: Table<any>;
 }) {
 
   return (
@@ -77,7 +86,9 @@ export function TableHeader({
         )}
 
         <div className="flex sm:flex-row flex-col justify-end gap-4 w-full pr-1">
+
           <div className="flex gap-4">
+            {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
             {tableHeader?.isFilter && (
               <>
                 {tableHeader?.filterProps && (
@@ -85,6 +96,41 @@ export function TableHeader({
                 )}
               </>
             )}
+            {enableColumnVisibility && table && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuItem
+                          key={column.id}
+                          className="capitalize"
+                          onClick={() => column.toggleVisibility(!column.getIsVisible())}
+                        >
+                          <Checkbox
+                            checked={column.getIsVisible()}
+                            onChange={() => { }}
+                            className="mr-2"
+                          />
+                          {typeof column.columnDef.header === 'string'
+                            ? column.columnDef.header
+                            : column.id}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {tableHeader?.isExportable && (
               <div
                 onClick={handleExport}
@@ -95,7 +141,7 @@ export function TableHeader({
             )}
           </div>
 
-          {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
+
         </div>
       </div>
     </div>

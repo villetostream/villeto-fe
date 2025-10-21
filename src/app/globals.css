@@ -68,6 +68,11 @@
   --color-success: var(--success);
   --color-info: var(--info);
   --color-warning: var(--warning);
+  --color-pending: var(--pending);
+  --color-rejected: var(--rejected);
+  --color-paid: var(--paid);
+  --color-approved: var(--approved);
+  --color-draft: var(--draft);
 }
 
 :root {
@@ -120,11 +125,16 @@
   --navy-light: oklch(0.356 0.075 276.2); /* hsl(223 47% 25%) */
   --navy-foreground: oklch(1 0 0); /* hsl(0 0% 100%) */
 
-  --chart-spend: oklch(61.8% 0.2 301);
-  --chart-budget: oklch(75.7% 0.28 29);
+  --chart-spend: oklch(50.5% 0.235 292.1);
+  --chart-budget: oklch(68.8% 0.175 18.7);
   --success: oklch(0.715 0.204 140.61);
   --warning: oklch(77.5% 0.2 82);
   --info: oklch(60.5% 0.21 233);
+  --pending: oklch(80.7% 0.171 72.4);
+  --draft: oklch(49.2% 0.03 250.8);
+  --approved: oklch(30.2% 0.274 285.8);
+  --rejected: oklch(62.3% 0.202 25.2);
+  --paid: oklch(68.3% 0.154 142.5);
 
   /* Glow / Accent */
   --primary-glow: oklch(0.849 0.12 175.6); /* hsl(174 72% 76%) */

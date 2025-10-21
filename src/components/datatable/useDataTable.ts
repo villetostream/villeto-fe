@@ -12,6 +12,9 @@ export interface UseDataTableOptions {
   initialSearch?: string;
   initialFilterBy?: Record<string, string>;
   totalItems?: number;
+  manualSorting?: boolean;
+  manualFiltering?: boolean;
+  manualPagination?: boolean;
 }
 
 interface DataTableState {
@@ -91,6 +94,9 @@ export function useDataTable(options?: UseDataTableOptions) {
     initialSearch = "",
     initialFilterBy = {},
     totalItems = 0,
+    manualSorting = false,
+    manualFiltering = false,
+    manualPagination = false,
   } = options || {};
 
   const [state, dispatch] = useReducer(dataTableReducer, {
@@ -134,5 +140,8 @@ export function useDataTable(options?: UseDataTableOptions) {
       dispatch({ type: "SET_SELECTED_DATA_IDS", selectedIds }),
     resetTable: () => dispatch({ type: "RESET_TABLE", options: options || {} }),
     paginationProps,
+    manualSorting,
+    manualFiltering,
+    manualPagination,
   };
 }

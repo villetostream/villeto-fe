@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { LineChart, BarChart3 } from "lucide-react";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowDown, ArrowDown2, Calendar, Filter, Money2 } from "iconsax-reactjs";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -174,17 +173,17 @@ export const ExpenseChart = () => {
                             type="monotone"
                             dataKey="spend"
                             stroke="var(--chart-spend)"
-                            strokeWidth={3}
-                            dot={{ fill: "var(--chart-spend)", r: 4 }}
-                            activeDot={{ r: 6 }}
+                            strokeWidth={2}
+                            dot={{ fill: "var(--chart-spend)", r: 0 }}
+
                         />
                         <Line
                             type="monotone"
                             dataKey="budget"
                             stroke="var(--chart-budget)"
-                            strokeWidth={3}
-                            dot={{ fill: "var(--chart-budget)", r: 4 }}
-                            activeDot={{ r: 6 }}
+                            strokeWidth={2}
+                            dot={{ fill: "var(--chart-budget)", r: 0 }}
+
                         />
                     </RechartsLineChart>
                 )}

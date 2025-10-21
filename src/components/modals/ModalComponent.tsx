@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
 import { Button, type ButtonProps as UIButtonProps } from '../ui/button'
 import { LucideIcon } from 'lucide-react' // or your icon library
+import { ArrowDown2, Filter } from 'iconsax-reactjs'
 
 interface ModalComponentInterface {
     buttonText: String
@@ -29,10 +30,10 @@ const ModalComponent = ({
     return (
         <Dialog open={isOpen} onOpenChange={onOpen}>
             <DialogTrigger asChild>
-                <Button variant={variant} className="flex items-center gap-2">
-                    {Icon && iconPosition === 'left' && <Icon size={16} />}
-                    {buttonText}
-                    {Icon && iconPosition === 'right' && <Icon size={16} />}
+                <Button variant={variant} size="md" className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filter
+                    <ArrowDown2 />
                 </Button>
             </DialogTrigger>
             <DialogContent className='!p-6 max-h-[80%] overflow-y-auto'>

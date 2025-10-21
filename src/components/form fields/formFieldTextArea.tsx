@@ -11,7 +11,7 @@ const FormFieldTextArea = ({ name, label, placeholder, control, description }: {
                 <FormItem>
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
-                        <Textarea placeholder={placeholder} {...field} className='input' />
+                        <Textarea placeholder={placeholder} {...field} rows={5} className='input' />
                     </FormControl>
                     <FormDescription>
                         {description}
