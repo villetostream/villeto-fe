@@ -34,10 +34,13 @@ import PermissionGuard from '@/components/permissions/permission-protected-compo
 import { reimbursements } from './expenses/page';
 import ExpenseTable from '@/components/expenses/table/ExpenseTable';
 import { Eye } from 'iconsax-reactjs';
+import { PiCheckCircleFill } from 'react-icons/pi';
+import { FaEye } from 'react-icons/fa';
 
 export default function DashboardPage() {
     const user = useAuthStore(state => state.user);
-
+    const total = reimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(3);
+    const [integer, decimal] = total.split(".");
     return (
         <>
             <PermissionGuard requiredPermissions={[PERMISSIONS.VIEW_ADMIN_DASHBOARD]}>
@@ -184,51 +187,72 @@ export default function DashboardPage() {
                         </div>
 
                         <div style={{ backgroundImage: 'url("/images/card.jpg")' }} className=" bg-no-repeat bg-cover h-[156px] w-[278px]">
-                            <div className="bg-primary/20 backdrop-blur-sm rounded-xl p-6 min-w-[240px] border border-primary/30">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-white/90 text-sm">Wallet Balance</span>
-                                    <Eye size={16} className="text-white/80" />
+                            <div className="mt-auto flex flex-col h-full justify-end  p-3.5 w-full">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-white/90 text-xs leading-[125%]">Wallet Balance</span>
+                                    <FaEye size={16} className="text-white/80" />
                                 </div>
-                                <p className="text-3xl font-bold text-white">${reimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(3)}</p>
+                                <p className="text-2xl font-extrabold leading-[150%] text-white font-mono">
+                                    ${integer}.
+                                    <span className="text-xs font-normal leading-[125%] opacity-70">{decimal}</span>
+                                </p>
                             </div>
                         </div>
                     </div>
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
                         <StatsCard
-                            title="Overall Budget Utilization"
-                            value="40%"
-                            subtitle="You have 10 accounts to pay"
+                            title="Draft"
+                            value="4"
+                            icon={<>
+                                <div className='p-1 flex items-center justify-center bg-[#384A57] rounded-full'>
+                                    <img src={"/images/svgs/draft.svg"} />
+                                </div></>}
+                            subtitle={<span className='text-xs leading-[125%]'>
+                                Manage your saved items
+                            </span>
+                            }
                         />
                         <StatsCard
-                            title="Total Accounts Payable"
-                            value="$24,536.00"
-                            subtitle={<>
-                                You have 10 accounts to pay</>}
+                            title="Approved"
+                            value="10"
+                            icon={<>
+                                <div className='p-1 flex items-center justify-center bg-[#418341] rounded-full text-white'>
+                                    <img src={"/images/svgs/check.svg"} />
+                                </div></>}
+                            subtitle={<span className='text-xs leading-[125%]'>
+                                View all items that have been reviewed.</span>}
                         />
                         <StatsCard
-                            title="Open Approvals"
-                            value="20"
-                            subtitle={<Link href="" className='text-success underline'>
-                                Authorize Approvals
-                            </Link>
+                            title="Submitted"
+                            value="6"
+                            icon={<>
+                                <div className='p-1 flex items-center justify-center bg-[#5A67D8] rounded-full'>
+                                    <img src={"/images/svgs/submitted.svg"} />
+                                </div></>}
+                            subtitle={<span className='text-xs leading-[125%]'>Track entries that have been sent for review
+                            </span>
                             }
                             trend="up"
                         />
                         <StatsCard
                             title="Critical Policy Alerts"
                             value="10"
-                            subtitle={<Link href="" className='text-error underline'>
-                                Authorize Policy Alerts
-                            </Link>}
-                            trend="down"
+                            icon={<>
+                                <div className='p-1 flex items-center justify-center bg-[#38B2AC] rounded-full text-white'>
+                                    <img src={"/images/svgs/money.svg"} className='text-white' />
+                                </div></>}
+                            subtitle={<span className='text-xs leading-[125%]'>
+                                Access records of completed payments.
+                            </span>}
+
                         />
                     </div>
                     {/* <ExpenseEmptyState /> */}
                     {/* Reimbursements Table */}
-                    <Card className="bg-dashboard-card border-dashboard-border">
+                    <Card className="bg-dashboard-card !border-0 border-transparent shadow-none">
                         <CardHeader>
-                            <CardTitle className="text-dashboard-text-primary">Expenses</CardTitle>
+                            <CardTitle className="text-dashboard-text-primary ">Expenses</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ExpenseTable />
