@@ -263,7 +263,7 @@ function DataTable<Data extends object, Value = unknown>(
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex flex-col w-full border">
+    <div className="flex flex-col w-full border-0">
       <TableHeader
         tableHeader={tableHeader}
         handleExport={handleExport}
@@ -328,7 +328,7 @@ function DataTable<Data extends object, Value = unknown>(
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-4 whitespace-nowrap text-left">
+                      <TableCell key={cell.id} className="px-4 py-2.5 whitespace-nowrap text-left">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
