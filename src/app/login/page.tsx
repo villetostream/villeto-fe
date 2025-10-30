@@ -62,7 +62,7 @@ export default function LoginPage() {
                 </div>
                 <CircleProgress currentStep={1} />
             </div>
-            <Card className="w-full bg-white">
+            <Card className="w-full bg-white !border-0">
                 <CardHeader className="space-y-2.5 ">
 
                     <HugeiconsIcon icon={MailAtSign01Icon} className="w-10 h-10 text-primary mb-2.5" />

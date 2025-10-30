@@ -16,7 +16,7 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
             </div>
             <div style={{
                 backgroundImage: "url('/layout.png')"
-            }} className='flex-1 bg-[#E6F8F6] h-full p-8 flex flex-col bg-no-repeat bg-contain '></div>
+            }} className='flex-1 bg-[#E6F8F6] h-full p-8 flex flex-col bg-no-repeat bg-contain bg-center '></div>
 
         </div>
     );
