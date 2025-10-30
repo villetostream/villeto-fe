@@ -96,7 +96,8 @@ export function clearOnboardingCookies(): void {
     'onboarding_leadership',
     'onboarding_financial',
     'onboarding_products',
-    'onboarding_step'
+    'onboarding_step',
+    "onboarding_id"
   ];
 
   onboardingCookies.forEach(cookieName => {

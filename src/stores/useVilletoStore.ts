@@ -37,6 +37,7 @@ export interface VilletoProduct {
 export interface OnboardingState {
     monthlySpend: number;
     spendRange: string;
+    onboardingId: string;
     bankConnected: boolean;
     bankProcessing: boolean;
     connectedAccounts: ConnectedAccount[];
@@ -51,10 +52,11 @@ interface VilletoState {
     currentStep: number;
 
     showCongratulations: boolean;
-
+    onboardingId: string;
 
     // Actions
     setCurrentStep: (step: number) => void;
+    setOnboardingId: (step: string) => void;
     updateBusinessSnapshot: (data: Partial<BusinessSnapshot>) => void;
     updateUserProfiles: (profiles: UserProfile[]) => void;
     updateFinancialPulse: (data: Partial<FinancialPulse>) => void;
@@ -73,6 +75,7 @@ interface VilletoState {
 
 const initialState: OnboardingState = {
     monthlySpend: 1, // 0-3 representing the spend ranges
+    onboardingId: "",
     spendRange: '<$10k',
     bankConnected: false,
     bankProcessing: false,
@@ -128,7 +131,14 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
     ...loadFromCookies(),
     showCongratulations: false,
 
+
     setCurrentStep: (step) => set({ currentStep: step }),
+    setOnboardingId: (step) => {
+        set({ onboardingId: step }); const state = get();
+        setCookie('onboarding_id', {
+            businessSnapshot: state.onboardingId,
+        });
+    },
 
     setMonthlySpend: (spend: number) => {
         const ranges = ['<$10k', '$10k-$50k', '$50k-$200k', '$200k+'];

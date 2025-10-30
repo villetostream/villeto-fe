@@ -115,7 +115,7 @@ export default function ReviewConfirmation() {
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Teams Expected Monthly Spend</p>
-                            <p className="font-medium">{financialPulse.monthlySpend}</p>
+                            <p className="font-medium">{financialPulse?.monthlySpend ?? 0}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Bank Connection</p>

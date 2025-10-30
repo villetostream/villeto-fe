@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Pre-Onboarding ",
-    description: "Email registration",
+    title: "Login",
+    description: "Login page",
 };
 
-export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
+export default function LoginLayout({ children }: { children: React.ReactNode }) {
     // Determine current step from pathname if needed, or let each page handle
     return (
         <div className="flex bg-background h-screen overflow-hidden">

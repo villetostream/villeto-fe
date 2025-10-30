@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Building2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
+import { Building03FreeIcons, Building03Icon } from "@hugeicons/core-free-icons";
 
-const schema = z.object({
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useStartOnboardingApi } from "@/actions/pre-onboarding/get-started";
+import { toast } from "sonner";
+
+export const onboardingBusinessSchema = z.object({
     business_name: z.string().min(1, "Company name is required").min(2, "Must be at least 2 characters").max(100),
     // admin_name: z.string().min(1, "Admin name is required").min(2, "Must be at least 2 characters").max(100).regex(/^[A-Za-z\s]+$/, "Only letters and spaces allowed"),
     // admin_email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -26,9 +31,11 @@ const schema = z.object({
 export default function Business() {
     const router = useRouter();
     const { businessSnapshot, updateBusinessSnapshot } = useOnboardingStore();
+    const startOnboarding = useStartOnboardingApi()
+    const loading = startOnboarding.isPending;
 
     const form = useForm({
-        resolver: zodResolver(schema), mode: 'onChange',
+        resolver: zodResolver(onboardingBusinessSchema), mode: 'onChange',
         defaultValues: {
             business_name: businessSnapshot.businessName || "",
             contact_number: businessSnapshot.contactNumber || "",
@@ -37,8 +44,10 @@ export default function Business() {
         }
     });
 
-    async function onSubmit(data: any) {
+    async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
         try {
+            await startOnboarding.mutateAsync(data);
+
             // Update the store with form data
             updateBusinessSnapshot({
                 businessName: data.business_name,
@@ -49,16 +58,18 @@ export default function Business() {
 
             router.push("/onboarding/leadership");
         }
-        catch (e) {
+        catch (e: any) {
             console.warn(e)
+            toast.error(e.message);
         }
     }
 
     return (
         <div className="space-y-8 flex flex-col  justify-center h-full">
             <div className="text-left ">
-                <div className="w-16 h-16 bg-primary-light rounded-full flex ">
-                    <Building2 className="h-8 w-8 text-primary" />
+                <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
+                    <HugeiconsIcon icon={Building03FreeIcons} className="size-16 text-primary" />
+
                 </div>
 
                 <OnboardingTitle title="Tell us more about your Business"
@@ -164,7 +175,19 @@ export default function Business() {
                     <div className="w-full flex mt-10">
 
 
-                        <Button type="submit" className="!ml-auto min-w-[250px] max-w-[250px] self-end">Continue <ArrowRight className="h-4 w-4" /></Button>
+                        <Button
+                            type="submit"
+                            className="!ml-auto min-w-[250px] max-w-[250px] self-end"
+                            disabled={loading}
+                        >
+                            {loading ? "Creating..." : "Continue"}{" "}
+                            {loading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <ArrowRight className="h-4 w-4" />
+                            )}
+                        </Button>
+
                     </div>
                 </form>
             </Form>

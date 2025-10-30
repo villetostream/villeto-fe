@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/auth-provider";
 import { cookies } from "next/headers";
+import QueryProvider from "@/providers/queryClientProvider";
 
 const geistSans = Figtree({
   variable: "--font-geist-sans",
@@ -41,10 +42,10 @@ export default async function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}>
-        {children}
-
-
-        <Toaster richColors expand />
+        <QueryProvider>
+          {children}
+          <Toaster richColors expand />
+        </QueryProvider>
       </body >
     </html >
   );

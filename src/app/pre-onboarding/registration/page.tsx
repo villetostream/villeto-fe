@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { MessageSquare, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
+import CircleProgress from "@/components/HalfProgressCircle";
 
 const formSchema = z.object({
     firstName: z.string().min(1, "First name is required").max(100),
@@ -45,10 +46,13 @@ export default function GetStarted() {
     };
 
     return (
-        <div className="h-full flex items-center justify-center">
-            {/* <div className="absolute top-8 left-8">
-        <VilletoLogo />
-      </div> */}
+        <div className="h-full flex flex-col items-center justify-center">
+            <div className='absolute top-0 left-0 mb-auto p-10 flex w-full items-center justify-between'>
+                <div>
+                    <img src="/images/logo.png" className='h-14 w-32 object-cover' />
+                </div>
+                <CircleProgress currentStep={2} />
+            </div>
 
             <div className="">
                 <div className="mb-8">

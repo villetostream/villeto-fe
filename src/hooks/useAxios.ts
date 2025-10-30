@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/auth-stores";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export function useAxios(): AxiosInstance {
   const user = useAuthStore.getState().user;
@@ -22,7 +22,7 @@ export function useAxios(): AxiosInstance {
     // }
 
     const instance = axios.create({
-      baseURL: BASE_URL,
+      baseURL: BASEURL,
       headers,
       withCredentials: true,
     });
