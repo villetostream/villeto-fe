@@ -60,7 +60,9 @@ const Page = () => {
   const onSubmit = async (data: EmailForm) => {
     try {
       // Step 1: Confirm account
+      onboarding.setContactEmail(data.email)
       const confirmResponse = await confirmAccount.mutateAsync(data);
+      console.log({ confirmResponse })
 
       setConfirmedEmail("a0451fee-17e5-450d-a215-d14ffaaa020c");
       onboarding.setOnboardingId("a0451fee-17e5-450d-a215-d14ffaaa020c");
@@ -69,6 +71,7 @@ const Page = () => {
     } catch (e: any) {
       let error = e as AxiosError
       if (error.status === 404) {
+        onboarding.setContactEmail(data.email)
         router.push('/pre-onboarding/registration')
       }
     }

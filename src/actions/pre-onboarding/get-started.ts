@@ -3,6 +3,7 @@ import { type UseMutationResult, useMutation } from "@tanstack/react-query";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { onboardingBusinessSchema } from "@/app/onboarding/business/page";
+import { registrationSchema } from "@/app/pre-onboarding/registration/page";
 
 
 interface Response {
@@ -20,7 +21,7 @@ interface Response {
     statusText: string;
 }
 
-type payload = z.infer<typeof onboardingBusinessSchema>
+type payload = z.infer<typeof registrationSchema>
 
 export const useStartOnboardingApi = (): UseMutationResult<Response, Error, payload> => {
     const axiosInstance = useAxios();

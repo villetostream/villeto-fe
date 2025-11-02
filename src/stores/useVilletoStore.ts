@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { getCookie, setCookie, clearOnboardingCookies } from '@/lib/cookies';
+import z from 'zod';
+import { registrationSchema } from '@/app/pre-onboarding/registration/page';
 
 export interface UserProfile {
     id: string;
@@ -46,6 +48,8 @@ export interface OnboardingState {
     userProfiles: UserProfile[];
     financialPulse: FinancialPulse;
     villetoProducts: VilletoProduct[];
+    contactEmail: string
+    preOnboarding?: z.infer<typeof registrationSchema> | null
 }
 
 interface VilletoState {
@@ -53,10 +57,13 @@ interface VilletoState {
 
     showCongratulations: boolean;
     onboardingId: string;
+    contactEmail: string;
 
     // Actions
+    setPreOnboarding: (data: z.infer<typeof registrationSchema>) => void;
     setCurrentStep: (step: number) => void;
     setOnboardingId: (step: string) => void;
+    setContactEmail: (email: string) => void;
     updateBusinessSnapshot: (data: Partial<BusinessSnapshot>) => void;
     updateUserProfiles: (profiles: UserProfile[]) => void;
     updateFinancialPulse: (data: Partial<FinancialPulse>) => void;
@@ -77,6 +84,8 @@ const initialState: OnboardingState = {
     monthlySpend: 1, // 0-3 representing the spend ranges
     onboardingId: "",
     spendRange: '<$10k',
+    contactEmail: "",
+    preOnboarding: null,
     bankConnected: false,
     bankProcessing: false,
     connectedAccounts: [],
@@ -108,6 +117,8 @@ const loadFromCookies = (): Partial<OnboardingState> => {
     const leadershipData = getCookie('onboarding_leadership');
     const financialData = getCookie('onboarding_financial');
     const productsData = getCookie('onboarding_products');
+    const preOnboarding = getCookie("preOnboarding");
+    const contactEmail = getCookie("contactEmail");
 
     return {
         ...(businessData && { businessSnapshot: businessData.businessSnapshot }),
@@ -122,6 +133,8 @@ const loadFromCookies = (): Partial<OnboardingState> => {
             financialPulse: financialData.financialPulse
         }),
         ...(productsData && { villetoProducts: productsData.villetoProducts }),
+        ...(preOnboarding && { preOnboarding: preOnboarding }),
+        ...(contactEmail && { contactEmail: contactEmail })
     };
 };
 
@@ -136,7 +149,20 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
     setOnboardingId: (step) => {
         set({ onboardingId: step }); const state = get();
         setCookie('onboarding_id', {
-            businessSnapshot: state.onboardingId,
+            onboardingId: state.onboardingId,
+        });
+    },
+    setContactEmail: (step) => {
+        set({ contactEmail: step }); const state = get();
+        setCookie('contactEmail', {
+            contactEmail: state.contactEmail,
+        });
+    },
+    setPreOnboarding: (step) => {
+        set({ preOnboarding: step });
+        const state = get();
+        setCookie('preOnboarding', {
+            preOnboarding: state.preOnboarding,
         });
     },
 
