@@ -10,22 +10,26 @@ import { TabsContent } from "@radix-ui/react-tabs";
 import { AddBeneficialOwnerModal } from "@/components/onboarding/AddBeneficialOwner";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
+import { LeaderShipPayload, useUpdateOnboardingLeadersApi } from "@/actions/onboarding/update-leadership";
+import { toast } from "sonner";
 
 interface Person {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     role: string;
     email: string;
-    ownership?: number;
+    ownershipPercentage?: number;
     avatar?: string;
+    phone?: string; // Add this
 }
 
 interface BeneficialOwner extends Person {
-    ownership: number;
+    ownershipPercentage: number;
 }
 
 interface Officer extends Person {
-    position: string;
+    role: string;
 }
 
 interface ComplianceNoticeProps {
@@ -67,18 +71,20 @@ export function EmptyState({ imageSrc, imageAlt, message }: EmptyStateProps) {
 interface OwnerCardProps {
     owner: {
         id: string;
-        name: string;
+        firstName: string;
+        lastName: String;
         role: string;
         email: string;
-        ownership?: number;
+        ownershipPercentage?: number;
         position?: string;
     };
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
     type: "beneficial" | "officer";
+    showIcons: boolean
 }
 
-export function OwnerCard({ owner, onEdit, onDelete, type }: OwnerCardProps) {
+export function OwnerCard({ owner, onEdit, onDelete, type, showIcons = true }: OwnerCardProps) {
     return (
         <Card className="p-4">
             <div className="flex items-center justify-between gap-5">
@@ -86,20 +92,20 @@ export function OwnerCard({ owner, onEdit, onDelete, type }: OwnerCardProps) {
                     {/* Avatar */}
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-orange-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-semibold text-lg">
-                            {owner.name.split(' ').map(n => n[0]).join('')}
+                            {owner.firstName.split('')[0] + owner.lastName.split('')[0]}
                         </span>
                     </div>
 
                     {/* Owner Info */}
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
-                            <span className="font-semibold font-base">{owner.name}</span>
+                            <span className="font-semibold font-base">{owner.firstName} {owner.lastName}</span>
                             <span className="text-sm">
                                 {type === "beneficial" ? owner.role : owner.position}
                             </span>
                             {type === "beneficial" && (
                                 <span className="text-sm flex-auto">
-                                    {owner.ownership}%
+                                    {owner.ownershipPercentage}%
                                 </span>
                             )}
                         </div>
@@ -108,7 +114,7 @@ export function OwnerCard({ owner, onEdit, onDelete, type }: OwnerCardProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
+                {showIcons && (<div className="flex items-center gap-2 shrink-0">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(owner.id)}>
                         <Edit className="h-4 w-4" />
                     </Button>
@@ -119,7 +125,7 @@ export function OwnerCard({ owner, onEdit, onDelete, type }: OwnerCardProps) {
                     >
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                </div>
+                </div>)}
             </div>
         </Card>
     );
@@ -129,6 +135,7 @@ interface ActionButtonsProps {
     onAdd: () => void;
     onContinue: () => void;
     hasOwners: boolean;
+    loading: boolean;
     addButtonText: string;
     continueButtonText: string;
     layout?: "default" | "equal";
@@ -140,6 +147,7 @@ export function ActionButtons({
     hasOwners,
     addButtonText,
     continueButtonText,
+    loading,
     layout = "default"
 }: ActionButtonsProps) {
     if (layout === "equal") {
@@ -149,6 +157,7 @@ export function ActionButtons({
                     variant="outline"
                     onClick={onAdd}
                     className="flex items-center gap-2 flex-1"
+                    disabled={loading}
                 >
                     {addButtonText}
                     <Plus className="h-4 w-4" />
@@ -157,7 +166,7 @@ export function ActionButtons({
                 <Button
                     onClick={onContinue}
                     className={`flex items-center gap-2 flex-1 ${!hasOwners ? 'opacity-50' : ''}`}
-                    disabled={!hasOwners}
+                    disabled={loading ?? !hasOwners}
                 >
                     {hasOwners ? continueButtonText : "Next Step"}
                     <ArrowRight className="h-4 w-4" />
@@ -172,6 +181,8 @@ export function ActionButtons({
                 variant="outline"
                 onClick={onAdd}
                 className="flex items-center gap-2 flex-1"
+                disabled={loading}
+
             >
                 {addButtonText}
                 <Plus className="h-4 w-4" />
@@ -180,7 +191,7 @@ export function ActionButtons({
             <Button
                 onClick={onContinue}
                 className={`flex items-center gap-2 flex-1 ${!hasOwners ? 'opacity-50' : ''}`}
-                disabled={!hasOwners}
+                disabled={loading ?? !hasOwners}
             >
                 {hasOwners ? continueButtonText : "Next Step"}
                 <ArrowRight className="h-4 w-4" />
@@ -197,8 +208,11 @@ export default function Leadership() {
     const [editingPerson, setEditingPerson] = useState<{ id: string; type: "beneficial" | "officer" } | null>(null);
 
     // Separate profiles into beneficial owners and officers
-    const beneficialOwners = userProfiles.filter(profile => profile.percentage !== undefined) as BeneficialOwner[];
-    const officers = userProfiles.filter(profile => profile.percentage === undefined) as Officer[];
+    const beneficialOwners = userProfiles.filter(profile => profile.ownershipPercentage !== undefined) as BeneficialOwner[];
+    const officers = userProfiles.filter(profile => profile.ownershipPercentage === undefined) as Officer[];
+
+    const updateOnboarding = useUpdateOnboardingLeadersApi()
+    const loading = updateOnboarding.isPending;
 
     const handleAddPerson = (person: Omit<BeneficialOwner, "id"> | Omit<Officer, "id">) => {
         console.log({ person })
@@ -207,7 +221,7 @@ export default function Leadership() {
             // Editing existing person
             const updatedProfiles = userProfiles.map(p =>
                 p.id === editingPerson.id
-                    ? { ...p, ...person, avatar: `${person.name.split(' ').map(n => n[0]).join('')}` }
+                    ? { ...p, ...person, avatar: `${person.firstName.split(' ')[0] + person.lastName.split(' ')[0]}` }
                     : p
             );
             updateUserProfiles(updatedProfiles);
@@ -216,7 +230,7 @@ export default function Leadership() {
             const newPerson = {
                 ...person,
                 id: Date.now().toString(),
-                avatar: `${person.name.split(' ').map(n => n[0]).join('')}`,
+                avatar: `${person.firstName.split(' ')[0] + person.lastName.split(' ')[0]}`,
             };
             const updatedProfiles = [...userProfiles, newPerson];
             updateUserProfiles(updatedProfiles);
@@ -229,7 +243,7 @@ export default function Leadership() {
     const handleEditPerson = (id: string) => {
         const person = userProfiles.find(p => p.id === id);
         if (person) {
-            const type = person.percentage !== undefined ? "beneficial" : "officer";
+            const type = person.ownershipPercentage !== undefined ? "beneficial" : "officer";
             setEditingPerson({ id, type });
             setIsModalOpen(true);
         }
@@ -240,8 +254,39 @@ export default function Leadership() {
         updateUserProfiles(updatedProfiles);
     };
 
-    const handleContinue = () => {
-        router.push("/onboarding/financial");
+    // Transform the data to match the payload format
+    const transformDataForPayload = () => {
+        const payload: LeaderShipPayload = {
+            businessOwners: beneficialOwners.map(owner => ({
+                firstName: owner.firstName,
+                lastName: owner.lastName,
+                email: owner.email,
+                // Add default or make phone required in your interface
+                ownershipPercentage: owner.ownershipPercentage || 0,
+
+            })),
+            officers: officers.map(officer => ({
+                firstName: officer.firstName,
+                lastName: officer.lastName,
+                email: officer.email,
+
+            }))
+        };
+        return payload;
+    };
+
+    const handleContinue = async () => {
+        try {
+            const payload = transformDataForPayload();
+
+            // Submit the data
+            const response = await updateOnboarding.mutateAsync(payload);
+            toast.success("Leader details updated successfully!");
+            router.push("/onboarding/financial");
+        } catch (error) {
+            console.error("Error updating company details:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to update company details");
+        }
     };
 
     console.log({ beneficialOwners }, { officers })
@@ -280,6 +325,7 @@ export default function Leadership() {
                                 onEdit={handleEditPerson}
                                 onDelete={handleDeletePerson}
                                 type={type}
+                                showIcons
                             />
                         ))}
                     </div>
@@ -292,6 +338,7 @@ export default function Leadership() {
                     addButtonText={type === "beneficial" ? "Add Beneficial Owner" : "Add Officer"}
                     continueButtonText="Continue"
                     layout={layout}
+                    loading={loading}
                 />
 
                 <AddBeneficialOwnerModal

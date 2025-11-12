@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
 import FormFieldInput from '@/components/form fields/formFieldInput';
 import CircleProgress from '@/components/HalfProgressCircle';
+import { useAuthCheck } from '@/actions/auth/auth-check';
 
 const formSchema = z.object({
     email: z.email().min(1, "email is required").max(100),
@@ -32,24 +33,27 @@ export default function LoginPage() {
         },
     });
     const [error, setError] = useState('');
-    const login = useAuthStore(state => state.login);
-    const isLoading = useAuthStore(state => state.isLoading);
+
+    const checkAsync = useAuthCheck()
+    const isLoading = checkAsync.isPending;
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+
         setError('');
 
         try {
+
+            await checkAsync.mutateAsync(data.email);
+            router.push(`/login-with-password?email=${encodeURIComponent(data.email)}`);
             // const success = await login(email, password);
             // console.log(`succes is ${success}`)
             // if (success) {
-            //     router.push('/dashboard');
             // } else {
             //     setError('Invalid email or password');
             // }
         } catch (err) {
-            setError('An error occurred during login');
+            //    toast.error()
         }
     };
 
@@ -75,7 +79,7 @@ export default function LoginPage() {
                 <CardContent className='pt-10'>
                     <Form {...form}>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
 
 
 

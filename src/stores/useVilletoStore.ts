@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { getCookie, setCookie, clearOnboardingCookies } from '@/lib/cookies';
 import z from 'zod';
-import { registrationSchema } from '@/app/pre-onboarding/registration/page';
+import { registrationSchema } from '@/lib/schemas/schemas';
 
 export interface UserProfile {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     role: string;
-    percentage?: number;
-    avatar: string;
+    email: string;
+    ownershipPercentage?: number;
+    avatar?: string;
 }
 export interface ConnectedAccount {
     id: string;
@@ -34,6 +36,7 @@ export interface VilletoProduct {
     name: string;
     color: string;
     selected: boolean;
+    value: string
 }
 
 export interface OnboardingState {
@@ -103,25 +106,27 @@ const initialState: OnboardingState = {
         integrations: [],
     },
     villetoProducts: [
-        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 text-purple-700', selected: false },
-        { id: '2', name: 'Expense Management', color: 'bg-green-100 text-green-700', selected: false },
-        { id: '3', name: 'Vendor Payments', color: 'bg-blue-100 text-blue-700', selected: false },
-        { id: '4', name: 'Payroll Automation', color: 'bg-pink-100 text-pink-700', selected: false },
-        { id: '5', name: 'Accounts Payable/Receivable', color: 'bg-pink-100 text-pink-700', selected: false },
+        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 !border-purple-600 text-purple-700', selected: false, value: "CORPORATE_CARDS" },
+        { id: '2', name: 'Expense Management', color: 'bg-green-100 !border-green-600 text-green-700', selected: false, value: "EXPENSE_MANAGEMENT" },
+        { id: '3', name: 'Vendor Payments', color: 'bg-blue-100 !border-blue-600 text-blue-700', selected: false, value: "VENDOR_PAYMENTS" },
+        { id: '4', name: 'Payroll Automation', color: 'bg-pink-100 border-pink-600 text-pink-700', selected: false, value: "PAYROLL_AUTOMATION" },
+        { id: '5', name: 'Accounts Payable/Receivable', color: 'bg-pink-100 border-pink-600 text-pink-700', selected: false, value: "ACCOUNTS_PAYABLE_RECEIVABLE" },
     ],
 };
 
 // Load initial state from cookies
 const loadFromCookies = (): Partial<OnboardingState> => {
-    const businessData = getCookie('onboarding_business');
+    if (typeof document === "undefined") return {};
+    const businessSnapshot = getCookie('onboarding_business');
     const leadershipData = getCookie('onboarding_leadership');
     const financialData = getCookie('onboarding_financial');
     const productsData = getCookie('onboarding_products');
     const preOnboarding = getCookie("preOnboarding");
     const contactEmail = getCookie("contactEmail");
+    const onboardingId = getCookie("onboarding_id");
 
     return {
-        ...(businessData && { businessSnapshot: businessData.businessSnapshot }),
+        ...(businessSnapshot && { ...businessSnapshot }),
         ...(leadershipData && { userProfiles: leadershipData.userProfiles }),
         ...(financialData && {
             monthlySpend: financialData.monthlySpend,
@@ -132,9 +137,11 @@ const loadFromCookies = (): Partial<OnboardingState> => {
             showConnectModal: financialData.showConnectModal,
             financialPulse: financialData.financialPulse
         }),
-        ...(productsData && { villetoProducts: productsData.villetoProducts }),
-        ...(preOnboarding && { preOnboarding: preOnboarding }),
-        ...(contactEmail && { contactEmail: contactEmail })
+        ...(productsData && { ...productsData.villetoProducts }),
+        ...(preOnboarding && { ...preOnboarding }),
+        ...(contactEmail && { ...contactEmail }),
+        ...(onboardingId && { ...onboardingId })
+
     };
 };
 
@@ -241,5 +248,5 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
     },
 
     closeCongratulations: () => set({ showCongratulations: false }),
-    reset: () => set(initialState)
+    reset: () => { clearOnboardingCookies(); set(initialState) }
 }));

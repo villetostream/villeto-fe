@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,16 +15,8 @@ import CircleProgress from "@/components/HalfProgressCircle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { useStartOnboardingApi } from "@/actions/pre-onboarding/get-started";
 import { toast } from "sonner";
+import { registrationSchema } from "@/lib/schemas/schemas";
 
-export const registrationSchema = z.object({
-    contactFirstName: z.string().min(1, "First name is required").max(100),
-    contactLastName: z.string().min(1, "Last name is required").max(100),
-    companyName: z.string().min(1, "Company name is required").max(200),
-    accountType: z.enum(["demo", "enterprise"] as const, {
-        error: "Please select an account type",
-    }),
-    contactEmail: z.string()
-});
 
 type FormData = z.infer<typeof registrationSchema>;
 
@@ -33,6 +25,8 @@ export default function GetStarted() {
     const onboarding = useOnboardingStore()
     const startOnboarding = useStartOnboardingApi();
     const loading = startOnboarding.isPending;
+
+    console.log(onboarding.preOnboarding)
 
     const form = useForm<FormData>({
         resolver: zodResolver(registrationSchema),
@@ -44,11 +38,23 @@ export default function GetStarted() {
             contactEmail: onboarding.contactEmail
         },
     });
+    useEffect(() => {
+        if (onboarding.preOnboarding) {
+            form.reset({
+                contactFirstName: onboarding.preOnboarding.contactFirstName || "",
+                contactLastName: onboarding.preOnboarding.contactLastName || "",
+                companyName: onboarding.preOnboarding.companyName || "",
+                accountType: onboarding.preOnboarding.accountType || undefined,
+                contactEmail: onboarding.contactEmail || "",
+            });
+        }
+    }, [onboarding.preOnboarding, onboarding.contactEmail]);
 
     const onSubmit = async (data: FormData) => {
         console.log(data);
         try {
             const response = await startOnboarding.mutateAsync(data);
+            console.log({ response })
             onboarding.setPreOnboarding(data);
             onboarding.setOnboardingId(response.data.onboardingId as string);
             router.push("/onboarding");
@@ -61,20 +67,20 @@ export default function GetStarted() {
     const accountType = form.watch("accountType");
 
     return (
-        <div className="h-full flex flex-col items-center justify-center">
-            <div className='absolute top-0 left-0 mb-auto p-10 flex w-full items-center justify-between'>
+        <div className="h-full flex flex-col lg:justify-center pb-10">
+            <div className=' p-10 flex w-full items-center justify-between'>
                 <div>
                     <img src="/images/logo.png" className='h-14 w-32 object-cover' />
                 </div>
                 <CircleProgress currentStep={2} />
             </div>
 
-            <div className="">
+            <div className=" px-[6.43777%] flex flex-col">
                 <div className="mb-8">
                     <img
                         src={"/images/svgs/chart-rose.svg"}
                         alt="Welcome celebration"
-                        className="size-16 mb-6"
+                        className="size-16"
                     />
                 </div>
 
@@ -86,7 +92,7 @@ export default function GetStarted() {
                 </div>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-5">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 my-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField
                                 control={form.control}
@@ -149,7 +155,7 @@ export default function GetStarted() {
                                         <RadioGroup
                                             onValueChange={field.onChange}
                                             value={field.value}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2"
+                                            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2"
                                         >
                                             {/* DEMO OPTION */}
                                             <FormItem>
@@ -206,8 +212,9 @@ export default function GetStarted() {
                         <div className="flex gap-4 pt-4">
                             <Button
                                 type="button"
+
                                 variant="ghost"
-                                className="flex-1 h-14 text-base font-semibold bg-gray-200"
+                                className="flex-1 text-base font-semibold bg-gray-200"
                                 onClick={() => window.open("mailto:sales@villeto.com")}
                                 disabled={loading}
 
@@ -218,7 +225,8 @@ export default function GetStarted() {
                             <Button
                                 variant={"hero"}
                                 type="submit"
-                                className="flex-1 h-14 text-base font-semibold"
+
+                                className="flex-1 text-base font-semibold"
                                 disabled={loading}
                             >
                                 {loading ? "Creating..." : "Continue"}

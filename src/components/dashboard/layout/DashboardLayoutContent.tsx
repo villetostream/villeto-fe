@@ -42,15 +42,15 @@ export default function DashboardLayoutContent({
                 <DashboardSidebar userRole={userRole} />
 
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <header className="flex items-center  px-6 py-4 border-b border-dashboard-border-shade w-full">
-                        <SidebarTrigger />
+                    <header className="flex items-center  px-6 py-3 border-b border-dashboard-border-shade w-full">
+
 
                         <UserSection />
 
                     </header>
 
 
-                    <main className="flex-1 overflow-auto">
+                    <main className="flex-1 overflow-auto p-5">
                         {children}
                     </main>
                 </div>

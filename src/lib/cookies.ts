@@ -18,6 +18,7 @@ export interface CookieOptions {
  * Sets a cookie with proper encoding and expiration
  */
 export function setCookie(name: string, value: any, options: CookieOptions = {}): void {
+  if (typeof document === 'undefined') return;
   try {
     // Validate the data structure
     CookieDataSchema.parse(value);
@@ -41,6 +42,7 @@ export function setCookie(name: string, value: any, options: CookieOptions = {})
  * Gets a cookie value with proper decoding and validation
  */
 export function getCookie<T = any>(name: string): T | null {
+  if (typeof document === 'undefined') return null;
   try {
     const nameEQ = name + '=';
     const ca = document.cookie.split(';');
@@ -72,6 +74,7 @@ export function getCookie<T = any>(name: string): T | null {
  * Removes a cookie
  */
 export function removeCookie(name: string, options: CookieOptions = {}): void {
+  if (typeof document === 'undefined') return;
   const expires = new Date(0); // Set to past date to expire immediately
   let cookieString = `${name}=; expires=${expires.toUTCString()}; path=${options.path || '/'}`;
 

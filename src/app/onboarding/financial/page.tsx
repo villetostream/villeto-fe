@@ -1,20 +1,45 @@
 "use client"
-import { Receipt } from "lucide-react";
+import { Loader2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SpendingSlider } from "@/components/onboarding/financial/SpendingSlider";
+import { spendingRanges, SpendingSlider } from "@/components/onboarding/financial/SpendingSlider";
 import { BankConnection } from "@/components/onboarding/financial/BankConnection";
 import { ConnectBankModal } from "@/components/onboarding/financial/ConnectBankModal";
 import { useOnboardingStore } from "@/stores/useOnboardingStore";
+import { useOnboardingStore as store } from "@/stores/useVilletoStore";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Invoice02Icon } from '@hugeicons/core-free-icons';
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useRouter } from "next/navigation";
+import { useUpdateOnboardingFinancialPulseApi } from "@/actions/onboarding/update-financial-pulse";
 
 export default function FinancialPulse() {
-    const { bankConnected, connectedAccounts } = useOnboardingStore();
-    const router = useRouter()
+    const { bankConnected, connectedAccounts, spendRange } = useOnboardingStore();
+    const { } = store()
 
+    const router = useRouter()
+    const updateFinancial = useUpdateOnboardingFinancialPulseApi()
+    const loading = updateFinancial.isPending;
     const canContinue = bankConnected || connectedAccounts.length > 0;
+
+    console.log({ spendRange })
+
+    const handleSubmit = async () => {
+        try {
+            const selectedRange = spendingRanges.find(r => r.label === spendRange);
+            const payload = {
+                spendLimit: {
+                    lower: selectedRange?.lower ?? 0,
+                    upper: selectedRange?.upper ?? 0,
+                },
+
+            };
+
+            // await updateFinancial.mutateAsync({ ...payload });
+            router.push("/onboarding/products")
+        } catch (error) {
+
+        }
+    }
 
     return (
         <div className="h-full bg-background flex">
@@ -39,14 +64,14 @@ export default function FinancialPulse() {
                 <div className="mt-12 flex justify-end">
                     <Button
                         size="lg"
-                        disabled={!canContinue}
-                        onClick={() => router.push("/onboarding/products")}
+                        disabled={loading ?? !canContinue}
+                        onClick={handleSubmit}
                         className={`px-8 py-3 bg-primary hover:bg-villeto-primary-light text-white`}
                     >
-                        Continue
-                        <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none">
+                        {loading ? "Creating" : "   Continue"}
+                        {loading ? <Loader2 className="size-6 animate-spin" /> : <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none">
                             <path d="M5 12h14m-7-7 7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        </svg>}
                     </Button>
                 </div>
 

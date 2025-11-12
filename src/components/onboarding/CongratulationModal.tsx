@@ -1,20 +1,19 @@
+"use client"
+
 import { useOnboardingStore } from '@/stores/useVilletoStore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowRight, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function CongratulationsModal() {
   const { showCongratulations, closeCongratulations } = useOnboardingStore();
+  const router = useRouter();
 
   return (
-    <Dialog open={showCongratulations} onOpenChange={closeCongratulations}>
+    <Dialog open={showCongratulations} onOpenChange={() => { router.replace("/login"); closeCongratulations() }}>
       <DialogContent className="max-w-md mx-4 p-8 text-center border-0 rounded-2xl">
-        <button
-          onClick={closeCongratulations}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
+
 
         {/* Celebration Icon */}
         <div className="mb-6">
@@ -36,7 +35,7 @@ export function CongratulationsModal() {
 
         {/* Continue Button */}
         <Button
-          onClick={closeCongratulations}
+          onClick={() => { router.replace("/login"); closeCongratulations() }}
           className="w-full bg-primary hover:bg-primary/90 text-white  text-lg rounded-xl"
         >
           Continue

@@ -2,8 +2,7 @@ import type { z } from "zod";
 import { type UseMutationResult, useMutation } from "@tanstack/react-query";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
-import { onboardingBusinessSchema } from "@/app/onboarding/business/page";
-import { registrationSchema } from "@/app/pre-onboarding/registration/page";
+import { registrationSchema } from "@/lib/schemas/schemas";
 
 
 interface Response {
