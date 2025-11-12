@@ -113,6 +113,11 @@ const Page = () => {
 
       toast.info("Complete your onboarding!")
     }
+    if (status === 3) {
+      router.push('/onboarding/products');
+
+      toast.info("Complete your onboarding!")
+    }
 
     if (status === 4) {
       toast.info("Onboarding Complete, Login into your account")

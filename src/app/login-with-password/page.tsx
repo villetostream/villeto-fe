@@ -95,6 +95,8 @@ export default function LoginPage() {
                                 type="submit"
                                 className="w-full mt-2"
                                 disabled={isLoading}
+                                size={"md"}
+
                             >
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Sign In
