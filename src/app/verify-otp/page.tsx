@@ -3,24 +3,17 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LockKeyIcon, LockPasswordFreeIcons } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 export default function VerifyOTP() {
     const router = useRouter();
     const [otp, setOtp] = useState("");
     const [email, setEmail] = useState("");
     const [userName, setUserName] = useState("");
+    const searchParams = useSearchParams()
 
-    useEffect(() => {
-        const storedEmail = localStorage.getItem("userEmail");
-        const storedName = localStorage.getItem("userName");
-        if (!storedEmail) {
-            router.replace("/");
-        } else {
-            setEmail(storedEmail);
-            setUserName(storedName || "User");
-        }
-    }, [router]);
 
     const handleContinue = () => {
         if (otp.length === 6) {
@@ -29,16 +22,15 @@ export default function VerifyOTP() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-[hsl(174,72%,66%)] to-[hsl(203,89%,78%)] flex items-center justify-center p-4">
-            {/* <div className="absolute top-8 left-8">
-                <VilletoLogo />
-            </div> */}
+        <div className="min-h-screen w-full bg-[#E6F8F6] flex items-center justify-center p-4">
+            <div>
+                <img src="/images/logo.png" className='h-14 w-32 object-cover' alt="Logo" />
+            </div>
 
-            <div className="w-full max-w-md bg-card rounded-3xl shadow-2xl p-8 md:p-12">
+            <div className="w-full max-w-lg bg-card rounded-3xl shadow-2xl p-8 md:p-12">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-24 h-24 rounded-full border-2 border-primary flex items-center justify-center mb-4">
-                        <User className="w-12 h-12 text-primary" />
-                    </div>
+                    <HugeiconsIcon icon={LockKeyIcon} className="size-10 text-primary" />
+
                     <p className="text-sm text-muted-foreground mb-6">{email}</p>
 
                     <h1 className="text-3xl font-bold text-center mb-2">Welcome {userName}!</h1>

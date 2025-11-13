@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import { getCookie, setCookie, clearOnboardingCookies } from '@/lib/cookies';
+import z from 'zod';
+import { registrationSchema } from '@/lib/schemas/schemas';
 
 export interface UserProfile {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     role: string;
-    percentage?: number;
-    avatar: string;
+    email: string;
+    ownershipPercentage?: number;
+    avatar?: string;
 }
 export interface ConnectedAccount {
     id: string;
@@ -32,6 +36,7 @@ export interface VilletoProduct {
     name: string;
     color: string;
     selected: boolean;
+    value: string
 }
 
 export interface OnboardingState {
@@ -46,6 +51,8 @@ export interface OnboardingState {
     userProfiles: UserProfile[];
     financialPulse: FinancialPulse;
     villetoProducts: VilletoProduct[];
+    contactEmail: string
+    preOnboarding?: z.infer<typeof registrationSchema> | null
 }
 
 interface VilletoState {
@@ -53,10 +60,13 @@ interface VilletoState {
 
     showCongratulations: boolean;
     onboardingId: string;
+    contactEmail: string;
 
     // Actions
+    setPreOnboarding: (data: z.infer<typeof registrationSchema>) => void;
     setCurrentStep: (step: number) => void;
     setOnboardingId: (step: string) => void;
+    setContactEmail: (email: string) => void;
     updateBusinessSnapshot: (data: Partial<BusinessSnapshot>) => void;
     updateUserProfiles: (profiles: UserProfile[]) => void;
     updateFinancialPulse: (data: Partial<FinancialPulse>) => void;
@@ -77,6 +87,8 @@ const initialState: OnboardingState = {
     monthlySpend: 1, // 0-3 representing the spend ranges
     onboardingId: "",
     spendRange: '<$10k',
+    contactEmail: "",
+    preOnboarding: null,
     bankConnected: false,
     bankProcessing: false,
     connectedAccounts: [],
@@ -94,23 +106,27 @@ const initialState: OnboardingState = {
         integrations: [],
     },
     villetoProducts: [
-        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 text-purple-700', selected: false },
-        { id: '2', name: 'Expense Management', color: 'bg-green-100 text-green-700', selected: false },
-        { id: '3', name: 'Vendor Payments', color: 'bg-blue-100 text-blue-700', selected: false },
-        { id: '4', name: 'Payroll Automation', color: 'bg-pink-100 text-pink-700', selected: false },
-        { id: '5', name: 'Accounts Payable/Receivable', color: 'bg-pink-100 text-pink-700', selected: false },
+        { id: '1', name: 'Corporate Cards', color: 'bg-purple-100 !border-purple-600 text-purple-700', selected: false, value: "CORPORATE_CARDS" },
+        { id: '2', name: 'Expense Management', color: 'bg-green-100 !border-green-600 text-green-700', selected: false, value: "EXPENSE_MANAGEMENT" },
+        { id: '3', name: 'Vendor Payments', color: 'bg-blue-100 !border-blue-600 text-blue-700', selected: false, value: "VENDOR_PAYMENTS" },
+        { id: '4', name: 'Payroll Automation', color: 'bg-pink-100 border-pink-600 text-pink-700', selected: false, value: "PAYROLL_AUTOMATION" },
+        { id: '5', name: 'Accounts Payable/Receivable', color: 'bg-pink-100 border-pink-600 text-pink-700', selected: false, value: "ACCOUNTS_PAYABLE_RECEIVABLE" },
     ],
 };
 
 // Load initial state from cookies
 const loadFromCookies = (): Partial<OnboardingState> => {
-    const businessData = getCookie('onboarding_business');
+    if (typeof document === "undefined") return {};
+    const businessSnapshot = getCookie('onboarding_business');
     const leadershipData = getCookie('onboarding_leadership');
     const financialData = getCookie('onboarding_financial');
     const productsData = getCookie('onboarding_products');
+    const preOnboarding = getCookie("preOnboarding");
+    const contactEmail = getCookie("contactEmail");
+    const onboardingId = getCookie("onboarding_id");
 
     return {
-        ...(businessData && { businessSnapshot: businessData.businessSnapshot }),
+        ...(businessSnapshot && { ...businessSnapshot }),
         ...(leadershipData && { userProfiles: leadershipData.userProfiles }),
         ...(financialData && {
             monthlySpend: financialData.monthlySpend,
@@ -121,7 +137,11 @@ const loadFromCookies = (): Partial<OnboardingState> => {
             showConnectModal: financialData.showConnectModal,
             financialPulse: financialData.financialPulse
         }),
-        ...(productsData && { villetoProducts: productsData.villetoProducts }),
+        ...(productsData && { ...productsData.villetoProducts }),
+        ...(preOnboarding && { ...preOnboarding }),
+        ...(contactEmail && { ...contactEmail }),
+        ...(onboardingId && { ...onboardingId })
+
     };
 };
 
@@ -136,7 +156,20 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
     setOnboardingId: (step) => {
         set({ onboardingId: step }); const state = get();
         setCookie('onboarding_id', {
-            businessSnapshot: state.onboardingId,
+            onboardingId: state.onboardingId,
+        });
+    },
+    setContactEmail: (step) => {
+        set({ contactEmail: step }); const state = get();
+        setCookie('contactEmail', {
+            contactEmail: state.contactEmail,
+        });
+    },
+    setPreOnboarding: (step) => {
+        set({ preOnboarding: step });
+        const state = get();
+        setCookie('preOnboarding', {
+            preOnboarding: state.preOnboarding,
         });
     },
 
@@ -215,5 +248,5 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
     },
 
     closeCongratulations: () => set({ showCongratulations: false }),
-    reset: () => set(initialState)
+    reset: () => { clearOnboardingCookies(); set(initialState) }
 }));

@@ -8,6 +8,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { ProductLoadingIcon, CreditCardIcon, Invoice04Icon, Store01Icon, Coins01Icon, Invoice03Icon } from '@hugeicons/core-free-icons';
 import OnboardingTitle from '@/components/onboarding/_shared/OnboardingTitle';
 import { useRouter } from 'next/navigation';
+import { useUpdateOnboardingProductsApi } from '@/actions/onboarding/update-onboarding-product';
+import { Loader2 } from 'lucide-react';
 
 const products = [
     {
@@ -53,16 +55,27 @@ const products = [
 ];
 
 export default function ChooseProducts() {
-    const { villetoProducts, toggleProduct, setCurrentStep } = useOnboardingStore();
+    const { villetoProducts, toggleProduct } = useOnboardingStore();
+    const updateOnboarding = useUpdateOnboardingProductsApi()
     const router = useRouter()
+    const loading = updateOnboarding.isPending;
 
-    const handleContinue = () => {
-        router.push("/onboarding/review");
+    const handleContinue = async () => {
+        try {
+            const payload = villetoProducts.filter((product) => product.selected).map((product) => product.value);
+            await updateOnboarding.mutateAsync(payload);
+            router.push("/onboarding/review");
+        } catch (error) {
+
+        }
     };
 
     const isProductSelected = (productId: string) => {
         return villetoProducts.find(p => p.id === productId)?.selected || false;
     };
+
+    // Check if at least one product is selected
+    const isAnyProductSelected = villetoProducts.some(product => product.selected);
 
     return (
         <div className="flex-1 ">
@@ -70,7 +83,7 @@ export default function ChooseProducts() {
             {/* Header */}
             <div className="text-left mb-10 ">
                 <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
-                    <HugeiconsIcon icon={ProductLoadingIcon} className="size-16 text-primary" />
+                    <HugeiconsIcon icon={ProductLoadingIcon} className="size-14 text-primary" />
                 </div>
                 <OnboardingTitle title={"Choose your Villeto Product"} subtitle={"Villeto offers a wide array of products to choose from."} />
 
@@ -122,12 +135,14 @@ export default function ChooseProducts() {
             <div className="flex justify-end">
                 <Button
                     onClick={handleContinue}
-                    className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2"
+                    disabled={loading ?? !isAnyProductSelected}
+                    size="md"
+                    className="!px-12  font-medium flex items-center space-x-2  disabled:cursor-not-allowed"
                 >
-                    <span>Continue</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span>{loading ? "Creating..." : "Continue"}</span>
+                    {loading ? <Loader2 className="aize-5 animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    </svg>}
                 </Button>
             </div>
         </div>

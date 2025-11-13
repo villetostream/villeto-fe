@@ -14,12 +14,8 @@ export function UserSection() {
     const router = useRouter();
     const pathname = usePathname()
 
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
 
-    if (!mounted) return null; // prevents SSR/client mismatch
-
-    return user ? (
+    return (
         <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
                 <Menu />
@@ -43,5 +39,5 @@ export function UserSection() {
                 </div>
             </div>
         </div>
-    ) : null;
+    );
 }

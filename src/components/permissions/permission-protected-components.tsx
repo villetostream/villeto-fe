@@ -21,7 +21,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   // Helper function to check for exact permission matches
   const hasPermissionForRoute = (permissions: string[]) => {
     return permissions?.some((permission) =>
-      userPermissions?.some(
+      (userPermissions ?? []).some(
         (userPermission) => userPermission === permission
       )
     );
