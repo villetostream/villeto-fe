@@ -8,9 +8,9 @@ import { User } from "@/stores/auth-stores";
 
 
 interface Response {
-    data: {
-        [key: string]: string | number | boolean | User;
-    };
+    accessToken: string,
+    user: User,
+
     error: {
         error: string;
         message?: string;

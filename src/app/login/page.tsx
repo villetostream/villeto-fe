@@ -19,6 +19,7 @@ import z from 'zod';
 import FormFieldInput from '@/components/form fields/formFieldInput';
 import CircleProgress from '@/components/HalfProgressCircle';
 import { useAuthCheck } from '@/actions/auth/auth-check';
+import Link from 'next/link';
 
 const formSchema = z.object({
     email: z.email().min(1, "email is required").max(100),
@@ -66,7 +67,7 @@ export default function LoginPage() {
                 </div>
                 <CircleProgress currentStep={1} />
             </div>
-            <Card className="w-full bg-white !border-0">
+            <Card className="w-full bg-white !border-0 shadow-none">
                 <CardHeader className="space-y-2.5 ">
 
                     <HugeiconsIcon icon={MailAtSign01Icon} className="w-10 h-10 text-primary mb-2.5" />
@@ -106,7 +107,7 @@ export default function LoginPage() {
                             </Button>
                         </form>
                     </Form>
-
+                    <div className='flex justify-center items-center gap-2 text-lg font-medium mt-10'>New to Villeto? <Link href="/pre-onboarding" className="text-primary text-lg font-medium text-no-underline  hover:text-no-underline">Sign up</Link></div>
 
                 </CardContent>
             </Card>

@@ -23,9 +23,9 @@ export default function VerifyOTP() {
 
     return (
         <div className="min-h-screen w-full bg-[#E6F8F6] flex items-center justify-center p-4">
-            <div>
+            <header className="fixed p-10 top-0 left-0 ">
                 <img src="/images/logo.png" className='h-14 w-32 object-cover' alt="Logo" />
-            </div>
+            </header>
 
             <div className="w-full max-w-lg bg-card rounded-3xl shadow-2xl p-8 md:p-12">
                 <div className="flex flex-col items-center mb-8">
@@ -63,6 +63,7 @@ export default function VerifyOTP() {
                 <Button
                     onClick={handleContinue}
                     disabled={otp.length !== 6}
+                    size="md    "
                     className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/90 disabled:opacity-50"
                 >
                     Continue

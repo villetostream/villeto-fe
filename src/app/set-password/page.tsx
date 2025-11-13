@@ -91,9 +91,9 @@ export default function SetPassword() {
 
     return (
         <div className="min-h-screen w-full  bg-[#E6F8F6] flex items-center justify-center p-4">
-            <div>
+            <header className="fixed p-10 top-0 left-0 ">
                 <img src="/images/logo.png" className='h-14 w-32 object-cover' alt="Logo" />
-            </div>
+            </header>
 
             <div className="w-full max-w-[600px] bg-card rounded-3xl shadow-2xl p-8 md:p-9">
                 <div className="flex flex-col items-center mb-8">
