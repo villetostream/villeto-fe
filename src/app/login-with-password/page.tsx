@@ -20,16 +20,19 @@ import FormFieldInput from '@/components/form fields/formFieldInput';
 import CircleProgress from '@/components/HalfProgressCircle';
 import { loginSchema } from '@/lib/schemas/schemas';
 import { useLogin } from '@/actions/auth/auth-login';
+import { toast } from 'sonner';
 
 
 type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-    const isLoading = useAuthStore(state => state.isLoading);
+
     const router = useRouter();
     const searchParams = useSearchParams()
     const login = useLogin()
+    const isLoading = login.isPending;
     const setUser = useAuthStore().login;
+    const setAccessToken = useAuthStore().setAccessToken;
 
 
     const form = useForm<FormData>({
@@ -43,11 +46,14 @@ export default function LoginPage() {
     const onSubmit = async (data: FormData) => {
         try {
             const response = await login.mutateAsync(data);
-            setUser(response.data.user as User)
+            console.log({ response })
+            setAccessToken(response.accessToken)
+            setUser(response.user as User)
             router.push('/dashboard');
 
-        } catch (err) {
-
+        } catch (err: any) {
+            console.log({ err })
+            toast.error(err.message)
         }
     };
 

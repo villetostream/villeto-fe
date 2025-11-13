@@ -68,7 +68,7 @@ export const Header = () => {
                     {/* Desktop CTA */}
                     <div className="hidden md:flex items-center space-x-4">
                         <Button variant="outlinePrimary" size="lg" asChild className={" rounded-[16px] min-w-[171px]"}>
-                            <Link href="/pre-onboarding" className='flex items-center'>
+                            <Link href="/login" className='flex items-center'>
 
                                 Sign-in
                                 <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
