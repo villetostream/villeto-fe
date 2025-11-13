@@ -63,7 +63,7 @@ export default function VerifyOTP() {
                 <Button
                     onClick={handleContinue}
                     disabled={otp.length !== 6}
-                    size="md    "
+                    size="md"
                     className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/90 disabled:opacity-50"
                 >
                     Continue
