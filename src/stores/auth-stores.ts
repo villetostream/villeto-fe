@@ -5,17 +5,25 @@ import Cookies from 'js-cookie';
 import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/permissions';
 
 export interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    department?: string;
+    createdAt: Date,
+    updatedAt: Date,
+    deletedAt?: Date,
+    userId: string,
+    firstName: string,
+    lastName: number,
+    email: string,
+    loginCount: number,
+    isActive: boolean,
+    phone?: string | number,
+    role: string
 }
 
 interface AuthState {
     user: User | null;
+    accessToken: string | null;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    setAccessToken: (token: string) => void;
+    login: (data: User) => void;
     logout: () => void;
     hasPermission: (permission: Permission) => boolean;
     hydrate: () => void;
@@ -23,14 +31,6 @@ interface AuthState {
     getUserPermissions: () => Permission[];
 }
 
-// Mock users for demonstration
-const MOCK_USERS: User[] = [
-    { id: '1', name: 'John Owner', email: 'owner@example.com', role: 'owner' },
-    { id: '2', name: 'Alice Admin', email: 'admin@example.com', role: 'admin' },
-    { id: '3', name: 'Bob Manager', email: 'manager@example.com', role: 'manager' },
-    { id: '4', name: 'Eva Auditor', email: 'auditor@example.com', role: 'auditor' },
-    { id: '5', name: 'Mike Employee', email: 'employee@example.com', role: 'employee' },
-];
 
 export const useAuthStore = create<AuthState>()(
     persist(
@@ -38,40 +38,27 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             isLoading: true,
             userPermissions: [],
+            accessToken: null,
 
             getUserPermissions: () => {
-                const { user } = get();
-                return user ? ROLE_PERMISSIONS[user.role as UserRole] : [];
+                const state = get();
+                return state.userPermissions; // Now returns cached array
             },
-
-            login: async (email: string, password: string): Promise<boolean> => {
-                set({ isLoading: true });
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-
-                    const foundUser = MOCK_USERS.find(u => u.email === email);
-                    if (foundUser && password === 'password') {
-                        set({ user: foundUser, isLoading: false });
-                        return true;
-                    }
-
-                    set({ isLoading: false });
-                    return false;
-                } catch (error) {
-                    set({ isLoading: false });
-                    return false;
-                }
+            setAccessToken: (data: string) => {
+                set({ accessToken: data });
+            },
+            login: (data: User) => {
+                set({ user: data });
             },
 
             logout: () => {
-                set({ user: null });
-                Cookies.remove('auth-storage'); // ensure middleware won't see stale data
+                set({ user: null, userPermissions: [], accessToken: null });
+                Cookies.remove('auth-storage');
             },
 
             hasPermission: (permission: Permission): boolean => {
-                const { user } = get();
-                if (!user) return false;
-                return ROLE_PERMISSIONS[user.role].includes(permission);
+                const { userPermissions } = get();
+                return userPermissions.includes(permission);
             },
 
             hydrate: () => {
@@ -97,6 +84,10 @@ export const useAuthStore = create<AuthState>()(
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     state.isLoading = false;
+                    // Recalculate permissions on rehydration
+                    if (state.user) {
+                        state.userPermissions = ROLE_PERMISSIONS[state.user.role as UserRole] || [];
+                    }
                 }
             },
         }

@@ -29,6 +29,7 @@ const FormFieldSelect = <T extends Record<string, any>>({
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
                         <Select
+                            {...field}
 
                             onValueChange={field.onChange}
                             value={field.value?.toString()} // Convert to string for consistent comparison

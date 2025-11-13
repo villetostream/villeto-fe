@@ -1,5 +1,4 @@
 
-// app/dashboard/page.tsx
 "use client";
 
 
@@ -45,7 +44,7 @@ export default function DashboardPage() {
         <>
             <PermissionGuard requiredPermissions={[PERMISSIONS.VIEW_ADMIN_DASHBOARD]}>
 
-                <div className="p-5 space-y-5">
+                <div className="space-y-5">
                     {/* Header */}
                     {/* Apply Banner */}
                     <Card className="bg-gradient-to-r from-primary/20 to-primary/10 border-primary/50 !p-0">
@@ -178,7 +177,7 @@ export default function DashboardPage() {
                 </div>
             </PermissionGuard>
             <PermissionGuard requiredPermissions={[PERMISSIONS.VIEW_EMPLOYEE_DASHBOARD]}>
-                <div className="min-h-screen bg-dashboard-bg p-5">
+                <div className="min-h-screen bg-dashboard-bg">
 
                     <div className="bg-navy rounded-2xl p-3.5 px-11 mb-8 flex items-center justify-between">
                         <div className='flex flex-col justify-center'>

@@ -1,11 +1,11 @@
 import { useOnboardingStore } from "@/stores/useOnboardingStore";
 import { cn } from "@/lib/utils";
 
-const spendingRanges = [
-    { value: 0, label: "<$10k" },
-    { value: 1, label: "$10k-$50k" },
-    { value: 2, label: "$50k-$200k" },
-    { value: 3, label: "$200k+" },
+export const spendingRanges = [
+    { value: 0, label: "<$10k", lower: 0, upper: 10000 },
+    { value: 1, label: "$10k-$50k", lower: 10000, upper: 50000 },
+    { value: 2, label: "$50k-$200k", lower: 50000, upper: 200000 },
+    { value: 3, label: "$200k+", lower: 200000, upper: null }, // null or Infinity
 ];
 
 export const SpendingSlider = () => {

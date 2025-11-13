@@ -76,7 +76,7 @@ const LandingContent = () => {
   return (
     <>
       <MaxWidth
-        className={''}
+        className={'py-3.5'}
 
         data-bg-color={""}
       >

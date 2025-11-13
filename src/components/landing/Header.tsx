@@ -44,8 +44,8 @@ export const Header = () => {
 
     return (
         <header className="fixed top-0 left-0 right-0 z-[999] max-w-[1560px] mx-auto bg-white">
-            <div className="bg-white  border-b border-border/60 xl:py-[12px]">
-                <div className={`px-6  flex items-center justify-between bg-white`}>
+            <div className="bg-white  border-b border-border/60">
+                <div className={`px-6 py-[14px]  flex items-center justify-between bg-white `}>
                     {/* Logo */}
                     <div className="flex items-center space-x-2">
                         <span className={`font-bold text-xl `}>Villeto</span>
@@ -67,12 +67,16 @@ export const Header = () => {
 
                     {/* Desktop CTA */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <Button variant="glass" size="sm" className={""}>
-                            Learn More
-                            <MousePointer2Icon className="ml-1 h-4 w-4" />
-                        </Button>
-                        <Button variant="hero" size="lg" asChild className={""}>
+                        <Button variant="outlinePrimary" size="lg" asChild className={" rounded-[16px] min-w-[171px]"}>
                             <Link href="/pre-onboarding" className='flex items-center'>
+
+                                Sign-in
+                                <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
+                            </Link>
+
+                        </Button>
+                        <Button variant="hero" size="md" asChild className={""}>
+                            <Link href="#" className='flex items-center'>
                                 See A demo <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
                             </Link>
                         </Button>

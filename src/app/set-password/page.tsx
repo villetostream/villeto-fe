@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { LockPasswordFreeIcons } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 const formSchema = z.object({
     password: z.string().min(8, "Password must be at least 8 characters"),
@@ -29,14 +31,14 @@ export default function SetPassword() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [password, setPassword] = useState("");
 
-    useEffect(() => {
-        const storedEmail = localStorage.getItem("userEmail");
-        if (!storedEmail) {
-            router.replace("/");
-        } else {
-            setEmail(storedEmail);
-        }
-    }, [router]);
+    // useEffect(() => {
+    //     const storedEmail = localStorage.getItem("userEmail");
+    //     if (!storedEmail) {
+    //         router.replace("/");
+    //     } else {
+    //         setEmail(storedEmail);
+    //     }
+    // }, [router]);
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -88,26 +90,23 @@ export default function SetPassword() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-[hsl(174,72%,66%)] to-[hsl(203,89%,78%)] flex items-center justify-center p-4">
-            {/* <div className="absolute top-8 left-8">
-                <VilletoLogo />
-            </div> */}
+        <div className="min-h-screen w-full  bg-[#E6F8F6] flex items-center justify-center p-4">
+            <div>
+                <img src="/images/logo.png" className='h-14 w-32 object-cover' alt="Logo" />
+            </div>
 
-            <div className="w-full max-w-md bg-card rounded-3xl shadow-2xl p-8 md:p-12">
+            <div className="w-full max-w-[600px] bg-card rounded-3xl shadow-2xl p-8 md:p-9">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-24 h-24 rounded-full border-2 border-primary flex items-center justify-center mb-4">
-                        <Lock className="w-12 h-12 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-6">{email}</p>
+                    <HugeiconsIcon icon={LockPasswordFreeIcons} className="size-10 text-primary mb-10" />
 
-                    <h1 className="text-3xl font-bold text-center mb-2">Set Password</h1>
-                    <p className="text-muted-foreground text-center">
+                    <h1 className="text-2xl leading-[100%] font-semibold text-center mb-2.5">Set New Password</h1>
+                    <p className="text-muted-foreground text-center text-sm leading-[100%]">
                         Set your password to enhance account security.
                     </p>
                 </div>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <FormField
                             control={form.control}
                             name="password"
@@ -188,11 +187,11 @@ export default function SetPassword() {
                             )}
                         />
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5">
                             <Badge
                                 variant={hasMinLength ? "default" : "outline"}
-                                className={`px-4 py-2 ${hasMinLength
-                                    ? "bg-primary text-primary-foreground border-primary"
+                                className={`px-4 py-2.5 rounded-full text-sm leading-[100%] font-normal ${hasMinLength
+                                    ? "bg-primary/5 text-foreground border-primary"
                                     : "border-border text-muted-foreground"
                                     }`}
                             >
@@ -200,8 +199,8 @@ export default function SetPassword() {
                             </Badge>
                             <Badge
                                 variant={hasNumber ? "default" : "outline"}
-                                className={`px-4 py-2 ${hasNumber
-                                    ? "bg-primary text-primary-foreground border-primary"
+                                className={`px-4 py-2.5 rounded-full text-sm leading-[100%] font-normal ${hasNumber
+                                    ? "bg-primary/5 text-foreground border-primary"
                                     : "border-border text-muted-foreground"
                                     }`}
                             >
@@ -209,8 +208,9 @@ export default function SetPassword() {
                             </Badge>
                             <Badge
                                 variant={hasUppercase ? "default" : "outline"}
-                                className={`px-4 py-2 ${hasUppercase
-                                    ? "bg-primary text-primary-foreground border-primary"
+                                className={`px-4 py-2.5 !rounded-full text-sm leading-[100%] font-normal ${hasUppercase
+                                    ? "bg-primary/5 text-foreground border-primary"
+
                                     : "border-border text-muted-foreground"
                                     }`}
                             >
@@ -218,8 +218,9 @@ export default function SetPassword() {
                             </Badge>
                             <Badge
                                 variant={hasLowercase ? "default" : "outline"}
-                                className={`px-4 py-2 ${hasLowercase
-                                    ? "bg-primary text-primary-foreground border-primary"
+                                className={`px-4 py-2.5 rounded-full text-sm leading-[100%] font-normal ${hasLowercase
+                                    ? "bg-primary/5 text-foreground border-primary"
+
                                     : "border-border text-muted-foreground"
                                     }`}
                             >
@@ -230,26 +231,19 @@ export default function SetPassword() {
                         <Button
                             type="submit"
                             disabled={!allRequirementsMet}
-                            className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted"
+                            size={"md"}
+                            className="w-full"
                         >
-                            Continue
-                            <svg
-                                className="ml-2 h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
+                            Save Password
                         </Button>
 
-                        <button
+                        {/* <button
                             type="button"
                             onClick={handleSkip}
                             className="w-full text-center text-primary hover:underline font-medium"
                         >
                             Skip for now
-                        </button>
+                        </button> */}
                     </form>
                 </Form>
             </div>

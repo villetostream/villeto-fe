@@ -5,7 +5,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Permission, PERMISSIONS, UserRole } from "@/lib/permissions";
 
@@ -22,6 +22,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSubButton,
+    SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -96,8 +97,9 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
     const location = usePathname();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-    const user = useAuthStore((state) => state.user);
+    const logout = useAuthStore((state) => state.logout);
     const hasPermission = useAuthStore((state) => state.hasPermission);
+    const router = useRouter()
 
     const toggleMenu = (label: string) => {
         setExpandedMenus(prev =>
@@ -211,12 +213,10 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
 
     return (
         <Sidebar collapsible="icon">
-            <SidebarHeader className="border-b border-sidebar-border">
-                <div className="flex items-center gap-2 px-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span className="text-primary-foreground font-bold text-sm">V</span>
-                    </div>
+            <SidebarHeader className="border-b border-sidebar-border py-4">
+                <div className="flex items-center  justify-end gap-2 px-2">
 
+                    <SidebarTrigger />
                 </div>
             </SidebarHeader>
 
@@ -252,7 +252,10 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
             <SidebarFooter className="border-t border-sidebar-border">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton tooltip="Log Out">
+                        <SidebarMenuButton onClick={() => {
+                            logout()
+                            router.push("/login")
+                        }} tooltip="Log Out">
                             <Logout />
                             <span>Log Out</span>
                         </SidebarMenuButton>

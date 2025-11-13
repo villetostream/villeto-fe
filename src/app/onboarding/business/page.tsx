@@ -1,64 +1,81 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Building2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SelectTrigger, SelectValue, SelectContent, SelectItem, Select } from "@/components/ui/select";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
+import { Building03FreeIcons, Building03Icon } from "@hugeicons/core-free-icons";
 
-const schema = z.object({
-    business_name: z.string().min(1, "Company name is required").min(2, "Must be at least 2 characters").max(100),
-    // admin_name: z.string().min(1, "Admin name is required").min(2, "Must be at least 2 characters").max(100).regex(/^[A-Za-z\s]+$/, "Only letters and spaces allowed"),
-    // admin_email: z.string().min(1, "Email is required").email("Invalid email address"),
-    // password: z.string().min(1, "Password is required").min(12, "Password must be at least 12 characters"),
-    contact_number: z.string().min(1, "Contact number is required").min(12, "Contact number must be at least 12 characters"),
-    country: z.string().min(1, "Please select a country"),
-    // currency: z.string().min(1, "Please select a currency"),
-    business_website: z.httpUrl().optional(),
-});
+import { HugeiconsIcon } from '@hugeicons/react';
+import { toast } from "sonner";
+import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
+import FormFieldSelect from "@/components/form fields/formFieldSelect";
+import FormFieldInput from "@/components/form fields/formFieldInput";
+import { useEffect } from "react";
+import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
+
+
 
 export default function Business() {
     const router = useRouter();
-    const { businessSnapshot, updateBusinessSnapshot } = useOnboardingStore();
+    const { businessSnapshot, updateBusinessSnapshot, preOnboarding } = useOnboardingStore();
+    const updateOnboarding = useUpdateOnboardingCompanyDetailsApi()
+    const loading = updateOnboarding.isPending;
+    console.log({ businessSnapshot }, { preOnboarding })
 
     const form = useForm({
-        resolver: zodResolver(schema), mode: 'onChange',
+        resolver: zodResolver(onboardingBusinessSchema), mode: 'onChange',
         defaultValues: {
-            business_name: businessSnapshot.businessName || "",
-            contact_number: businessSnapshot.contactNumber || "",
-            country: businessSnapshot.countryOfRegistration || "",
-            business_website: businessSnapshot.website || "",
+            business_name: preOnboarding?.companyName || "",
+            contactPhone: businessSnapshot.contactNumber || "",
+            countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+            websiteUrl: businessSnapshot.website || "",
         }
     });
 
-    async function onSubmit(data: any) {
+    useEffect(() => {
+        if (preOnboarding) {
+            form.reset({
+                business_name: preOnboarding?.companyName || "",
+                contactPhone: businessSnapshot.contactNumber || "",
+                countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+                websiteUrl: businessSnapshot.website || "",
+            });
+        }
+    }, [preOnboarding, businessSnapshot]);
+
+    async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
         try {
+            await updateOnboarding.mutateAsync(data);
+
             // Update the store with form data
             updateBusinessSnapshot({
                 businessName: data.business_name,
-                contactNumber: data.contact_number,
-                countryOfRegistration: data.country,
-                website: data.business_website,
+                contactNumber: data.contactPhone,
+                countryOfRegistration: data.countryOfRegistration,
+                website: data.websiteUrl,
             });
 
             router.push("/onboarding/leadership");
         }
-        catch (e) {
+        catch (e: any) {
             console.warn(e)
+            toast.error(e.response.data.message);
         }
     }
 
     return (
         <div className="space-y-8 flex flex-col  justify-center h-full">
             <div className="text-left ">
-                <div className="w-16 h-16 bg-primary-light rounded-full flex ">
-                    <Building2 className="h-8 w-8 text-primary" />
+                <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
+                    <HugeiconsIcon icon={Building03FreeIcons} className="size-16 text-primary" />
+
                 </div>
 
                 <OnboardingTitle title="Tell us more about your Business"
@@ -75,57 +92,36 @@ export default function Business() {
                         render={({ field }) => (
                             <FormItem>
 
-                                <FormLabel>Business Naame</FormLabel>
+                                <FormLabel>Business Name</FormLabel>
                                 <FormControl>
 
-                                    <Input  {...field} placeholder="Enter your business name" />
+                                    <Input readOnly disabled {...field} placeholder="Enter your business name" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )} />
-                    <FormField control={form.control} name="country"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Country of Registration</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}  >
-                                    <FormControl>
-                                        <SelectTrigger className="!w-full">
-                                            <SelectValue placeholder="Select country" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent className="!w-full">
-                                        <SelectItem value="KYA">Kenya</SelectItem>
-                                        <SelectItem value="GHN">Ghana</SelectItem>
-                                        <SelectItem value="NGA">Nigeria</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                    <FormFieldSelect
+                        control={form.control}
+                        name="countryOfRegistration"
+                        label="Country of Registration"
+                        values={[{ label: "Kenya", value: "KYA" }, { label: "Ghana", value: "GHN" }, { label: "Nigeria", value: "NGA" }]}
+                        placeholder="Select Country"
+                    />
 
-                    <FormField control={form.control} name="contact_number"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Contact Number</FormLabel>
-                                <FormControl>
+                    <FormFieldInput
+                        control={form.control}
+                        name="contactPhone"
+                        label="Contact Number"
+                        placeholder="Enter contact number"
 
-                                    <Input {...field} placeholder="Enter contact number" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                    />
 
-                    <FormField control={form.control} name="business_website"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Website</FormLabel>
-                                <FormControl>
-
-                                    <Input {...field} placeholder="Enter website link" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                    <FormFieldInput control={form.control} name="websiteUrl"
+                        label="Website"
+                        placeholder="Enter website link "
+                        type="url"
+                        description="start with 'https://'"
+                    />
 
                     {/* <FormField control={form.control} name="password"
                     render={({ field }) => (
@@ -164,7 +160,19 @@ export default function Business() {
                     <div className="w-full flex mt-10">
 
 
-                        <Button type="submit" className="!ml-auto min-w-[250px] max-w-[250px] self-end">Continue <ArrowRight className="h-4 w-4" /></Button>
+                        <Button
+                            type="submit"
+                            className="!ml-auto min-w-[250px] max-w-[250px] self-end"
+                            disabled={loading}
+                        >
+                            {loading ? "Creating..." : "Continue"}{" "}
+                            {loading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <ArrowRight className="h-4 w-4" />
+                            )}
+                        </Button>
+
                     </div>
                 </form>
             </Form>
