@@ -12,6 +12,8 @@ import { Form } from "../ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getFormSchema, LeadershipFormData } from "@/lib/schemas/schemas";
 import z from "zod";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Briefcase01Icon, MailAtSign01Icon, User03FreeIcons, UserAdd01FreeIcons } from "@hugeicons/core-free-icons";
 
 interface AddBeneficialOwnerModalProps {
     isOpen: boolean;
@@ -107,12 +109,15 @@ export const AddBeneficialOwnerModal = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleCancel}>
-            <DialogContent className="sm:w-2xl">
-                <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <div className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-muted-foreground" />
+            <DialogContent className="!sm:min-w-[600px] p-0">
+                <DialogHeader className="flex flex-row items-center justify-between space-y-0 p-10 pb-7 border-b border-b-muted">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-14 h-14 bg-muted/80 rounded-full flex items-center justify-center">
+                            <HugeiconsIcon icon={UserAdd01FreeIcons} className="size-8 text-foreground" />
+
+                        </div>
                         <div>
-                            <DialogTitle className="text-lg font-semibold">
+                            <DialogTitle className="text-xl leading-[100%] font-semibold">
                                 {isEditing ? 'Edit' : 'Add'} {isBeneficialOwner ? 'Beneficial Owner' : 'Officer'}
                             </DialogTitle>
                             <p className="text-sm text-muted-foreground">
@@ -125,7 +130,7 @@ export const AddBeneficialOwnerModal = ({
                     </div>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-10 pt-7">
                         {/* Name Field */}
                         <div className="grid md:grid-cols-2 gap-6">
 
@@ -134,12 +139,20 @@ export const AddBeneficialOwnerModal = ({
                                 control={control}
                                 placeholder={`Enter name of ${isBeneficialOwner ? 'beneficial owner' : 'officer'}`}
                                 label="First Name of user"
+                                prefixIcon={
+                                    <HugeiconsIcon icon={User03FreeIcons} className="size-4 text-muted-foreground" />
+
+                                }
                             />
                             <FormFieldInput
                                 name="lastName"
                                 control={control}
                                 placeholder={`Enter name of ${isBeneficialOwner ? 'beneficial owner' : 'officer'}`}
                                 label="Last Name of user"
+                                prefixIcon={
+                                    <HugeiconsIcon icon={User03FreeIcons} className="size-4 text-muted-foreground" />
+
+                                }
                             />
                         </div>
 
@@ -147,9 +160,13 @@ export const AddBeneficialOwnerModal = ({
 
                         <FormFieldInput
                             control={control}
-                            label={"role"}
+                            label={"Role"}
                             placeholder={`Enter ${isBeneficialOwner ? 'role' : 'position'}`}
                             name={"role"}
+                            prefixIcon={
+                                <HugeiconsIcon icon={Briefcase01Icon} className="size-4 text-muted-foreground" />
+
+                            }
                         />
 
 
@@ -162,7 +179,10 @@ export const AddBeneficialOwnerModal = ({
                             type="email"
                             placeholder="Enter email address"
                             label="Email Address"
+                            prefixIcon={
+                                <HugeiconsIcon icon={MailAtSign01Icon} className="size-4 text-muted-foreground" />
 
+                            }
                         />
 
 

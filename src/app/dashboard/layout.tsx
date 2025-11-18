@@ -1,4 +1,5 @@
 import DashboardLayoutContent from "@/components/dashboard/layout/DashboardLayoutContent";
+import QueryProvider from "@/providers/queryClientProvider";
 import { cookies } from "next/headers";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +14,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
             defaultOpen={defaultOpen}
             initialUserRole={userRole}
         >
-            {children}
+            <QueryProvider>
+
+                {children}
+            </QueryProvider>
         </DashboardLayoutContent>
     );
 }

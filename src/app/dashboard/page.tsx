@@ -235,7 +235,7 @@ export default function DashboardPage() {
                             trend="up"
                         />
                         <StatsCard
-                            title="Critical Policy Alerts"
+                            title="Paid"
                             value="10"
                             icon={<>
                                 <div className='p-1 flex items-center justify-center bg-[#38B2AC] rounded-full text-white'>

@@ -73,6 +73,8 @@
   --color-paid: var(--paid);
   --color-approved: var(--approved);
   --color-draft: var(--draft);
+
+  --color-primary-light: var(--primary-light);
 }
 
 :root {
@@ -85,6 +87,7 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.72 0.12 188);
   --primary-foreground: oklch(0.985 0 0);
+  --primary-light: oklch(0.7035 0.1242 184.62 / 0.0588);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -196,6 +199,7 @@
   --navy-light: oklch(0.265 0.06 276.2); /* darker navy-light */
   --navy-foreground: oklch(0.985 0 0); /* light text */
   --primary-glow: oklch(0.78 0.15 175.6); /* slightly dimmed glow */
+  --primary-light: oklch(0.7035 0.1242 184.62 / 0.0588);
 }
 
 @layer base {

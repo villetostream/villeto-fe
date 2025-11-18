@@ -13,6 +13,8 @@ interface FormFieldInputProps {
     description?: string;
     inputMode?: "search" | "text" | "none" | "tel" | "url" | "email" | "numeric" | "decimal" | undefined;
     showPasswordToggle?: boolean;
+    pattern?: string;
+    prefixIcon?: React.ReactNode; // Add nullable prefixIcon prop
 }
 
 const FormFieldInput = ({
@@ -23,7 +25,9 @@ const FormFieldInput = ({
     description,
     type = "text",
     inputMode,
-    showPasswordToggle = false
+    pattern,
+    showPasswordToggle = false,
+    prefixIcon = null // Default to null
 }: FormFieldInputProps) => {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -42,11 +46,17 @@ const FormFieldInput = ({
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
                         <div className="relative">
+                            {prefixIcon && (
+                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    {prefixIcon}
+                                </div>
+                            )}
                             <Input
-                                className='input pr-10'
+                                className={`input ${prefixIcon ? 'pl-10' : ''} ${showPasswordToggle && type === 'password' ? 'pr-10' : ''}`}
                                 type={inputType}
                                 placeholder={placeholder}
                                 inputMode={inputMode}
+                                pattern={pattern}
                                 {...field}
                             />
                             {showPasswordToggle && type === 'password' && (
