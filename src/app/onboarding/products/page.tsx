@@ -82,7 +82,7 @@ export default function ChooseProducts() {
 
             {/* Header */}
             <div className="text-left mb-10 ">
-                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
+                <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center mb-10">
                     <HugeiconsIcon icon={ProductLoadingIcon} className="size-14 text-primary" />
                 </div>
                 <OnboardingTitle title={"Choose your Villeto Product"} subtitle={"Villeto offers a wide array of products to choose from."} />

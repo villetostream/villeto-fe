@@ -12,6 +12,8 @@ import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { LeaderShipPayload, useUpdateOnboardingLeadersApi } from "@/actions/onboarding/update-leadership";
 import { toast } from "sonner";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PencilEdit02FreeIcons, UserGroup03FreeIcons, UserGroup03Icon } from "@hugeicons/core-free-icons";
 
 interface Person {
     id: string;
@@ -116,7 +118,7 @@ export function OwnerCard({ owner, onEdit, onDelete, type, showIcons = true }: O
                 {/* Actions */}
                 {showIcons && (<div className="flex items-center gap-2 shrink-0">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(owner.id)}>
-                        <Edit className="h-4 w-4" />
+                        <HugeiconsIcon icon={PencilEdit02FreeIcons} className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="ghost"
@@ -359,8 +361,9 @@ export default function Leadership() {
     return (
         <div className="h-full flex-col flex">
             <div className="text-left space-y-4">
-                <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto">
-                    <Users className="h-8 w-8 text-primary" />
+                <div className=" size-24 flex items-center justify-center bg-primary-light rounded-full mb-10">
+                    <HugeiconsIcon icon={UserGroup03FreeIcons} className="size-16 text-primary" />
+
                 </div>
 
                 <OnboardingTitle

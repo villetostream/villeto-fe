@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const steps = [
     { id: 1, title: "Welcome to Villeto", key: "onboarding" },
@@ -13,11 +13,24 @@ const steps = [
     { id: 6, title: "Review & Confirmation", key: "review" },
 ];
 
-
-
 export const OnboardingSidebar = () => {
     const pathName = usePathname();
+    const router = useRouter();
+
     console.log("Current Pathname:", pathName);
+
+    // Function to handle step click
+    const handleStepClick = (stepKey: string, stepId: number, currentStep: number) => {
+        // Only navigate if the step is completed (stepId < currentStep)
+        if (stepId < currentStep) {
+            if (stepId == 1) {
+                router.push(`/onboarding`);
+                return;
+            }
+            router.push(`/onboarding/${stepKey}`);
+        }
+    };
+
     return (
         <div className="flex-1 max-w-[660px] h-full bg-contain bg-no-repeat rounded-[30px] relative overflow-hidden" style={{ backgroundImage: "url('/onboarding-layout.webp')" }}>
 
@@ -37,11 +50,20 @@ export const OnboardingSidebar = () => {
                         const isCurrent = step.key === pathName?.split("/").pop();
                         const currentStep = steps.find(s => s.key === pathName?.split("/").pop())?.id || 0;
                         const isCompleted = step.id < currentStep;
-                        console.log(pathName?.split("/").pop(), step.key, { currentStep }, { isCurrent }, { isCompleted });
                         const isUpcoming = currentStep + 1;
 
                         return (
-                            <div key={step.id} className="flex items-start gap-5 ">
+                            <div
+                                key={step.id}
+                                className={cn(
+                                    "flex items-start gap-5",
+                                    {
+                                        "cursor-pointer hover:opacity-80 transition-opacity": isCompleted,
+                                        "cursor-default": !isCompleted
+                                    }
+                                )}
+                                onClick={() => handleStepClick(step.key, step.id, currentStep)}
+                            >
                                 {/* Step indicator */}
                                 <div className="flex flex-col items-center gap-1.5">
                                     <div
@@ -53,12 +75,10 @@ export const OnboardingSidebar = () => {
                                             }
                                         )}
                                     >
-
                                         <div className={cn("w-5 h-5 rounded-full bg-gray-600 border border-gray-600", {
                                             "bg-navy text-white": isCompleted,
                                             "bg-primary text-white border-primary border": (isUpcoming != step.id) && isCurrent,
                                         })} />
-
                                     </div>
                                     {/* Connector line */}
                                     {index < steps.length - 1 && (
@@ -74,9 +94,7 @@ export const OnboardingSidebar = () => {
                                     <div
                                         className={cn(
                                             "text-lg leading-[100%] font-semibold ",
-
                                             "text-white"
-
                                         )}
                                     >
                                         {step.title}

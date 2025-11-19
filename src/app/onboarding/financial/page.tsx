@@ -47,7 +47,7 @@ export default function FinancialPulse() {
 
                 {/* Header */}
                 <div className="text-left mb-12">
-                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-10">
+                    <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center mb-10">
                         <HugeiconsIcon icon={Invoice02Icon} className="size-16 text-primary" />
                     </div>
                     <OnboardingTitle title={"Company Expenditure"} subtitle={"Manage how much your company spends over a period of time"} />

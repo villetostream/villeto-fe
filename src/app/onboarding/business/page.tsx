@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
-import { Building03FreeIcons, Building03Icon } from "@hugeicons/core-free-icons";
+import { Building03FreeIcons } from "@hugeicons/core-free-icons";
 
 import { HugeiconsIcon } from '@hugeicons/react';
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ export default function Business() {
     const form = useForm({
         resolver: zodResolver(onboardingBusinessSchema), mode: 'onChange',
         defaultValues: {
-            business_name: preOnboarding?.companyName || "",
+            business_name: preOnboarding?.companyName || "hello",
             contactPhone: businessSnapshot.contactNumber || "",
             countryOfRegistration: businessSnapshot.countryOfRegistration || "",
             websiteUrl: businessSnapshot.website || "",
@@ -113,13 +113,12 @@ export default function Business() {
                         name="contactPhone"
                         label="Contact Number"
                         placeholder="Enter contact number"
-
                     />
 
                     <FormFieldInput control={form.control} name="websiteUrl"
                         label="Website"
                         placeholder="Enter website link "
-                        type="url"
+                        type="text"
                         description="start with 'https://'"
                     />
 

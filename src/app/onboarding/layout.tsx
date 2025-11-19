@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { steps } from "@/components/onboarding/stepsConfig";
+
 import { Metadata } from "next";
 import { OnboardingSidebar } from "@/components/onboarding/_shared/OnboardingSidebar";
 import QueryProvider from "@/providers/queryClientProvider";
@@ -13,13 +12,13 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex p-5 gap-5 bg-background h-screen overflow-hidden">
       <OnboardingSidebar />
-      <div className="flex-1  p-8 px-[5.43777%] w-full h-full bg-white overflow-y-auto">
-        <QueryProvider>
+      <QueryProvider>
+        <div className="flex-1  p-8 px-[5.43777%] w-full h-full min-[]: bg-white overflow-y-auto">
 
           {children}
-        </QueryProvider>
 
-      </div>
+        </div>
+      </QueryProvider>
     </div>
   );
 }

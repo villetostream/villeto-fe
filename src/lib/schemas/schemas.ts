@@ -15,16 +15,132 @@ export const registrationSchema = z.object({
 });
 
 
+// Custom HTTP URL validator with optional protocol but required valid domain
+export const customHttpUrlSchema = z.string()
+    .optional()
+    .refine((url) => {
+        if (!url) return true; // Optional field, empty is valid
+
+        // Basic length check
+        if (url.length < 3) return false;
+
+        // Reject if only protocol is provided
+        if (url === 'https://' || url === 'http://') return false;
+
+        try {
+            // Try to parse as-is first (might have protocol)
+            let parsedUrl: URL;
+            try {
+                parsedUrl = new URL(url);
+            } catch {
+                // If that fails, try with https:// prefix
+                parsedUrl = new URL(`https://${url}`);
+            }
+
+            const hostname = parsedUrl.hostname;
+
+            // Domain validation regex
+            const domainRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+
+            // Remove www. if present for validation
+            const domainToValidate = hostname.replace(/^www\./, '');
+
+            // Validate the domain format
+            if (!domainRegex.test(domainToValidate)) {
+                return false;
+            }
+
+            // Additional check: domain should have at least one dot (except if it's localhost)
+            if (!hostname.includes('.') && hostname !== 'localhost') {
+                return false;
+            }
+
+            return true;
+        } catch {
+            return false;
+        }
+    }, "Please enter a valid URL (e.g., example.com, www.example.com)")
+    .transform((url) => {
+        if (!url) return url;
+
+        try {
+            // Try to parse as-is first
+            new URL(url);
+            return url; // Already has protocol
+        } catch {
+            // Add https:// protocol if missing
+            return `https://${url}`;
+        }
+    });
+
+// Updated onboarding business schema using the custom validator
 export const onboardingBusinessSchema = z.object({
     business_name: z.string().min(1, "Company name is required").min(2, "Must be at least 2 characters").max(100).optional(),
-    // admin_name: z.string().min(1, "Admin name is required").min(2, "Must be at least 2 characters").max(100).regex(/^[A-Za-z\s]+$/, "Only letters and spaces allowed"),
-    // admin_email: z.string().min(1, "Email is required").email("Invalid email address"),
-    // password: z.string().min(1, "Password is required").min(12, "Password must be at least 12 characters"),
     contactPhone: z.string().min(1, "Contact number is required").min(12, "Contact number must be at least 12 characters"),
     countryOfRegistration: z.string().min(1, "Please select a country"),
-    // currency: z.string().min(1, "Please select a currency"),
-    websiteUrl: z.httpUrl().optional(),
+    websiteUrl: customHttpUrlSchema,
 });
+
+// Alternative version with more strict domain validation
+export const strictCustomHttpUrlSchema = z.string()
+    .optional()
+    .refine((url) => {
+        if (!url) return true;
+
+        if (url === 'https://' || url === 'http://') return false;
+
+        try {
+            let hostname: string;
+
+            try {
+                const parsedWithProtocol = new URL(url);
+                hostname = parsedWithProtocol.hostname;
+            } catch {
+                const parsedWithHttps = new URL(`https://${url}`);
+                hostname = parsedWithHttps.hostname;
+            }
+
+            // More comprehensive domain validation
+            const domainRegex = /^(?!-)([A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,63}$/;
+
+            // Remove www. for validation
+            const cleanHostname = hostname.replace(/^www\./, '');
+
+            // Must have at least one dot and valid TLD
+            if (!cleanHostname.includes('.') || cleanHostname.endsWith('.')) {
+                return false;
+            }
+
+            // Check each part of the domain
+            const parts = cleanHostname.split('.');
+            if (parts.length < 2) return false;
+
+            // Validate each part
+            for (const part of parts) {
+                if (part.length < 1 || part.length > 63) return false;
+                if (!/^[a-zA-Z0-9-]+$/.test(part)) return false;
+                if (part.startsWith('-') || part.endsWith('-')) return false;
+            }
+
+            // Last part (TLD) should be at least 2 characters
+            const tld = parts[parts.length - 1];
+            if (tld.length < 2) return false;
+
+            return true;
+        } catch {
+            return false;
+        }
+    }, "Please enter a valid domain (e.g., example.com, sub.example.co.uk)")
+    .transform((url) => {
+        if (!url) return url;
+
+        try {
+            new URL(url);
+            return url;
+        } catch {
+            return `https://${url}`;
+        }
+    });
 
 // Base schema with common fields
 const baseSchema = z.object({
