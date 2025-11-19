@@ -15,8 +15,6 @@ export const registrationSchema = z.object({
 });
 
 
-import { z } from "zod";
-
 // Custom HTTP URL validator with optional protocol but required valid domain
 export const customHttpUrlSchema = z.string()
     .optional()
