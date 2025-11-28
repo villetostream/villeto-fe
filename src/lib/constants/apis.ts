@@ -10,6 +10,16 @@ export const API_KEYS = {
   },
   AUTH: {
     LOGIN: "auth/login",
-    CHECK: "users/"
+    CHECK: "users/",
+    PERMISSIONS: "auth/permissions/"
+  },
+  DEPARTMENT: {
+    DEPARTMENTS: "departments/"
+  },
+  ROLE: {
+    ROLES: "roles/"
+  },
+  USER: {
+    USERS: "users/"
   }
 } as const;

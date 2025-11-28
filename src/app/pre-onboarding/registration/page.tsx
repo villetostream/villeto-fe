@@ -16,6 +16,7 @@ import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { useStartOnboardingApi } from "@/actions/pre-onboarding/get-started";
 import { toast } from "sonner";
 import { registrationSchema } from "@/lib/schemas/schemas";
+import FormFieldInput from "@/components/form fields/formFieldInput";
 
 
 type FormData = z.infer<typeof registrationSchema>;
@@ -94,53 +95,26 @@ export default function GetStarted() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 my-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField
+                            <FormFieldInput
                                 control={form.control}
                                 name="contactFirstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            First Name<span className="text-destructive">*</span>
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter first name" {...field} className="h-12" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="First Name"
+                                placeholder="Enter first name"
                             />
 
-                            <FormField
+                            <FormFieldInput
                                 control={form.control}
                                 name="contactLastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            Last Name<span className="text-destructive">*</span>
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter last name" {...field} className="h-12" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label="Last Name"
+                                placeholder="Enter last name"
                             />
                         </div>
 
-                        <FormField
+                        <FormFieldInput
                             control={form.control}
                             name="companyName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        Company Name<span className="text-destructive">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter your official company name" {...field} className="h-12" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            label="Company Name"
+                            placeholder="Enter your official company name"
                         />
 
                         <FormField
@@ -241,8 +215,8 @@ export default function GetStarted() {
                             </Button>
                         </div>
                     </form>
-                </Form>
-            </div>
-        </div>
+                </Form >
+            </div >
+        </div >
     );
 };

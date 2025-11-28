@@ -207,3 +207,35 @@ export const loginSchema = z.object({
         .regex(/[0-9]/, "Password must contain at least one number")
         .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
 });
+
+
+
+
+
+// department schema
+export const createDepartmentSchema = z.object({
+    departmentName: z.string().min(1, "Department name is required"),
+    departmentCode: z.string().optional(),
+    departmentManager: z.string().optional(),
+    reportsTo: z.string().optional(),
+    status: z.union([z.boolean(), z.string()])
+        .transform(val => {
+            if (typeof val === 'boolean') return val;
+            if (val === 'false') return false;
+            return true; // default to true for any other string
+        })
+        .default(true),
+    description: z.string().min(1, "Description is required"),
+    id: z.string().optional().nullable()
+});
+
+//role schema
+
+export const roleSchema = z.object({
+    name: z.string().min(1, "Role name is required"),
+    description: z.string().optional(),
+    isActive: z.boolean(),
+    permissionIds: z.array(z.string()).default([]),
+});
+
+export type RoleFormData = z.infer<typeof roleSchema>;

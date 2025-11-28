@@ -39,3 +39,5 @@ export const hotelFormSchema = z.object({
 
 export type FlightFormData = z.infer<typeof flightFormSchema>;
 export type HotelFormData = z.infer<typeof hotelFormSchema>;
+
+
