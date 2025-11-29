@@ -1,7 +1,20 @@
-import React from 'react'
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
-import { Path, UseFormReturn } from 'react-hook-form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import React from "react";
+import {
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "../ui/form";
+import { Path } from "react-hook-form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../ui/select";
 
 interface FormFieldSelectProps<T extends Record<string, any>> {
     placeholder: string;
@@ -18,7 +31,7 @@ const FormFieldSelect = <T extends Record<string, any>>({
     label,
     description,
     values,
-    placeholder
+    placeholder,
 }: FormFieldSelectProps<T>) => {
     return (
         <FormField
@@ -27,30 +40,36 @@ const FormFieldSelect = <T extends Record<string, any>>({
             render={({ field }) => (
                 <FormItem>
                     <FormLabel>{label}</FormLabel>
+
                     <FormControl>
                         <Select
-                            {...field}
+                            onValueChange={(val) => {
+                                // Convert string back to original type
+                                const original = values.find((v) => v.value.toString() === val)
+                                    ?.value;
 
-                            onValueChange={field.onChange}
-                            value={field.value?.toString()} // Convert to string for consistent comparison
-                            defaultValue={field.value?.toString()}
+                                field.onChange(original ?? val);
+                            }}
+                            value={field.value?.toString()}
                         >
                             <SelectTrigger className="input capitalize w-full">
                                 <SelectValue placeholder={placeholder} />
                             </SelectTrigger>
+
                             <SelectContent>
                                 {values.map((item) => (
                                     <SelectItem
-                                        value={item.value.toString()} // Convert to string for consistent comparison
-                                        key={item.value.toString()} // Use value as key, converted to string
-                                        className='capitalize text-black'
+                                        key={item.value.toString()}
+                                        value={item.value.toString()}
+                                        className="capitalize text-black"
                                     >
-                                        {item.label} {/* Render the label, not the object */}
+                                        {item.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </FormControl>
+
                     {description && <FormDescription>{description}</FormDescription>}
                     <FormMessage />
                 </FormItem>

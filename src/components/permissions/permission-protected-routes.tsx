@@ -20,7 +20,7 @@ const withPermissions = (
     const hasPermissionForRoute = (permissions: string[]) => {
       return permissions?.some((permission) =>
         userPermissions?.some((userPermission) =>
-          userPermission.includes(permission)
+          userPermission.name.includes(permission)
         )
       );
     };

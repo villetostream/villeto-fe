@@ -160,16 +160,7 @@ function DataTable<Data extends object, Value = unknown>(
     manualPagination,
     manualSorting,
     manualFiltering,
-    onSortingChange: (updater) => {
-      const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
-      setSorting(newSorting);
-      onSortingChange?.(newSorting);
-    },
-    onColumnFiltersChange: (updater) => {
-      const newFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
-      setColumnFilters(newFilters);
-      onColumnFiltersChange?.(newFilters);
-    },
+    onSortingChange: setSorting,
     onColumnVisibilityChange: (updater) => {
       const newVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
       setColumnVisibility(newVisibility);
@@ -195,35 +186,47 @@ function DataTable<Data extends object, Value = unknown>(
     return data.filter((row) => selectedDataIds.has(getRowId(row)));
   }, [data, selectedDataIds, getRowId]);
 
-  // Sync row selection with selectedDataIds
+  // Replace your useEffect hooks with this optimized version:
+
+  // Sync row selection with selectedDataIds (one-way sync from props to state)
   useEffect(() => {
+    if (!enableRowSelection || !setSelectedDataIds) return;
+
     const newSelection: RowSelectionState = {};
     data.forEach((row, index) => {
       if (selectedDataIds.has(getRowId(row))) {
         newSelection[index] = true;
       }
     });
-    setRowSelection(newSelection);
-    console.log("selecteddataId,data,getRowId")
 
-  }, [data]);
+    // Only update if there's an actual change to prevent loops
+    if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
+      setRowSelection(newSelection);
+    }
+  }, [data, selectedDataIds, getRowId]); // Remove rowSelection from dependencies
 
-  // Update selectedDataIds when row selection changes
+  // Update selectedDataIds when row selection changes (one-way sync from state to props)
   useEffect(() => {
-    if (enableRowSelection && setSelectedDataIds) {
-      const newSelectedIds = new Set<string>();
-      Object.keys(rowSelection).forEach((index) => {
-        if (rowSelection[parseInt(index)]) {
-          const row = data[parseInt(index)];
-          if (row) {
-            newSelectedIds.add(getRowId(row));
-          }
+    if (!enableRowSelection || !setSelectedDataIds) return;
+
+    const newSelectedIds = new Set<string>();
+    Object.keys(rowSelection).forEach((index) => {
+      if (rowSelection[parseInt(index)]) {
+        const row = data[parseInt(index)];
+        if (row) {
+          newSelectedIds.add(getRowId(row));
         }
-      });
+      }
+    });
+
+    // Only update if there's an actual change to prevent loops
+    const currentIds = Array.from(selectedDataIds).sort().join(',');
+    const newIds = Array.from(newSelectedIds).sort().join(',');
+
+    if (currentIds !== newIds) {
       setSelectedDataIds(newSelectedIds);
     }
-    console.log("rowselection,data,enableRowSelection,getRowId")
-  }, [data, enableRowSelection]);
+  }, [rowSelection, data, getRowId]); // Remove selectedDataIds and setSelectedDataIds from dependencies
 
   const handleRowChange = useCallback(
     (e: { value: string[] }) => {
@@ -328,7 +331,7 @@ function DataTable<Data extends object, Value = unknown>(
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-2.5 whitespace-nowrap text-left">
+                      <TableCell key={cell.id} className="px-4 py-2.5 whitespace-nowrap text-left text-[#181D27]">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -338,10 +341,10 @@ function DataTable<Data extends object, Value = unknown>(
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={table.getVisibleFlatColumns().length}
-                    className="text-center py-20 text-lg"
+                    className="text-center py-20 text-lg hover:bg-transparent"
                   >
                     Oops, No data available!!!
                   </TableCell>
@@ -362,8 +365,8 @@ function DataTable<Data extends object, Value = unknown>(
       </div>
       {paginationProps?.total ? (
         <>
-          <div className="flex flex-col md:flex-row items-center justify-between bg-gray-50 py-2 px-4 rounded-b-md w-full mt-[-6px]">
-            <div className="w-full md:w-auto mb-2 md:mb-0">
+          <div className="flex  md:flex-row items-center justify-between bg-gray-50 py-2 px-4 rounded-b-md w-full mt-[-6px]">
+            <div className="w-full sm:w-auto mb-2 md:mb-0">
               <Select
                 value={String(paginationProps.pageSize)}
                 onValueChange={(value) => { handleRowChange({ value: [value] }); paginationProps.setPage(1) }}

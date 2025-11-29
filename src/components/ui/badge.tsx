@@ -27,6 +27,8 @@ const badgeVariants = cva(
         draft:
           ` bg-draft/5 text-draft border border-transparent`,
         paid: "bg-paid/5 text-paid border border-transparent",
+        active: "bg-paid/5 text-green-400 border border-transparent",
+        inactive: "bg-rejected/5 text-destructive border border-transparent",
 
       },
     },

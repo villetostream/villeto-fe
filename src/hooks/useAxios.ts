@@ -36,7 +36,7 @@ export function useAxios(): AxiosInstance {
           originalRequest._retry = true;
           try {
             const refreshRes = await axios.post(
-              `${BASEURL}auth/refresh-token`
+              `${BASEURL}auth/refresh`
             );
             const newToken = refreshRes.data.data.access_token;
             // update store

@@ -1,3 +1,9 @@
 export const QUERY_KEYS = {
-  ONBOARDINGDETAILS: "onboarding-details"
+  ONBOARDINGDETAILS: "onboarding-details",
+  DEPARTMENTS: "all-departments",
+  DEPARTMENT: "department",
+  PERMISSIONS: "all-permissions",
+  ROLES: "roles",
+  ROLE: "role",
+  USERS: "users"
 } as const;

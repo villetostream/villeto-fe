@@ -110,7 +110,7 @@ export const AddBeneficialOwnerModal = ({
     return (
         <Dialog open={isOpen} onOpenChange={handleCancel}>
             <DialogContent className="!sm:min-w-[600px] p-0">
-                <DialogHeader className="flex flex-row items-center justify-between space-y-0 p-10 pb-7 border-b border-b-muted">
+                <DialogHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-7 border-b border-b-muted">
                     <div className="flex items-center gap-2.5">
                         <div className="w-14 h-14 bg-muted/80 rounded-full flex items-center justify-center">
                             <HugeiconsIcon icon={UserAdd01FreeIcons} className="size-8 text-foreground" />
@@ -130,7 +130,7 @@ export const AddBeneficialOwnerModal = ({
                     </div>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-10 pt-7">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-5 pt-4">
                         {/* Name Field */}
                         <div className="grid md:grid-cols-2 gap-6">
 
@@ -169,9 +169,6 @@ export const AddBeneficialOwnerModal = ({
                             }
                         />
 
-
-
-
                         {/* Email Field */}
                         <FormFieldInput
                             name="email"
@@ -181,10 +178,8 @@ export const AddBeneficialOwnerModal = ({
                             label="Email Address"
                             prefixIcon={
                                 <HugeiconsIcon icon={MailAtSign01Icon} className="size-4 text-muted-foreground" />
-
                             }
                         />
-
 
                         {/* Ownership Percentage - Only for Beneficial Owners */}
                         {isBeneficialOwner && (
@@ -242,6 +237,7 @@ export const AddBeneficialOwnerModal = ({
                                 type="button"
                                 variant="ghostNavy"
                                 onClick={handleCancel}
+                                size={"md"}
                                 className="flex items-center gap-2 flex-1"
                             >
                                 Cancel
@@ -250,6 +246,7 @@ export const AddBeneficialOwnerModal = ({
 
                             <Button
                                 type="submit"
+                                size={"md"}
                                 disabled={isBeneficialOwner && (ownershipValue ?? 0) > maxOwnership}
                                 className="flex items-center gap-2 flex-1"
                             >

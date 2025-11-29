@@ -21,6 +21,7 @@ import CircleProgress from '@/components/HalfProgressCircle';
 import { loginSchema } from '@/lib/schemas/schemas';
 import { useLogin } from '@/actions/auth/auth-login';
 import { toast } from 'sonner';
+import { AxiosError } from 'axios';
 
 
 type FormData = z.infer<typeof loginSchema>;
@@ -33,6 +34,8 @@ export default function LoginPage() {
     const isLoading = login.isPending;
     const setUser = useAuthStore().login;
     const setAccessToken = useAuthStore().setAccessToken;
+    const setUserPermissions = useAuthStore().setUserPermissions;
+    const [error, setError] = useState<string | null>(null)
 
 
     const form = useForm<FormData>({
@@ -45,15 +48,18 @@ export default function LoginPage() {
 
     const onSubmit = async (data: FormData) => {
         try {
+            setError(null);
             const response = await login.mutateAsync(data);
             console.log({ response })
-            setAccessToken(response.accessToken)
-            setUser(response.user as User)
+            setAccessToken(response.data.accessToken)
+            setUser(response.data.user as User)
+            setUserPermissions(response.data.user?.role.permissions)
             router.push('/dashboard');
 
         } catch (err: any) {
             console.log({ err })
-            toast.error(err.message)
+            setError(((err as AxiosError).response?.data as any)?.message as string ?? "")
+            // toast.error(err.message)
         }
     };
 
@@ -80,6 +86,7 @@ export default function LoginPage() {
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            {error && <div className='text-center text-sm text-destructive bg-destructive/5 p-3'>{error}</div>}
                             <FormFieldInput
                                 label='Password'
                                 placeholder="Enter your password"

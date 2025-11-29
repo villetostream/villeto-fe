@@ -2,12 +2,9 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Permission } from "@/actions/auth/auth-permissions";
 
-interface Permission {
-    id: string;
-    label: string;
-    enabled: boolean;
-}
+
 
 interface PermissionGroupProps {
     name: string;
@@ -26,23 +23,19 @@ export const PermissionGroup = ({ name, permissions, onPermissionToggle }: Permi
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-                <div className="space-y-3 p-4 border-l-2 border-border ml-4 mt-2">
+                <div className="space-y-3 px-4 border-l-2 border-border ml-4 mt-2">
                     {permissions.map((permission) => (
                         <div
-                            key={permission.id}
-                            className="flex items-center justify-between py-2"
+                            key={permission.name}
+                            className="flex items-center justify-between "
                         >
                             <div>
-                                <p className="font-medium text-sm">{permission.label}</p>
-                                {permission.id === "view-users" && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        Access and review all submitted expense reports.
-                                    </p>
-                                )}
+                                <p className="font-medium text-sm">{permission.name}</p>
+
                             </div>
                             <Switch
                                 checked={permission.enabled}
-                                onCheckedChange={() => onPermissionToggle(permission.id)}
+                                onCheckedChange={() => onPermissionToggle(permission.permissionId)}
                             />
                         </div>
                     ))}

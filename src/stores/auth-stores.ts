@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import Cookies from 'js-cookie';
-
-import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/permissions';
+import { Permission } from '@/actions/auth/auth-permissions';
+import { Role } from '@/actions/role/get-all-roles';
+import { Department } from '@/actions/departments/get-all-departments';
 
 export interface User {
     createdAt: Date,
@@ -15,7 +16,12 @@ export interface User {
     loginCount: number,
     isActive: boolean,
     phone?: string | number,
-    role: string
+    ownershipPercentage?: number,
+    companyId?: string,
+    department?: Department,
+    departmentId?: string | null,
+    position: string,
+    role: Role
 }
 
 interface AuthState {
@@ -23,9 +29,10 @@ interface AuthState {
     accessToken: string | null;
     isLoading: boolean;
     setAccessToken: (token: string) => void;
+    setUserPermissions: (token: Permission[]) => void;
     login: (data: User) => void;
     logout: () => void;
-    hasPermission: (permission: Permission) => boolean;
+    hasPermission: (permission: string | string[]) => boolean;
     hydrate: () => void;
     userPermissions: Permission[];
     getUserPermissions: () => Permission[];
@@ -47,7 +54,11 @@ export const useAuthStore = create<AuthState>()(
             setAccessToken: (data: string) => {
                 set({ accessToken: data });
             },
+            setUserPermissions: (data: Permission[]) => {
+                set({ userPermissions: data });
+            },
             login: (data: User) => {
+                console.log({ data })
                 set({ user: data });
             },
 
@@ -56,9 +67,15 @@ export const useAuthStore = create<AuthState>()(
                 Cookies.remove('auth-storage');
             },
 
-            hasPermission: (permission: Permission): boolean => {
+            hasPermission: (permission: string | string[]): boolean => {
                 const { userPermissions } = get();
-                return userPermissions.includes(permission);
+                const permissions = Array.isArray(permission) ? permission : [permission];
+
+                return permissions.every(perm =>
+                    userPermissions.some(userPerm =>
+                        userPerm.name.includes(perm)
+                    )
+                );
             },
 
             hydrate: () => {
@@ -67,27 +84,15 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: 'auth-storage',
-            storage: createJSONStorage(() => ({
-                getItem: (name) => {
-                    if (typeof window === 'undefined') return null;
-                    return Cookies.get(name) ?? null;
-                },
-                setItem: (name, value) => {
-                    if (typeof window === 'undefined') return;
-                    Cookies.set(name, value, { path: '/' });
-                },
-                removeItem: (name) => {
-                    if (typeof window === 'undefined') return;
-                    Cookies.remove(name);
-                },
-            })),
+            storage: createJSONStorage(() => sessionStorage),
             onRehydrateStorage: () => (state) => {
                 if (state) {
-                    state.isLoading = false;
-                    // Recalculate permissions on rehydration
-                    if (state.user) {
-                        state.userPermissions = ROLE_PERMISSIONS[state.user.role as UserRole] || [];
-                    }
+                    console.log({ state })
+                    state.hydrate();
+                    // // Recalculate permissions on rehydration
+                    // if (state.user) {
+                    //     state.userPermissions = [];
+                    // }
                 }
             },
         }
@@ -95,7 +100,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Optional helpers
-export const useHasPermission = (permission: Permission) => {
+export const useHasPermission = (permission: string) => {
     return useAuthStore(state => state.hasPermission(permission));
 };
 

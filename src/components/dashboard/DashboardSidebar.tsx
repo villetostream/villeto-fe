@@ -7,7 +7,6 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Permission, PERMISSIONS, UserRole } from "@/lib/permissions";
 
 // Shadcn components
 import {
@@ -28,12 +27,13 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useAuthStore } from "@/stores/auth-stores";
 import { Menu, Cards, Moneys, Profile2User, WalletMoney, Shop, LampOn, StatusUp, Messages, Setting2, Logout } from 'iconsax-reactjs';
+import { Permission } from "@/actions/auth/auth-permissions";
 
 interface NavItem {
     icon: any;
     label: string;
     href: string;
-    permission?: string;
+    permission: string[];
     subItems?: SubItem[];
     badge?: string;
     section: string
@@ -42,16 +42,16 @@ interface NavItem {
 interface SubItem {
     label: string;
     href: string;
-    permission: string;
+    permission: string[];
 }
 
 const navigationItems: NavItem[] = [
-    { icon: Menu, label: "Dashboard", href: "/dashboard", permission: PERMISSIONS.VIEW_DASHBOARD, section: "MAIN MENU" },
+    { icon: Menu, label: "Dashboard", href: "/dashboard", permission: [], section: "MAIN MENU" },
     {
         icon: Moneys,
         label: "Expenses",
-        permission: PERMISSIONS.VIEW_EXPENSES,
-        href: "/dashboard/expenses",
+        permission: [],
+        href: "/expenses",
         section: "MAIN MENU",
         // subItems: [
         //     { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
@@ -59,28 +59,28 @@ const navigationItems: NavItem[] = [
         //     { label: "Travel", href: "/dashboard/expenses/travel", permission: PERMISSIONS.VIEW_TRAVEL_EXPENSES },
         // ],
     },
-    { icon: Cards, label: "Cards", href: "/dashboard/cards", permission: PERMISSIONS.VIEW_CARDS, section: "MAIN MENU" },
-    { icon: WalletMoney, label: "Accounting", href: "/dashboard/accounting", permission: PERMISSIONS.VIEW_ACCOUNTING, section: "MANAGEMENT" },
-    { icon: Profile2User, label: "People", href: "/dashboard/people", permission: PERMISSIONS.VIEW_PEOPLE, section: "MANAGEMENT" },
-    { icon: Shop, label: "Vendors", href: "/dashboard/vendors", permission: PERMISSIONS.VIEW_VENDORS, section: "MANAGEMENT" },
-    { icon: LampOn, label: "Insights", href: "/dashboard/insights", permission: PERMISSIONS.VIEW_INSIGHTS, section: "ANALYTICS" },
-    { icon: StatusUp, label: "Analytics", href: "/dashboard/insights", permission: PERMISSIONS.VIEW_INSIGHTS, section: "ANALYTICS" },
+    { icon: Cards, label: "Cards", href: "/cards", permission: [""], section: "MAIN MENU" },
+    { icon: WalletMoney, label: "Accounting", href: "/accounting", permission: [""], section: "MANAGEMENT" },
+    { icon: Profile2User, label: "People", href: "/people", permission: ["read:users", "read:roles", "read:departments"], section: "MANAGEMENT" },
+    { icon: Shop, label: "Vendors", href: "/vendors", permission: [""], section: "MANAGEMENT" },
+    { icon: LampOn, label: "Insights", href: "/insights", permission: [], section: "ANALYTICS" },
+    { icon: StatusUp, label: "Analytics", href: "/insights", permission: [], section: "ANALYTICS" },
     // { icon: Users, label: "Spend programs", href: "/dashboard/spend-programs", permission: PERMISSIONS.VIEW_SPEND_PROGRAMS },
     // { icon: Building, label: "Procurement", href: "/dashboard/procurement", permission: PERMISSIONS.VIEW_PROCUREMENT },
     // { icon: FileText, label: "Bill Pay", href: "/dashboard/bill-pay", permission: PERMISSIONS.VIEW_BILL_PAY },
-    { icon: Messages, label: "Inbox", href: "/dashboard/inbox", permission: PERMISSIONS.VIEW_INBOX, section: "OTHERS" },
+    { icon: Messages, label: "Inbox", href: "/inbox", permission: [], section: "OTHERS" },
     {
         icon: Setting2,
         label: "Settings",
-        href: "/dashboard/settings",
-        permission: PERMISSIONS.VIEW_SETTINGS,
+        href: "/settings",
+        permission: [],
         section: "OTHERS",
         subItems: [
-            { label: "Expense Policy", href: "/dashboard/settings/expense-policy", permission: PERMISSIONS.MANAGE_EXPENSE_POLICY },
-            { label: "Company Settings", href: "/dashboard/settings/company-settings", permission: PERMISSIONS.MANAGE_COMPANY_SETTINGS },
-            { label: "Entities", href: "/dashboard/settings/entities", permission: PERMISSIONS.MANAGE_ENTITIES },
-            { label: "Apps", href: "/dashboard/settings/apps", permission: PERMISSIONS.MANAGE_APPS },
-            { label: "Personal Settings", href: "/dashboard/settings/personal-settings", permission: PERMISSIONS.MANAGE_PERSONAL_SETTINGS },
+            { label: "Expense Policy", href: "/settings/expense-policy", permission: [""] },
+            { label: "Company Settings", href: "/settings/company-settings", permission: [""] },
+            { label: "Entities", href: "/settings/entities", permission: [""] },
+            { label: "Apps", href: "/settings/apps", permission: [""] },
+            { label: "Personal Settings", href: "/settings/personal-settings", permission: [""] },
         ],
     },
     // { icon: Building, label: "Business Account", href: "/dashboard/business-account", permission: PERMISSIONS.VIEW_BUSINESS_ACCOUNT, badge: "New" },
@@ -90,11 +90,9 @@ const navigationItems: NavItem[] = [
 //     { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help", permission: PERMISSIONS.VIEW_HELP },
 // ];
 
-interface DashboardSidebarProps {
-    userRole: UserRole;
-}
 
-export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
+
+export function DashboardSidebar() {
     const location = usePathname();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
     const logout = useAuthStore((state) => state.logout);
@@ -116,11 +114,11 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
         return items
             .map((item) => {
                 if (item.subItems) {
-                    const filteredSubs = item.subItems.filter((sub) => hasPermission(sub.permission as Permission));
-                    if (!hasPermission(item.permission as Permission) && filteredSubs.length === 0) return null;
+                    const filteredSubs = item.subItems.filter((sub) => hasPermission(sub.permission));
+                    if (!hasPermission(item.permission) && filteredSubs.length === 0) return null;
                     return { ...item, subItems: filteredSubs };
                 } else {
-                    if (item.permission && !hasPermission(item.permission as Permission)) return null;
+                    if (item.permission && !hasPermission(item.permission)) return null;
                     return item;
                 }
             })
