@@ -27,7 +27,7 @@ export const useUpdateDepartmentApi = () => {
         retry: false,
         mutationFn: async (payload: CreateDepartmentPayload) => {
             const { id, ...latestPayload } = payload;
-            const res = await axiosInstance.patch(`${API_KEYS.DEPARTMENT.DEPARTMENTS}${id}ee`, latestPayload);
+            const res = await axiosInstance.patch(`${API_KEYS.DEPARTMENT.DEPARTMENTS}${id}`, latestPayload);
             return res.data;
         },
     });

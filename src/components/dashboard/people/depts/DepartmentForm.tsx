@@ -19,6 +19,7 @@ import { useUpdateDepartmentApi } from "@/actions/departments/update-department"
 import { AppUser, useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
 import z from "zod";
 import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { CustomSelect } from "@/components/form fields/custom-select";
 
 const createDepartmentSchema = z.object({
     departmentName: z.string().min(1, "Department name is required"),

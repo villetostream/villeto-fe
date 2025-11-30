@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
+import { X } from "lucide-react"; // or any close icon you prefer
 
 interface FormFieldSelectProps<T extends Record<string, any>> {
     placeholder: string;
@@ -23,6 +24,7 @@ interface FormFieldSelectProps<T extends Record<string, any>> {
     label: string;
     description?: string;
     values: Array<{ label: string; value: string | number | boolean }>;
+    clearable?: boolean;
 }
 
 const FormFieldSelect = <T extends Record<string, any>>({
@@ -32,42 +34,75 @@ const FormFieldSelect = <T extends Record<string, any>>({
     description,
     values,
     placeholder,
+    clearable = true, // default to false for backward compatibility
 }: FormFieldSelectProps<T>) => {
     return (
         <FormField
             control={control}
             name={name}
-            render={({ field }) => (
+            render={({ field, formState }) => (
                 <FormItem>
                     <FormLabel>{label}</FormLabel>
 
                     <FormControl>
-                        <Select
-                            onValueChange={(val) => {
-                                // Convert string back to original type
-                                const original = values.find((v) => v.value.toString() === val)
-                                    ?.value;
+                        <div className="relative">
+                            <Select
 
-                                field.onChange(original ?? val);
-                            }}
-                            value={field.value?.toString()}
-                        >
-                            <SelectTrigger className="input capitalize w-full">
-                                <SelectValue placeholder={placeholder} />
-                            </SelectTrigger>
+                                onValueChange={(val) => {
+                                    // Handle clear option
+                                    if (val === "__CLEAR__") {
+                                        field.onChange(formState.defaultValues?.[name] ?? "");
+                                        return;
+                                    }
 
-                            <SelectContent>
-                                {values.map((item) => (
-                                    <SelectItem
-                                        key={item.value.toString()}
-                                        value={item.value.toString()}
-                                        className="capitalize text-black"
-                                    >
-                                        {item.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    // Convert string back to original type
+                                    const original = values.find((v) => v.value.toString() === val)
+                                        ?.value;
+
+                                    field.onChange(original ?? val);
+                                }}
+                                value={field.value?.toString()}
+
+                            >
+                                <SelectTrigger className="input capitalize w-full pr-8">
+                                    <SelectValue placeholder={placeholder} />
+                                </SelectTrigger>
+
+                                <SelectContent >
+                                    {/* Clear option - only show when clearable and there's a value */}
+                                    {clearable && field.value !== undefined && field.value !== "" && (
+                                        <SelectItem
+                                            value="__CLEAR__"
+                                            className="text-red-600 hover:text-red-700 focus:text-red-700"
+                                        >
+                                            Clear selection
+                                        </SelectItem>
+                                    )}
+
+                                    {values.map((item) => (
+                                        <SelectItem
+                                            key={item.value.toString()}
+                                            value={item.value.toString()}
+                                            className="capitalize text-black"
+                                        >
+                                            {item.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* Clear button shown when there's a value and clearable is true */}
+                            {clearable && field.value !== undefined && field.value !== "" && (
+                                <button
+                                    type="button"
+                                    onClick={() => field.onChange(formState.defaultValues?.[name] ?? "")}
+                                    className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-destructive focus:outline-none"
+                                    aria-label="Clear selection"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
                     </FormControl>
 
                     {description && <FormDescription>{description}</FormDescription>}

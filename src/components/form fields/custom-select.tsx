@@ -1,5 +1,5 @@
 import React, { JSX, useEffect, useState } from "react";
-import Select from "react-select";
+import Select, { ActionMeta, MultiValue, SingleValue } from "react-select"
 import { Controller, Control } from "react-hook-form";
 
 interface ISelect {
@@ -20,6 +20,8 @@ interface CustomSelectProps {
     isClearable?: boolean;
     isSearchable?: boolean;
     isMultiple?: boolean;
+    isLoading?: boolean;
+    onInputChange?: (inputValue: string) => void;
   };
   data: Array<ISelect>;
   label: string;
@@ -50,22 +52,40 @@ export const CustomSelect = ({
 
   useEffect(() => {
     setLocalValue(value);
-    console.log(value);
+    //console.log(value);
   }, [value]);
 
   // Handle direct changes when not using react-hook-form
-  const handleDirectChange = (selected: ISelect | ISelect[] | null) => {
+  const handleDirectChange = (
+    newValue: MultiValue<ISelect> | SingleValue<ISelect>,
+    _actionMeta: ActionMeta<ISelect>
+  ) => {
     if (selectProp?.isMultiple) {
-      const values = selected
-        ? (selected as ISelect[]).map((item) => item.value)
+      const values = newValue
+        ? (newValue as ISelect[]).map((item) => item.value)
         : [];
 
       setLocalValue(values as string[] | number[] | boolean[]);
       onChange?.(values as string[] | number[] | boolean[]);
     } else {
-      const singleValue = selected ? (selected as ISelect).value : null;
+      const singleValue = newValue ? (newValue as ISelect).value : null;
       setLocalValue(singleValue);
       onChange?.(singleValue);
+    }
+  };
+
+  // Handle react-hook-form changes
+  const handleControllerChange = (
+    newValue: MultiValue<ISelect> | SingleValue<ISelect>,
+    _actionMeta: ActionMeta<ISelect>,
+    field: any
+  ) => {
+    if (selectProp?.isMultiple) {
+      field.onChange(
+        newValue ? (newValue as ISelect[]).map((item) => item.value) : []
+      );
+    } else {
+      field.onChange(newValue ? (newValue as ISelect).value : null);
     }
   };
 
@@ -77,15 +97,8 @@ export const CustomSelect = ({
     // For direct control, use the provided onChange handler
     const handleChange = isDirectControl
       ? handleDirectChange
-      : (selected: ISelect | ISelect[] | null) => {
-        if (selectProp?.isMultiple) {
-          field.onChange(
-            selected ? (selected as ISelect[]).map((item) => item.value) : []
-          );
-        } else {
-          field.onChange(selected ? (selected as ISelect).value : null);
-        }
-      };
+      : (newValue: MultiValue<ISelect> | SingleValue<ISelect>, actionMeta: ActionMeta<ISelect>) =>
+        handleControllerChange(newValue, actionMeta, field);
 
     // Calculate the correct value for the Select component
     const selectValue = selectProp?.isMultiple
@@ -122,6 +135,11 @@ export const CustomSelect = ({
           classNamePrefix="react-select"
           value={selectValue}
           onChange={handleChange}
+          onInputChange={selectProp?.onInputChange}
+          isLoading={selectProp?.isLoading}
+       
+
+
 
         />
 

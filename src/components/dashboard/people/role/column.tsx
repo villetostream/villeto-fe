@@ -55,6 +55,7 @@ export const columns: ColumnDef<Role, any>[] = [
     columnHelper.display({
         id: "actions",
         header: "Actions",
+        enableHiding: false,
         cell: (data) => {
 
             const hook = useRoleHook();

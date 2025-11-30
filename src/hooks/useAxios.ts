@@ -53,7 +53,13 @@ export function useAxios(): AxiosInstance {
         }
         else {
         }
-        toast.error(error.response.data.message || error.message || "Invalid login credentials.");
+        if (!originalRequest.url.includes("account-confirmation")) {
+
+          toast.error(error.response.data.message || error.message || "Invalid login credentials.");
+        }
+        else {
+          toast.info("onboarding required!, redirecting to Onboarding ")
+        }
         return Promise.reject(error);
       }
     );
