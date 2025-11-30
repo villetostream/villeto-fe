@@ -60,6 +60,7 @@ export const columns: ColumnDef<Department, any>[] = [
     columnHelper.display({
         id: "actions",
         header: "Actions",
+        enableHiding: false,
         cell: (data) => {
 
             const hook = useDepartmentHook();
