@@ -78,11 +78,11 @@ export default function DashboardLayoutContent({
     }
 
     return (
-        <div className="flex h-screen bg-dashboard-background">
+        <div className="flex bg-dashboard-background overflow-hidden">
             <SidebarProvider defaultOpen={defaultOpen}>
                 <DashboardSidebar />
 
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <main className="flex-1 flex flex-col overflow-hidden">
                     <header className="flex items-center  px-6 py-3 border-b border-dashboard-border-shade w-full">
 
 
@@ -91,10 +91,10 @@ export default function DashboardLayoutContent({
                     </header>
 
 
-                    <main className="flex-1 overflow-auto p-5">
+                    <main className=" overflow-hidden p-5 h-full">
                         {children}
                     </main>
-                </div>
+                </main>
             </SidebarProvider>
         </div>
     );

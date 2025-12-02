@@ -47,6 +47,7 @@ export default function LoginPage() {
     });
 
     const onSubmit = async (data: FormData) => {
+        console.log("i got here")
         try {
             setError(null);
             const response = await login.mutateAsync(data);

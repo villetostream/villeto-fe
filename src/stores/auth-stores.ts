@@ -70,7 +70,11 @@ export const useAuthStore = create<AuthState>()(
             hasPermission: (permission: string | string[]): boolean => {
                 const { userPermissions } = get();
                 const permissions = Array.isArray(permission) ? permission : [permission];
-
+                console.log(permission, permissions.every(perm =>
+                    userPermissions.some(userPerm =>
+                        userPerm.name.includes(perm)
+                    )
+                ));
                 return permissions.every(perm =>
                     userPermissions.some(userPerm =>
                         userPerm.name.includes(perm)

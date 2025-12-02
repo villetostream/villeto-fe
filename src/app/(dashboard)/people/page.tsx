@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, CreditCard, Building2, UserCog, DollarSign } from "lucide-react";
 import { DepartmentsTab } from "@/components/dashboard/people/depts/DepartmentTab";
-import { AllUsersTab } from "@/components/dashboard/people/AllUsersTab";
+import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
@@ -43,7 +43,7 @@ function People() {
     };
 
     return (
-        <div className="min-h-screen bg-dashboard-bg">
+        <div className=" bg-dashboard-bg">
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -65,7 +65,7 @@ function People() {
                                         variant="outline"
                                         size={"md"}
                                         onClick={() => router.push("/people/bulk-invite")}
-                                        className="px-12"
+
 
                                     >
                                         + Bulk Invite Users
@@ -77,7 +77,7 @@ function People() {
                                     <Button
                                         onClick={() => router.push("/people/add-user")}
                                         size={"md"}
-                                        className="px-12"
+
 
                                     >
                                         + Add Single User
@@ -104,7 +104,7 @@ function People() {
                                 <Button
                                     onClick={handleCreateDepartment}
                                     size={"md"}
-                                    className="px-12"
+                                    className=""
 
                                 >
                                     Create Department

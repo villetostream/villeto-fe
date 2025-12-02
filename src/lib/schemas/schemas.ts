@@ -239,3 +239,18 @@ export const roleSchema = z.object({
 });
 
 export type RoleFormData = z.infer<typeof roleSchema>;
+
+export const userSchema = z.object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    location: z.string().min(1, "Location is required"),
+    cardIssued: z.boolean(),
+    jobTitle: z.string().min(1, "Job title is required"),
+    departmentId: z.string().uuid("Invalid department ID"),
+    roleId: z.string().min(1, "Role is required"),
+    id: z.string().optional()
+});
+
+export type UserFormData = z.infer<typeof userSchema>;
