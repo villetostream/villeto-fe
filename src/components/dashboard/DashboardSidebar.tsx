@@ -118,7 +118,7 @@ export function DashboardSidebar() {
                     if (!hasPermission(item.permission) && filteredSubs.length === 0) return null;
                     return { ...item, subItems: filteredSubs };
                 } else {
-                    if (item.permission && !hasPermission(item.permission)) return null;
+                    if (!hasPermission(item.permission)) return null;
                     return item;
                 }
             })
@@ -201,7 +201,7 @@ export function DashboardSidebar() {
         </>
         );
     };
-    const groupedItems = navigationItems.reduce((acc, item) => {
+    const groupedItems = filteredNavigationItems.reduce((acc, item) => {
         if (!acc[item.section]) {
             acc[item.section] = [];
         }

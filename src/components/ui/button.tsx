@@ -30,7 +30,7 @@ const buttonVariants = cva(
         outlineNavy: "border border-navy/20 bg-transparent text-navy-foreground hover:bg-navy/10 backdrop-blur-sm",
       },
       size: {
-        default: "h-12 px-4 py-2 has-[>svg]:px-3",
+        default: "h-11 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-[16px] gap-1.5 px-3 has-[>svg]:px-2.5",
         md: "h-[41px] rounded-[12px] gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",

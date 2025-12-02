@@ -20,6 +20,7 @@ export const API_KEYS = {
     ROLES: "roles/"
   },
   USER: {
-    USERS: "users/"
+    USERS: "users/",
+    INVITEUSER: "users/invite"
   }
 } as const;

@@ -3,6 +3,7 @@ import { UseQueryOptions, UseQueryResult, useQuery } from "@tanstack/react-query
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { QUERY_KEYS } from "@/lib/constants/api-query-key";
+import { Role } from "../role/get-all-roles";
 
 
 export interface Department {
@@ -34,7 +35,10 @@ export interface AppUser {
     companyId?: string | null;
     department?: string | null;
     departmentId?: string | null;
+    role?: Role
     position?: string | null;
+    cardIssued?: boolean
+    jobTitle?: string
 }
 interface Response {
     data: Department[]

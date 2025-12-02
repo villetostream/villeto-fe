@@ -16,7 +16,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   children,
 }) => {
   const userPermissions = useAuthStore(state => state.getUserPermissions());
-  console.log({ userPermissions })
+
 
   // Helper function to check for exact permission matches
   const hasPermissionForRoute = (permissions: string[]) => {

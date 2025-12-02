@@ -176,7 +176,7 @@ const DepartmentForm = () => {
                 <form onSubmit={handleSubmit(onSubmit as SubmitHandler<FieldValues>)} className="space-y-6">
                     <h2 className="text-lg font-semibold mb-4">Department Information</h2>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-7 mb-4">
                         <FormFieldInput
                             label="Department Name"
                             name="departmentName"
