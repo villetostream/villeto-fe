@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/providers/auth-provider";
 import { cookies } from "next/headers";
 import QueryProvider from "@/providers/queryClientProvider";
 
@@ -10,11 +9,6 @@ const geistSans = Figtree({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"]
-});
-
-const geistMono = Figtree({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +35,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}>
+        className={`${geistSans.variable} antialiased bg-white overflow-hidden min-h-svh`}>
         <QueryProvider>
           {children}
           <Toaster richColors expand />

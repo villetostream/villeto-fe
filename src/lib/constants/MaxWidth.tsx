@@ -11,8 +11,8 @@ interface MaxWidthProps {
 const MaxWidth = forwardRef<HTMLDivElement, MaxWidthProps>(
     ({ children, className, 'data-bg-color': dataBgColor }, ref) => {
         return (
-            <div ref={ref} className={cn('w-full h-full', className)} data-bg-color={dataBgColor}>
-                <div className="max-w-[1560px] mx-auto h-full">
+            <div ref={ref} className={cn('w-full h-fit', className)} data-bg-color={dataBgColor}>
+                <div className="max-w-[1560px] mx-auto h-fit">
                     {children}
                 </div>
             </div>

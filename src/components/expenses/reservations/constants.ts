@@ -27,3 +27,5 @@ export const ROOM_TYPES = [
     { value: "suite", label: "Suite" },
     { value: "executive", label: "Executive Suite" },
 ];
+
+

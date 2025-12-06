@@ -139,7 +139,7 @@ function AddSingleUser() {
 
     return (
         <Form {...form}>
-            <div className="overflow-hidden h-full rounded-lg p-7 bg-sidebar-accent/20 border border-accent">
+            <div className=" h-fit rounded-lg p-7 bg-sidebar-accent/20 border border-accent">
 
                 <div className="max-w-[968px] space-y-10">
                     <div className="flex items-center gap-4">
@@ -149,7 +149,7 @@ function AddSingleUser() {
                         />
                     </div>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-hidden">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 ">
                         <div>
                             <h3 className="mb-4 text-lg font-semibold">User Information</h3>
                             <div className="grid gap-6 md:grid-cols-2">
