@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/providers/auth-provider";
 import { cookies } from "next/headers";
 import QueryProvider from "@/providers/queryClientProvider";
 
