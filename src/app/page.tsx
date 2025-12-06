@@ -74,7 +74,7 @@ const LandingContent = () => {
   ];
 
   return (
-    <>
+    <div className=' overflow-y-auto h-[calc(100vh)]'>
       <MaxWidth
         className={'py-3.5'}
 
@@ -83,34 +83,28 @@ const LandingContent = () => {
         <Header />
       </MaxWidth>
       {sections.map((section) => (
-        <InView
-          key={section.id}
-          threshold={0}
-          rootMargin="0px 0px 0px 0px"
+
+        <MaxWidth
+          className={`${section.bg} ${section.className || ''}`}
+
+          data-bg-color={section.dataBgColor}
         >
-          {({ ref }) => (
-            <MaxWidth
-              className={`${section.bg} ${section.className || ''}`}
-              ref={ref}
-              data-bg-color={section.dataBgColor}
-            >
-              {section.content}
-            </MaxWidth>
-          )}
-        </InView>
+          {section.content}
+        </MaxWidth>
       ))}
-    </>
+
+
+    </div>
   );
 };
 
 export default function Landing() {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <ScrollContextProvider>
-        <AnimatedLanding>
-          <LandingContent />
-        </AnimatedLanding>
-      </ScrollContextProvider>
+
+
+      <LandingContent />
+
     </Suspense>
   );
 }

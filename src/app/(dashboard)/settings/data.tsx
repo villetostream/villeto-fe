@@ -1,4 +1,4 @@
-
+"use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,19 +16,107 @@ import {
     Smartphone,
     Globe,
     Download,
-    Trash2
+    Trash2,
+    ArrowRight
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IntegrationMethodCard } from "@/components/dashboard/settings/IntegrationMethodCard";
+import { useState } from "react";
 //settings have sub menu like expense policy, company settings, entities, apps, personal settings 
 // under the expense policy, its page content should be approvals, submitting expsenses,spend guidelines,uploading/replacng and deleting of policy with pictural display of the document
 //under the submitting expenses, ther will be a trigger button for sheet called expense requirements with contents like 
-
+type IntegrationMethod = "integration" | "csv" | null;
 export default function Settings() {
+
+    const [selectedMethod, setSelectedMethod] = useState<IntegrationMethod>(null);
+
+    const handleMethodSelect = (method: IntegrationMethod) => {
+        setSelectedMethod(method);
+    }
+    const handleContinue = () => {
+        if (selectedMethod === "csv") {
+            // setStep("upload");
+        }
+    };
     return (
 
         <div className="min-h-screen bg-dashboard-bg">
             <div className="p-6 space-y-6">
+                <Tabs defaultValue="data-integrations">
+                    <TabsList>
+                        <TabsTrigger
+                            value="my-profile"
+                            className="data-[state=active]:bg-background rounded-md px-6"
+                        >
+                            My Profile
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="policy-violations"
+                            className="data-[state=active]:bg-background rounded-md px-6"
+                        >
+                            Policy Violations
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="notifications"
+                            className="data-[state=active]:bg-background rounded-md px-6"
+                        >
+                            Notifications
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="data-integration"
+                            className="data-[state=active]:bg-background rounded-md px-6"
+                        >
+                            Data Integration
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="my-profile" className="mt-6">
+                        <></>
+                    </TabsContent>
+
+                    <TabsContent value="policy-violations" className="mt-6">
+                        <></>
+                    </TabsContent>
+
+                    <TabsContent value="notifications" className="mt-6">
+                        <></>
+                    </TabsContent>
+
+                    <TabsContent value="data-integration" className="mt-6">
+                        <div className="px-7 space-y-10">
+                            <>
+                                <h2 className="font-bold text-3xl ">Business Data Integration</h2>
+                                <p className="text-base font-normal leading-[100%] text-muted-foreground mt-3.5 ">Choose a method to import your company infomation. You can connect to an existing service or upload a file directly.</p>
+                            </>
+                            <>
+                                <div className="mb-8 grid gap-6 md:grid-cols-2">
+                                    <IntegrationMethodCard
+                                        type="integration"
+                                        selected={selectedMethod === "integration"}
+                                        onClick={() => handleMethodSelect("integration")}
+                                    />
+                                    <IntegrationMethodCard
+                                        type="csv"
+                                        selected={selectedMethod === "csv"}
+                                        onClick={() => handleMethodSelect("csv")}
+                                    />
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={handleContinue}
+                                        // disabled={!selectedMethod}
+                                        className="gap-2"
+                                    >
+                                        Continue
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </>
+                        </div>
+                    </TabsContent>
+                </Tabs>
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-dashboard-text-primary">Settings</h1>
                         <p className="text-dashboard-text-secondary mt-1">
@@ -44,10 +132,10 @@ export default function Settings() {
                             Save Changes
                         </Button>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Company Settings */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <Building className="w-5 h-5" />
@@ -80,10 +168,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Expense Policies */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <CreditCard className="w-5 h-5" />
@@ -120,10 +208,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* User Permissions */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <Users className="w-5 h-5" />
@@ -155,10 +243,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Notifications */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <Bell className="w-5 h-5" />
@@ -209,10 +297,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Security */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <Shield className="w-5 h-5" />
@@ -255,10 +343,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Integrations */}
-                <Card className="bg-dashboard-card border-dashboard-border">
+                {/* <Card className="bg-dashboard-card border-dashboard-border">
                     <CardHeader>
                         <CardTitle className="text-dashboard-text-primary flex items-center gap-2">
                             <Globe className="w-5 h-5" />
@@ -297,10 +385,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Danger Zone */}
-                <Card className="bg-dashboard-card border-status-error/20">
+                {/* <Card className="bg-dashboard-card border-status-error/20">
                     <CardHeader>
                         <CardTitle className="text-status-error flex items-center gap-2">
                             <Trash2 className="w-5 h-5" />
@@ -320,7 +408,7 @@ export default function Settings() {
                             </Button>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
             </div>
         </div>
 

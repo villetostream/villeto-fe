@@ -13,7 +13,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getFormSchema, LeadershipFormData } from "@/lib/schemas/schemas";
 import z from "zod";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Briefcase01Icon, MailAtSign01Icon, User03FreeIcons, UserAdd01FreeIcons } from "@hugeicons/core-free-icons";
+import { Briefcase01Icon, InformationCircleIcon, MailAtSign01Icon, User03FreeIcons, UserAdd01FreeIcons } from "@hugeicons/core-free-icons";
+import { HiInformationCircle, HiMiniInformationCircle } from "react-icons/hi2";
 
 interface AddBeneficialOwnerModalProps {
     isOpen: boolean;
@@ -118,7 +119,7 @@ export const AddBeneficialOwnerModal = ({
                         </div>
                         <div>
                             <DialogTitle className="text-xl leading-[100%] font-semibold">
-                                {isEditing ? 'Edit' : 'Add'} {isBeneficialOwner ? 'Beneficial Owner' : 'Officer'}
+                                {isEditing ? 'Edit' : 'Add'} {isBeneficialOwner ? 'Beneficial Owner' : ' Controlling Officer'}
                             </DialogTitle>
                             <p className="text-sm text-muted-foreground">
                                 {isBeneficialOwner
@@ -168,18 +169,26 @@ export const AddBeneficialOwnerModal = ({
 
                             }
                         />
+                        <>
+                            {/* Email Field */}
+                            <FormFieldInput
+                                name="email"
+                                control={control}
+                                type="email"
+                                placeholder="Enter email address"
+                                label="Email Address"
+                                prefixIcon={
+                                    <HugeiconsIcon icon={MailAtSign01Icon} className="size-4 text-muted-foreground" />
+                                }
+                            />
+                            {!isBeneficialOwner && (<div className="flex gap-2 items-center">
+                                <HugeiconsIcon icon={InformationCircleIcon} className="size-5 text-primary" />
 
-                        {/* Email Field */}
-                        <FormFieldInput
-                            name="email"
-                            control={control}
-                            type="email"
-                            placeholder="Enter email address"
-                            label="Email Address"
-                            prefixIcon={
-                                <HugeiconsIcon icon={MailAtSign01Icon} className="size-4 text-muted-foreground" />
-                            }
-                        />
+                                <p className="text-xs text-black font-normal leading-[100%] ">
+                                    This email will be used to login to the company dashboard
+                                </p>
+                            </div>)}
+                        </>
 
                         {/* Ownership Percentage - Only for Beneficial Owners */}
                         {isBeneficialOwner && (
@@ -250,7 +259,7 @@ export const AddBeneficialOwnerModal = ({
                                 disabled={isBeneficialOwner && (ownershipValue ?? 0) > maxOwnership}
                                 className="flex items-center gap-2 flex-1"
                             >
-                                {isEditing ? 'Update' : 'Add'} {isBeneficialOwner ? 'Owner' : 'Officer'}
+                                {isEditing ? 'Update' : 'Add'} {isBeneficialOwner ? 'Owner' : 'Controlling Officer'}
                                 <Plus className="h-4 w-4" />
                             </Button>
                         </div>

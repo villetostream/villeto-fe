@@ -5,7 +5,6 @@ import heroDashboard from '../../../public/images/tech-glow-1.webp'
 import { Input } from '../ui/input'
 import MaxWidth from '@/lib/constants/MaxWidth'
 import SocialProof from './shared/SocialProof'
-import { FadeIn } from './shared/AnimatedLanding'
 import Link from 'next/link'
 
 export const HeroSection = () => {
@@ -16,7 +15,7 @@ export const HeroSection = () => {
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     {/* Left Content */}
                     <div className="space-y-5">
-                        <FadeIn className="flex">
+                        <div className="flex">
                             <h1 className="text-4xl md:text-5xl font-semibold text-foreground leading-16">
                                 <span>
 
@@ -31,27 +30,27 @@ export const HeroSection = () => {
 
 
                             </h1>
-                        </FadeIn>
+                        </div>
 
-                        <FadeIn>
+                        <div>
                             <p className="text-xl text-muted-foreground ">
                                 Corporate cards, automated spend tracking, and vendor payments all under one intelligent platform.
                             </p>
-                        </FadeIn>
+                        </div>
 
-                        <FadeIn className="flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
+                        <div className="flex  gap-4 border rounded-md border-[#E2E2E2] p-2 focus-within:border-muted-foreground max-w-[452px]">
                             <Input className='!border-none focus-visible:border-0 focus-visible:ring-0 !shadow-none' placeholder='What is yout work email' />
                             <Button variant="hero" size="lg" asChild>
                                 <Link href="/pre-onboarding" className='flex items-center'>
                                     Get Started <ArrowRight className="ml-2 h-5 w-5" />
                                 </Link>
                             </Button>
-                        </FadeIn>
+                        </div>
                         <SocialProof />
                     </div>
 
                     {/* Right Content - Dashboard Preview */}
-                    <FadeIn className="relative">
+                    <div className="relative">
                         <div className="relative rounded-xl overflow-hidden shadow-2xl">
                             <img
                                 src={"/images/hero-image.png"}
@@ -62,7 +61,7 @@ export const HeroSection = () => {
                         </div>
 
 
-                    </FadeIn>
+                    </div>
                 </div>
             </div>
         </section>

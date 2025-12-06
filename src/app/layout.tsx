@@ -12,11 +12,6 @@ const geistSans = Figtree({
   weight: ["300", "400", "500", "600", "700"]
 });
 
-const geistMono = Figtree({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "Villeto",
   description: "Spend Management App",
@@ -41,7 +36,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}>
+        className={`${geistSans.variable} antialiased bg-white overflow-hidden min-h-svh`}>
         <QueryProvider>
           {children}
           <Toaster richColors expand />

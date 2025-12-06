@@ -13,9 +13,6 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -24,67 +21,12 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../ui/collapsible";
 import { useAuthStore } from "@/stores/auth-stores";
-import { Menu, Cards, Moneys, Profile2User, WalletMoney, Shop, LampOn, StatusUp, Messages, Setting2, Logout } from 'iconsax-reactjs';
-import { Permission } from "@/actions/auth/auth-permissions";
+import { Logout } from "iconsax-reactjs";
+import { NavItem, navigationItems } from "./sidebar-constants";
 
-interface NavItem {
-    icon: any;
-    label: string;
-    href: string;
-    permission: string[];
-    subItems?: SubItem[];
-    badge?: string;
-    section: string
-}
 
-interface SubItem {
-    label: string;
-    href: string;
-    permission: string[];
-}
-
-const navigationItems: NavItem[] = [
-    { icon: Menu, label: "Dashboard", href: "/dashboard", permission: [], section: "MAIN MENU" },
-    {
-        icon: Moneys,
-        label: "Expenses",
-        permission: [],
-        href: "/expenses",
-        section: "MAIN MENU",
-        // subItems: [
-        //     { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
-        //     { label: "Reimbursements", href: "/dashboard/expenses/reimbursements", permission: PERMISSIONS.VIEW_REIMBURSEMENTS },
-        //     { label: "Travel", href: "/dashboard/expenses/travel", permission: PERMISSIONS.VIEW_TRAVEL_EXPENSES },
-        // ],
-    },
-    { icon: Cards, label: "Cards", href: "/cards", permission: [""], section: "MAIN MENU" },
-    { icon: WalletMoney, label: "Accounting", href: "/accounting", permission: [""], section: "MANAGEMENT" },
-    { icon: Profile2User, label: "People", href: "/people", permission: ["read:users", "read:roles", "read:departments"], section: "MANAGEMENT" },
-    { icon: Shop, label: "Vendors", href: "/vendors", permission: [""], section: "MANAGEMENT" },
-    { icon: LampOn, label: "Insights", href: "/insights", permission: [], section: "ANALYTICS" },
-    { icon: StatusUp, label: "Analytics", href: "/insights", permission: [], section: "ANALYTICS" },
-    // { icon: Users, label: "Spend programs", href: "/dashboard/spend-programs", permission: PERMISSIONS.VIEW_SPEND_PROGRAMS },
-    // { icon: Building, label: "Procurement", href: "/dashboard/procurement", permission: PERMISSIONS.VIEW_PROCUREMENT },
-    // { icon: FileText, label: "Bill Pay", href: "/dashboard/bill-pay", permission: PERMISSIONS.VIEW_BILL_PAY },
-    { icon: Messages, label: "Inbox", href: "/inbox", permission: [], section: "OTHERS" },
-    {
-        icon: Setting2,
-        label: "Settings",
-        href: "/settings",
-        permission: [],
-        section: "OTHERS",
-        subItems: [
-            { label: "Expense Policy", href: "/settings/expense-policy", permission: [""] },
-            { label: "Company Settings", href: "/settings/company-settings", permission: [""] },
-            { label: "Entities", href: "/settings/entities", permission: [""] },
-            { label: "Apps", href: "/settings/apps", permission: [""] },
-            { label: "Personal Settings", href: "/settings/personal-settings", permission: [""] },
-        ],
-    },
-    // { icon: Building, label: "Business Account", href: "/dashboard/business-account", permission: PERMISSIONS.VIEW_BUSINESS_ACCOUNT, badge: "New" },
-];
 
 // const bottomItems: NavItem[] = [
 //     { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help", permission: PERMISSIONS.VIEW_HELP },
@@ -211,39 +153,37 @@ export function DashboardSidebar() {
 
     return (
         <Sidebar collapsible="icon">
-            <SidebarHeader className="border-b border-sidebar-border py-4">
-                <div className="flex items-center  justify-end gap-2 px-2">
-
+            <SidebarHeader className="border-b border-sidebar-border py-1.5">
+                <div className="flex items-center  justify-between gap-2 px-2">
+                    <div>
+                        <img src="/images/logo.png" className='h-12 aspect-video object-cover' />
+                    </div>
                     <SidebarTrigger />
                 </div>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="px-2.5 gap-0">
                 {Object.entries(groupedItems).map(([section, items]) => (
-                    <SidebarGroup key={section}>
-                        <SidebarGroupLabel className="text-[#7F7F7F] font-medium text-base mb-1">{section}</SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                {items.map((item) => {
-                                    const isActive = location === item.href;
 
-                                    return <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={isActive}
-                                            tooltip={item.label}
-                                            className="font-normal text-sm text-[#7F7F7F]"
-                                        >
-                                            <Link href={item.href}>
-                                                <item.icon />
-                                                <span>{item.label}</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                })}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
+                    <SidebarMenu className="gap-1">
+                        {items.map((item) => {
+                            const isActive = location === item.href;
+
+                            return <SidebarMenuItem key={item.label}>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isActive}
+                                    tooltip={item.label}
+                                    className="font-normal text-sm text-[#7F7F7F]"
+                                >
+                                    <Link href={item.href}>
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        })}
+                    </SidebarMenu>
                 ))}
             </SidebarContent>
 

@@ -88,7 +88,7 @@ export default function GetStarted() {
                 <div className="space-y-3.5 pr-10">
                     <OnboardingTitle
                         title="Get started with Villeto"
-                        subtitle="Fill in your details to access a live demo or apply for a Villeto account."
+                        subtitle="Fill in Admin details to access a live demo or apply for a Villeto account."
                     />
                 </div>
 
@@ -98,14 +98,14 @@ export default function GetStarted() {
                             <FormFieldInput
                                 control={form.control}
                                 name="contactFirstName"
-                                label="First Name"
+                                label="Contact First Name"
                                 placeholder="Enter first name"
                             />
 
                             <FormFieldInput
                                 control={form.control}
                                 name="contactLastName"
-                                label="Last Name"
+                                label="contact Last Name"
                                 placeholder="Enter last name"
                             />
                         </div>

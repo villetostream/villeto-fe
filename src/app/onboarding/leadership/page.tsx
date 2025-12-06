@@ -337,7 +337,7 @@ export default function Leadership() {
                     onAdd={() => setIsModalOpen(true)}
                     onContinue={handleContinue}
                     hasOwners={hasPeople}
-                    addButtonText={type === "beneficial" ? "Add Beneficial Owner" : "Add Officer"}
+                    addButtonText={type === "beneficial" ? "Add Beneficial Owner" : "Add Controlling Officer"}
                     continueButtonText="Continue"
                     layout={layout}
                     loading={loading}
@@ -378,7 +378,7 @@ export default function Leadership() {
                         Beneficial Owner
                     </TabsTrigger>
                     <TabsTrigger value="officer" className="flex-1">
-                        Officer
+                        Controlling  Officer
                     </TabsTrigger>
                 </TabsList>
 
