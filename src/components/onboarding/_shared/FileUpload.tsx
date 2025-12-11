@@ -90,13 +90,13 @@ export default function FileUpload({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  
+
   return (
-    <div className="w-full">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="w-full h-full">
+      {/* <div className="mb-3 flex items-center justify-between">
         <div className="text-base leading-[150%] font-semibold text-foreground">{label || "Upload File"}</div>
-      </div>
-      <div className="h-48">
+      </div> */}
+      <div className="h-full max-h-[600px]">
 
         <div
           {...getRootProps()}
@@ -133,7 +133,7 @@ export default function FileUpload({
             <div className="">
               <div className="flex items-center space-x-3">
                 {previewUrl && (
-                  <div className="flex-shrink-0 size-full object-contain rounded border overflow-auto">
+                  <div className="shrink-0 size-full object-contain rounded border overflow-auto">
                     <img
                       src={previewUrl}
                       alt="Preview"
