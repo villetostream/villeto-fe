@@ -19,7 +19,7 @@ import PermissionGuard from "@/components/permissions/permission-protected-compo
 const columnHelper = createColumnHelper<Department>();
 
 export const columns: ColumnDef<Department, any>[] = [
-    columnHelper.accessor("name", {
+    columnHelper.accessor("departmentName", {
         header: "DEPARTMENT",
         cell: (info) => <p className="capitalize">{`${info.getValue() || "-"}`}</p>,
     }),
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Department, any>[] = [
                     STATE_KEYS.DELETE == state && (
                         <ConfirmDialog
                             title={"Delete Department"}
-                            description={`Do you want to delete department ${selected?.name}?`}
+                            description={`Do you want to delete department ${selected?.departmentName}?`}
                             confirmText={"Delete"}
                             cancelText="Cancel"
                             loading={actionIsLoading}

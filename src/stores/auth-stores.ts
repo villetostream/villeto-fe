@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ userPermissions: data });
             },
             login: (data: User) => {
-                console.log({ data })
+
                 set({ user: data });
             },
 
@@ -70,11 +70,7 @@ export const useAuthStore = create<AuthState>()(
             hasPermission: (permission: string | string[]): boolean => {
                 const { userPermissions } = get();
                 const permissions = Array.isArray(permission) ? permission : [permission];
-                console.log(permission, permissions.every(perm =>
-                    userPermissions.some(userPerm =>
-                        userPerm.name.includes(perm)
-                    )
-                ));
+
                 return permissions.every(perm =>
                     userPermissions.some(userPerm =>
                         userPerm.name.includes(perm)
@@ -91,7 +87,6 @@ export const useAuthStore = create<AuthState>()(
             storage: createJSONStorage(() => sessionStorage),
             onRehydrateStorage: () => (state) => {
                 if (state) {
-                    console.log({ state })
                     state.hydrate();
                     // // Recalculate permissions on rehydration
                     // if (state.user) {

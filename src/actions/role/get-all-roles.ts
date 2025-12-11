@@ -5,6 +5,7 @@ import { API_KEYS } from "@/lib/constants/apis";
 import { QUERY_KEYS } from "@/lib/constants/api-query-key";
 import { Permission } from "../auth/auth-permissions";
 import { AppUser } from "../departments/get-all-departments";
+import { Meta } from "../users/get-all-users";
 
 
 export interface Role {
@@ -21,7 +22,7 @@ export interface Role {
 }
 interface Response {
     data: Role[]
-
+    meta: Meta
     error: {
         error: string;
         message?: string;

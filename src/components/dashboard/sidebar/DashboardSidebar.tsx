@@ -34,6 +34,8 @@ import { NavItem, navigationItems } from "./sidebar-constants";
 
 
 
+
+
 export function DashboardSidebar() {
     const location = usePathname();
     const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
@@ -49,7 +51,8 @@ export function DashboardSidebar() {
         );
     };
 
-    const isActive = (href: string) => location === href;
+    const isActive = (href: string) => location === href || location.startsWith(href);
+    console.log({ location })
     let currentSection = "";
 
     const filterItems = (items: NavItem[]): NavItem[] => {
@@ -167,12 +170,12 @@ export function DashboardSidebar() {
 
                     <SidebarMenu className="gap-1">
                         {items.map((item) => {
-                            const isActive = location === item.href;
+
 
                             return <SidebarMenuItem key={item.label}>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={isActive}
+                                    isActive={isActive(item.href)}
                                     tooltip={item.label}
                                     className="font-normal text-sm text-[#7F7F7F]"
                                 >

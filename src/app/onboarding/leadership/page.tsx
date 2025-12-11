@@ -168,7 +168,7 @@ export function ActionButtons({
                 <Button
                     onClick={onContinue}
                     className={`flex items-center gap-2 flex-1 ${!hasOwners ? 'opacity-50' : ''}`}
-                    disabled={loading ?? !hasOwners}
+                    disabled={!loading && !hasOwners}
                 >
                     {hasOwners ? continueButtonText : "Next Step"}
                     <ArrowRight className="h-4 w-4" />
@@ -193,7 +193,7 @@ export function ActionButtons({
             <Button
                 onClick={onContinue}
                 className={`flex items-center gap-2 flex-1 ${!hasOwners ? 'opacity-50' : ''}`}
-                disabled={loading ?? !hasOwners}
+                disabled={!loading && !hasOwners}
             >
                 {hasOwners ? continueButtonText : "Next Step"}
                 <ArrowRight className="h-4 w-4" />

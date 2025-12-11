@@ -32,7 +32,7 @@ function People() {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", activeTab);
         router.replace(`?${params.toString()}`, { scroll: false });
-    }, [activeTab, router, searchParams]);
+    }, [activeTab]);
 
     const handleCreateRole = () => {
         router.push("/people/create-role");
