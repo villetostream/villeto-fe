@@ -93,7 +93,7 @@ const DepartmentForm = () => {
 
 
             reset({
-                departmentName: department.name || "",
+                departmentName: department.departmentName || "",
                 departmentCode: department.code || "",
                 departmentManager: department.head?.userId || undefined,
                 reportsTo: department.manager?.userId || undefined,
@@ -119,7 +119,7 @@ const DepartmentForm = () => {
             console.log({ selectedMembers })
             const payload: CreateDepartmentPayload = {
                 id: data.id ?? undefined,
-                name: data.departmentName,
+                departmentName: data.departmentName,
                 description: data.description,
                 departmentCode: data.departmentCode || undefined,
                 membersIds: selectedMembers.map(member => member.userId),

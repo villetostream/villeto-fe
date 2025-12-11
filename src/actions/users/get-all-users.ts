@@ -7,6 +7,7 @@ import { AppUser } from "../departments/get-all-departments";
 
 interface Response {
     data: AppUser[]
+    meta: Meta;
     error: {
         error: string;
         message?: string;
@@ -18,12 +19,17 @@ interface Response {
     statusText: string;
 }
 
+export interface Meta {
+    totalCount: number,
+    totalPages: number,
+    currentPage: number,
+    limit: number
+}
 
 export const useGetAllUsersApi = (
-
     options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
 ): UseQueryResult<Response, Error> => {
-    const axiosInstance = useAxios(); // 
+    const axiosInstance = useAxios();
 
     return useQuery<Response, Error>({
         queryKey: [QUERY_KEYS.USERS],

@@ -13,7 +13,7 @@ const DepartmentTable = () => {
             data={depts?.data?.data ?? []}
             isLoading={depts.isLoading}
             columns={columns}
-            paginationProps={tableprops.paginationProps}
+            paginationProps={{ ...tableprops.paginationProps, total: depts?.data?.meta.totalCount ?? 0 }}
             enableRowSelection={true}
             enableColumnVisibility={true}
             selectedDataIds={tableprops.selectedDataIds}

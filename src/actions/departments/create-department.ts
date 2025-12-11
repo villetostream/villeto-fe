@@ -10,7 +10,7 @@ export interface Member {
 }
 
 export interface CreateDepartmentPayload {
-    name: string;
+    departmentName: string;
     description: string;
     departmentCode?: string;
     membersIds?: string[];

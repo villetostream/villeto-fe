@@ -4,11 +4,12 @@ import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { QUERY_KEYS } from "@/lib/constants/api-query-key";
 import { Role } from "../role/get-all-roles";
+import { Meta } from "../users/get-all-users";
 
 
 export interface Department {
     departmentId: string;
-    name: string;
+    departmentName: string;
     description?: string | null;
     code?: string | null;
     isActive?: boolean | null;
@@ -42,6 +43,7 @@ export interface AppUser {
 }
 interface Response {
     data: Department[]
+    meta: Meta
     error: {
         error: string;
         message?: string;

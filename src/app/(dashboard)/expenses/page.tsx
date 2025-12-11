@@ -26,6 +26,8 @@ import ExpenseTable from "@/components/expenses/table/ExpenseTable";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigger";
 
 
 export const reimbursements = [
@@ -133,9 +135,166 @@ export default function Reimbursements() {
 
     return (
         <>
-            <PermissionGuard requiredPermissions={[]}>
-                <ExpenseEmptyState />
-            </PermissionGuard>
+            <Tabs defaultValue="company-expenses">
+                <TabsList className="mb-10">
+                    <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
+                    <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>
+                </TabsList>
+                <TabsContent value="personal-expenses">
+
+                    <PermissionGuard requiredPermissions={[]}>
+                        <div className="space-y-8">
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                                <StatsCard
+                                    title="Draft"
+                                    value="4"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#384A57] rounded-full'>
+                                            <img src={"/images/svgs/draft.svg"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        Manage your saved items
+                                    </span>
+                                    }
+                                />
+                                <StatsCard
+                                    title="Approved"
+                                    value="10"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#418341] rounded-full text-white'>
+                                            <img src={"/images/svgs/check.svg"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        View all items that have been reviewed.</span>}
+                                />
+                                <StatsCard
+                                    title="Submitted"
+                                    value="6"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#5A67D8] rounded-full'>
+                                            <img src={"/images/svgs/submitted.svg"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>Track entries that have been sent for review
+                                    </span>
+                                    }
+                                    trend="up"
+                                />
+                                <StatsCard
+                                    title="Paid"
+                                    value="10"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#38B2AC] rounded-full text-white'>
+                                            <img src={"/images/svgs/money.svg"} className='text-white' />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        Access records of completed payments.
+                                    </span>}
+
+                                />
+                            </div>
+                            <ExpenseEmptyState />
+                        </div>
+                    </PermissionGuard>
+                </TabsContent>
+                <TabsContent value="company-expenses">
+
+                    <PermissionGuard requiredPermissions={[]} >
+                        <div className="space-y-8">
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                                <StatsCard
+                                    title="Total Expenses"
+                                    value="4"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#384A57] rounded-full'>
+                                            <img src={"/images/svgs/draft.svg"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        All expenses submitted this month
+                                    </span>
+                                    }
+                                />
+                                <StatsCard
+                                    title="Pending Approvals"
+                                    value="10"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#F45B69] rounded-full text-white'>
+                                            <img src={"/images/receipt-pending.png"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        Awaiting review.</span>}
+                                />
+                                <StatsCard
+                                    title="Approved Expenses"
+                                    value="6"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#5A67D8] rounded-full'>
+                                            <img src={"/images/svgs/submitted.svg"} />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>Cleared and ready for payment
+                                    </span>
+                                    }
+                                    trend="up"
+                                />
+                                <StatsCard
+                                    title="Paid"
+                                    value="10"
+                                    icon={<>
+                                        <div className='p-1 flex items-center justify-center bg-[#38B2AC] rounded-full text-white'>
+                                            <img src={"/images/svgs/money.svg"} className='text-white' />
+                                        </div></>}
+                                    subtitle={<span className='text-xs leading-[125%]'>
+                                        Completed & reimbursed transactions
+                                    </span>}
+
+                                />
+                            </div>
+                            {/* <ExpenseTable actionButton={<><NewExpenseButtonTrigger /></>} /> */}
+                            <Tabs defaultValue="all">
+                                <TabsList>
+
+                                    <TabsTrigger value="all">All</TabsTrigger>
+                                    <TabsTrigger value="draft">Draft</TabsTrigger>
+                                    <TabsTrigger value="submitted">Submitted</TabsTrigger>
+                                    <TabsTrigger value="approved">Approved</TabsTrigger>
+                                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                                    <TabsTrigger value="pending">Pending</TabsTrigger>
+                                    <TabsTrigger value="paid">Paid</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="all">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="draft">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="submitted">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="approved">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="rejected">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="pending">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                                <TabsContent value="paid">
+
+                                    <ExpenseTable actionButton={<></>} />
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    </PermissionGuard>
+                </TabsContent>
+            </Tabs>
 
         </>
 

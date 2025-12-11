@@ -1,6 +1,6 @@
 "use client"
 
-import { reimbursements } from "@/app/dashboard/expenses/page";
+import { reimbursements } from "@/app/(dashboard)/expenses/page";
 import { useDataTable } from "@/components/datatable/useDataTable";
 
 export const tableData = () => {

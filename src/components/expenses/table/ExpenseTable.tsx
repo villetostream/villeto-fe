@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { tableData } from './tableData';
 import NewExpenseButtonTrigger from '../NewExpenseButtonTrigger';
 import { columns } from './column';
 import { DataTable } from '@/components/datatable';
-import { reimbursements } from '@/app/dashboard/expenses/page';
+import { reimbursements } from '@/app/(dashboard)/expenses/page';
 
-const ExpenseTable = () => {
+const ExpenseTable = ({ actionButton = <></> }: { actionButton: React.ReactElement }) => {
 
     const [filteredData, setFilteredData] = useState(reimbursements);
     const tableprops = tableData();
@@ -19,7 +19,7 @@ const ExpenseTable = () => {
             selectedDataIds={tableprops.selectedDataIds}
             setSelectedDataIds={tableprops.setSelectedDataIds}
             tableHeader={{
-                actionButton: <><NewExpenseButtonTrigger /></>,
+                actionButton: actionButton,
                 isSearchable: true,
                 isExportable: false,
                 isFilter: true,

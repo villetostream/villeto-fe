@@ -1,49 +1,30 @@
 "use client"
 
 // External libraries
-import { Upload, X, FileText } from 'lucide-react';
-import React, { useState, useCallback, useMemo } from 'react';
+import { Upload, X, FileText, Loader2 } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'; // Added useRef
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 
 // UI components
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '../ui/table';
-import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
-    SortingState,
-    getSortedRowModel,
-    ColumnFiltersState,
-    getFilteredRowModel,
-} from '@tanstack/react-table';
-
-// Internal components
-import ProcessingOptions from './CsvProcessingOption';
+//table 
+import { ColumnDef } from '@tanstack/react-table';
 
 // Types
-import { CSVFileData, ProcessingOptions as ProcessingOptionsType } from '@/lib/types/csv';
+import { ProcessingOptions as ProcessingOptionsType } from '@/lib/types/csv';
 import { DataTable } from '../datatable';
 import { useDataTable } from '../datatable/useDataTable';
+import { useCompanyBulkImportApi } from '@/actions/companies/company-bulk-import.action';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 const CSVProcessor = () => {
     const [files, setFiles] = useState<File[]>([]);
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [csvData, setCsvData] = useState<any[]>([]);
     const [columns, setColumns] = useState<ColumnDef<any>[]>([]);
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [options, setOptions] = useState<ProcessingOptionsType>({
         hasHeaders: true,
         delimiter: ',',
@@ -55,6 +36,29 @@ const CSVProcessor = () => {
     const [emptyColumns, setEmptyColumns] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+
+    const uploadFileMutation = useCompanyBulkImportApi()
+    const loading = uploadFileMutation.isPending;
+    const router = useRouter()
+
+    // Create a ref for the error container
+    const errorRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to error when error state changes
+    useEffect(() => {
+        if (error && errorRef.current) {
+            // Add a small delay to ensure the error is rendered
+            setTimeout(() => {
+                errorRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center', // Center the error in viewport
+                });
+
+                // Also focus for accessibility
+                errorRef.current?.focus();
+            }, 100);
+        }
+    }, [error]);
 
     const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
         // Clear previous error
@@ -182,10 +186,7 @@ const CSVProcessor = () => {
                 cell: ({ row }) => (
                     <div className="font-mono text-sm">{row.getValue('_rowNumber')}</div>
                 ),
-
             });
-
-
 
             // Get ALL field names including empty ones
             let fieldNames: string[] = [];
@@ -242,11 +243,6 @@ const CSVProcessor = () => {
                                     </Badge>
                                 )}
                             </div>
-                            {field.trim() === '' && (
-                                <span className="text-xs text-gray-500 font-mono">
-                                    Field name: "{field}"
-                                </span>
-                            )}
                         </div>
                     ),
                     cell: ({ row }) => {
@@ -308,9 +304,16 @@ const CSVProcessor = () => {
         }
     }, [files, options]);
 
+    useEffect(() => {
+        if (files.length > 0) {
+            processCSV()
+        }
+    }, [files])
+
     const tableProps = useDataTable({
         initialPage: 1,
         initialPageSize: 10,
+
         manualSorting: false,
         manualFiltering: false,
         manualPagination: false,
@@ -340,26 +343,31 @@ const CSVProcessor = () => {
         setHasProcessed(false);
     };
 
+    const uploadFileToBackend = async () => {
+        try {
+            if (files.length <= 0) return;
+            const formData = new FormData()
+
+
+            formData.append("file", files[0]);
+            await uploadFileMutation.mutateAsync(formData)
+            setError(null)
+            toast.success("Upload Success, We will send an update once the integration is complete!");
+            router.push("/settings/data-integration")
+        } catch (error: any) {
+            setError(error.response?.data?.message || "Failed to upload file. Please try again.");
+        }
+    }
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center justify-end w-full gap-2">
-                    {files.length > 0 && !hasProcessed && (
-                        <Button
-                            onClick={processCSV}
-                            disabled={isProcessing || files.length === 0}
-                        >
-                            {isProcessing ? 'Processing...' : 'Process CSV'}
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-
-            {/* Error/Info Display */}
+            {/* Error/Info Display with ref */}
             {error && (
-                <div className={`p-4 rounded-md ${error.startsWith('Processed') ? 'bg-blue-50 border border-blue-200 text-blue-800' : error.includes('Warning') ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+                <div
+                    ref={errorRef} // Add ref here
+                    tabIndex={-1} // Make it focusable
+                    className={`p-4 rounded-md ${error.startsWith('Processed') ? 'bg-blue-50 border border-blue-200 text-blue-800' : error.includes('Warning') ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-red-50 border border-red-200 text-red-800'}`}
+                >
                     <div className="flex items-center">
                         <span className="text-sm font-medium">{error}</span>
                     </div>
@@ -438,31 +446,11 @@ const CSVProcessor = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300 animate-pulse"
+                            className="bg-primary h-2 rounded-full transition-all duration-300 animate-pulse"
                         ></div>
                     </div>
                 </div>
             )}
-
-            {/* Empty columns/headers summary */}
-            {/* {emptyColumns.length > 0 && csvData.length > 0 && (
-                <div className=" p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-blue-800">
-                                📊 CSV Analysis Summary
-                            </span>
-                            <div className="text-sm text-blue-700">
-                                <p>• {csvData.length} rows processed</p>
-                                <p>• {columns.length - 2} columns detected</p>
-                                {emptyColumns.length > 0 && (
-                                    <p>• {emptyColumns.length} column(s) are completely empty</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )} */}
 
             {csvData.length > 0 && (
                 <div className="mt-4 space-y-4">
@@ -485,19 +473,18 @@ const CSVProcessor = () => {
                             searchQuery: setGlobalSearch,
                             filterProps: {
                                 title: "Processed Data",
-                                filterData: [
-
-                                ],
-                                onFilter: (filters) => {
-
-                                },
+                                filterData: [],
+                                onFilter: (filters) => { },
                             },
-                            bulkActions: [
-
-                            ],
-
+                            bulkActions: [],
                         }}
                     />
+                    <div className='flex justify-end mt-4'>
+                        <Button size={"md"} onClick={uploadFileToBackend} disabled={loading} className='px-10 disabled:px-10'>
+                            {loading ? "Uploading" : "Upload"}
+                            {loading && <Loader2 className='size-4 animate-spin' />}
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

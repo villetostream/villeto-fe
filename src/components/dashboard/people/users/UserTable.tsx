@@ -16,7 +16,7 @@ const UsersTable = () => {
             data={users?.data?.data ?? []}
             isLoading={users.isLoading}
             columns={columns}
-            paginationProps={tableprops.paginationProps}
+            paginationProps={{ ...tableprops.paginationProps, total: users?.data?.meta.totalCount ?? 0 }}
             enableRowSelection={true}
             enableColumnVisibility={true}
             selectedDataIds={tableprops.selectedDataIds}
