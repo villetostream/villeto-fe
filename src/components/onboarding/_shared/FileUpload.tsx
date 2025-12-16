@@ -1,22 +1,49 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import { FileType } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import Tesseract from "tesseract.js";
 
 type UploadState = "idle" | "uploading" | "scanning" | "verified" | "failed";
 
+function getMimeFromBase64(base64: string): string | null {
+  const match = base64.match(/^data:(.+);base64,/);
+  return match ? match[1] : null;
+}
+const extractFileType = (filename: string): string => {
+  if (!filename) return 'unknown';
+
+  // Get the file extension
+  const extension = filename;
+
+  // Map common image extensions to their MIME types
+  const typeToExtension: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+    'image/bmp': 'bmp',
+    'image/x-icon': 'ico',
+    'image/tiff': 'tiff'
+  };
+
+  return typeToExtension[extension] || 'application/octet-stream';
+};
 export default function FileUpload({
   accept = { "application/pdf": [".pdf"], "image/*": [".png", ".jpg", ".jpeg"] },
   maxSize = 10 * 1024 * 1024,
   onUploaded,
   label,
   helper,
+  originalUpload
 }: {
   accept?: any;
   maxSize?: number;
   onUploaded?: (meta: { name: string; s3Key?: string; text?: string }) => void;
   label?: string;
   helper?: string;
+  originalUpload: string | null
 }) {
   const [state, setState] = useState<UploadState>("idle");
   const [progress, setProgress] = useState<number>(0);
@@ -25,6 +52,30 @@ export default function FileUpload({
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+
+  useEffect(() => {
+    if (originalUpload) {
+      console.log(typeof originalUpload);
+      console.log({ originalUpload });
+
+      // Directly set the base64 string as the preview URL
+      setPreviewUrl(originalUpload);
+      const mime = getMimeFromBase64(originalUpload)
+      const filetype = extractFileType(mime!)
+      console.log({ mime }, { filetype })
+      setFile(new File([originalUpload], `receipt.${filetype}`, {
+        type: mime!
+      }))
+
+      // Simulate having a file when we have an originalUpload
+      setFilename("preview-image.png");
+      setState("verified");
+
+      if (onUploaded) {
+        onUploaded({ name: "preview-image.png" });
+      }
+    }
+  }, [originalUpload]);
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setError(null);
@@ -90,13 +141,13 @@ export default function FileUpload({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  
+  console.log({ previewUrl })
   return (
-    <div className="w-full">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="w-full h-full">
+      {/* <div className="mb-3 flex items-center justify-between">
         <div className="text-base leading-[150%] font-semibold text-foreground">{label || "Upload File"}</div>
-      </div>
-      <div className="h-48">
+      </div> */}
+      <div className="h-full max-h-[600px]">
 
         <div
           {...getRootProps()}
@@ -133,7 +184,8 @@ export default function FileUpload({
             <div className="">
               <div className="flex items-center space-x-3">
                 {previewUrl && (
-                  <div className="flex-shrink-0 size-full object-contain rounded border overflow-auto">
+                  <div className="shrink-0 size-full object-contain rounded border overflow-auto">
+                    {previewUrl}
                     <img
                       src={previewUrl}
                       alt="Preview"

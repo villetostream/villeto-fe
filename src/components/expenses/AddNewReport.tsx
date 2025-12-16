@@ -13,6 +13,7 @@ import { z } from 'zod'
 import FormFieldInput from '../form fields/formFieldInput'
 import { Form } from '../ui/form'
 import FormFieldCalendar from '../form fields/FormFieldCalendar'
+import { useRouter } from 'next/navigation'
 
 // Zod schema for form validation
 const reportSchema = z.object({
@@ -26,7 +27,7 @@ type ReportFormData = z.infer<typeof reportSchema>
 
 const AddNewReport = ({ isOpen, close, toggle }: { isOpen: boolean, close: any, toggle: any }) => {
 
-    const { isOpen: isFormOpen, open: openForm, close: toggleForm } = useModal()
+    const router = useRouter()
 
     // Initialize react-hook-form with zod resolver
     const formHook = useForm<ReportFormData>({
@@ -48,8 +49,8 @@ const AddNewReport = ({ isOpen, close, toggle }: { isOpen: boolean, close: any, 
 
     const onSubmit = (data: ReportFormData) => {
         console.log("Form submitted:", data)
-        close()
-        openForm()
+        router.push(`/expenses/new-expense/upload?name=${encodeURIComponent(data.reportName)}&&date=${encodeURIComponent(data.reportDate.toDateString())}`);
+
         // You can add API call here if needed
     }
 
@@ -61,12 +62,6 @@ const AddNewReport = ({ isOpen, close, toggle }: { isOpen: boolean, close: any, 
     );
     console.log("in the add new report")
 
-    if (isFormOpen) {
-        return (
-
-            <ExpenseForm open={openForm} isOpen={isFormOpen} toggle={toggleForm} reportName={reportName} reportDate={reportDate.toDateString()} />
-        )
-    }
     return (
         <>
 

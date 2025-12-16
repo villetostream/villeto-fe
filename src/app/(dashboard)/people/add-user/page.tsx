@@ -57,7 +57,7 @@ function AddSingleUser() {
         return (
             allDepts?.data?.data
                 .map((dept: Department) => ({
-                    label: dept.name,
+                    label: dept.departmentName,
                     value: dept.departmentId.toString(),
                 })) || []
         );

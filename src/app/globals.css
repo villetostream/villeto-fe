@@ -212,6 +212,23 @@ body {
     @apply bg-background text-foreground font-sans;
   }
 }
+@layer components {
+  .detail-card {
+    @apply bg-primary/10 rounded-lg p-4 border border-border/50;
+  }
+
+  .detail-label {
+    @apply text-xs text-muted-foreground mb-1;
+  }
+
+  .detail-value {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .receipt-paper {
+    @apply bg-card rounded-lg shadow-lg p-6 font-mono text-xs border border-border;
+  }
+}
 
 /* Added custom animations for marquee */
 @keyframes marquee {

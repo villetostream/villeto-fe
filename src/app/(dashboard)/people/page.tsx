@@ -56,7 +56,7 @@ function People() {
                         </p>
                     </div>
                     <div className="flex gap-5">
-                        {activeTab === "all-users" && (
+                        {/* {activeTab === "all-users" && (
                             <>
                                 <PermissionGuard requiredPermissions={[]}>
 
@@ -84,7 +84,7 @@ function People() {
                                     </Button>
                                 </PermissionGuard>
                             </>
-                        )}
+                        )} */}
                         {activeTab === "roles" && (
                             <PermissionGuard requiredPermissions={["create:roles"]}>
 

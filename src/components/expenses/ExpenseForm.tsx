@@ -1,7 +1,7 @@
 "use client"
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, UseFormReturn } from "react-hook-form";
+import { useForm, useFieldArray, UseFormReturn, SubmitHandler, FieldValue, FieldValues } from "react-hook-form";
 import { z } from "zod";
 import {
     Sheet,
@@ -30,7 +30,15 @@ import useModal from "@/hooks/useModal";
 import SuccessModal from "../modals/SuccessModal";
 import { SplitExpense } from "./split/SplitExpenseform";
 import { splitExpenseSchema } from "./split/splitSchema";
+import { useRouter, useSearchParams } from "next/navigation";
 
+interface OCRData {
+    vendor: string;
+    amount: number;
+    transactionDate: string;
+    category: string;
+    description: string;
+}
 // Custom debounce hook
 export function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -50,7 +58,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 const expenseItemSchema = z.object({
     vendor: z.string().min(1, "Vendor name is required"),
-    amount: z.coerce.number().min(1, "Amount is required"),
+    amount: z.number().min(1, "Amount is required"),
     transactionDate: z.date().refine((val) => !!val, {
         message: "Transaction date is required",
     }),
@@ -65,7 +73,6 @@ const expenseFormSchema = z.object({
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
-type ExpenseItemValues = z.infer<typeof expenseItemSchema>;
 
 const categories = [
     "Meals & Entertainment",
@@ -81,33 +88,53 @@ const categories = [
     "Other"
 ];
 
-export interface ExpenseFormProps {
-    trigger?: React.ReactNode;
-    isOpen: boolean,
-    open: () => void,
-    toggle: () => void,
-    reportName?: string,
-    reportDate?: string,
-}
-
-export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportName }: ExpenseFormProps) {
+export function ExpenseForm() {
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [files, setFiles] = useState<string[]>([]);
+    const searchParams = useSearchParams()
+    const reportName = decodeURIComponent((searchParams.get("name") ?? "") as string)
+    const reportDate = decodeURIComponent(searchParams.get("date") ?? Date.now().toString());
     const { isOpen: IsSuccess, toggle: successToggle } = useModal()
+    const router = useRouter()
+    const ocrDataParam = searchParams.get("ocr");
+    // Load receipt images from sessionStorage
+    useEffect(() => {
+        const storedImages = sessionStorage.getItem("uploadedReceipts");
+        if (storedImages) {
+            console.log({ storedImages })
+            setFiles((JSON.parse(storedImages)));
+        }
+    }, []);
+    // Parse OCR data if available
+    const ocrData: OCRData[] = ocrDataParam ? JSON.parse(ocrDataParam) : [];
+
+    const defaultExpense = {
+        vendor: "",
+        amount: 0,
+        transactionDate: new Date(),
+        category: "",
+        description: "",
+        receipt: "",
+    };
+
+    // Pre-fill from OCR data if available
+    const initialExpenses = ocrData.length > 0
+        ? ocrData.map((data) => ({
+            vendor: data.vendor,
+            amount: data.amount,
+            transactionDate: new Date(data.transactionDate),
+            category: data.category,
+            description: data.description,
+            receipt: "receipt-uploaded",
+        }))
+        : [defaultExpense];
 
     const form = useForm<ExpenseFormValues>({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
-            expenses: [{
-                vendor: "",
-                amount: 0 as unknown as number,
-                category: "",
-                description: "",
-                transactionDate: new Date(),
-                receipt: "",
-                splits: []
-            }]
+            expenses: initialExpenses,
         },
-    }) as unknown as UseFormReturn<ExpenseFormValues>;
+    });
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -186,28 +213,21 @@ export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportN
                 isOpen={IsSuccess}
                 onClose={() => {
                     successToggle()
-                    toggle()
+
                 }}
                 onClick={() => {
-                    toggle()
+
                 }}
                 title="Expense Submitted"
                 description="Your expense has been successful submitted your expense."
                 buttonText="Back to Dashboard"
             />
-            <Sheet open={isOpen} onOpenChange={toggle}>
-                <SheetContent side="right" className="w-full lg:w-[500px] overflow-y-auto">
-                    <SheetHeader>
-                        <SheetTitle className="text-xl font-semibold text-dashboard-text-primary">
-                            Continue {reportName} Report
-                        </SheetTitle>
-                        <SheetDescription className="text-dashboard-text-secondary">
+            <div>
+                <>
 
-                        </SheetDescription>
-                    </SheetHeader>
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4 pb-6">
+                        <form onSubmit={form.handleSubmit(onSubmit as SubmitHandler<FieldValues>)} className="space-y-6 px-4 pb-6">
                             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border">
                                 <div>
                                     <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
@@ -224,69 +244,79 @@ export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportN
                             </div>
 
                             {/* Dynamic Expense Forms */}
-                            <div className="space-y-5">
+                            <div className="space-y-6">
                                 {fields.map((field, index) => {
                                     // Use the debounced amount instead of directly watching
                                     const amount = amounts[index] || 0;
                                     console.log({ amount }, { amounts })
 
                                     return (
-                                        <div key={field.id} className="border border-border rounded-lg p-4 space-y-4 relative">
-                                            {/* Remove button for additional forms */}
-                                            {fields.length > 1 && index != 0 && (
-                                                <div className="ml-auto w-fit flex">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghostNavy"
-                                                        size="sm"
-                                                        className="hover:bg-destructive/10 ml-auto"
-                                                        onClick={() => removeExpense(index)}
-                                                    >
-                                                        <Trash className="h-4 w-4 text-destructive" />
-                                                        Delete
-                                                    </Button>
+                                        <div key={field.id} className=" p-4 gap-10 relative grid lg:grid-cols-3" >
+                                            <div className="col-span-2 space-y-5">
+                                                {/* Remove button for additional forms */}
+                                                {fields.length > 1 && index != 0 && (
+                                                    <div className="ml-auto w-fit flex">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghostNavy"
+                                                            size="sm"
+                                                            className="hover:bg-destructive/10 ml-auto"
+                                                            onClick={() => removeExpense(index)}
+                                                        >
+                                                            <Trash className="h-4 w-4 text-destructive" />
+                                                            Delete
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                <SplitExpense
+                                                    control={form.control}
+                                                    expenseIndex={index}
+                                                    totalAmount={amount}
+                                                />
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormFieldInput
+                                                        control={form.control}
+                                                        name={`expenses.${index}.amount`}
+                                                        label="Amount"
+                                                        placeholder="Enter Amount"
+                                                        type="number"
+                                                        inputMode="numeric"
+                                                    />
+                                                    <FormFieldSelect
+                                                        control={form.control}
+                                                        name={`expenses.${index}.category`}
+                                                        values={categories.map((category) => ({ label: category, value: category }))}
+                                                        placeholder="Select Category"
+                                                        label="Category"
+                                                    />
                                                 </div>
-                                            )}
 
-                                            <SplitExpense
-                                                control={form.control}
-                                                expenseIndex={index}
-                                                totalAmount={amount}
-                                            />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormFieldSelect
+                                                        control={form.control}
+                                                        name={`expenses.${index}.vendor`}
+                                                        values={categories.map((category) => ({ label: category, value: category }))}
+                                                        placeholder="Select Vendor"
+                                                        label="Vendor"
+                                                    />
+                                                    <FormFieldCalendar
+                                                        control={form.control}
+                                                        name={`expenses.${index}.transactionDate`}
+                                                        label="Transaction Date"
+                                                    />
+                                                </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <FormFieldInput
-                                                    control={form.control}
-                                                    name={`expenses.${index}.amount`}
-                                                    label="Amount"
-                                                    placeholder="Enter Amount"
-                                                    type="number"
-                                                    inputMode="numeric"
-                                                />
-                                                <FormFieldSelect
-                                                    control={form.control}
-                                                    name={`expenses.${index}.category`}
-                                                    values={categories.map((category) => ({ label: category, value: category }))}
-                                                    placeholder="Select Category"
-                                                    label="Category"
-                                                />
-                                            </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <FormFieldSelect
+
+                                                <FormFieldTextArea
                                                     control={form.control}
-                                                    name={`expenses.${index}.vendor`}
-                                                    values={categories.map((category) => ({ label: category, value: category }))}
-                                                    placeholder="Select Vendor"
-                                                    label="Vendor"
-                                                />
-                                                <FormFieldCalendar
-                                                    control={form.control}
-                                                    name={`expenses.${index}.transactionDate`}
-                                                    label="Transaction Date"
+                                                    label="Description"
+                                                    name={`expenses.${index}.description`}
+                                                    placeholder=""
                                                 />
                                             </div>
-
                                             {/* File Upload */}
                                             <FormField
                                                 control={form.control}
@@ -298,17 +328,11 @@ export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportN
                                                             helper="Add Picture or drop here"
                                                             maxSize={5 * 1024 * 1024}
                                                             onUploaded={({ name }) => field.onChange(name)}
+                                                            originalUpload={files[0]}
                                                         />
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
-                                            />
-
-                                            <FormFieldTextArea
-                                                control={form.control}
-                                                label="Description"
-                                                name={`expenses.${index}.description`}
-                                                placeholder=""
                                             />
                                         </div>
                                     );
@@ -336,7 +360,7 @@ export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportN
                                 <Button
                                     type="button"
                                     variant="outlinePrimary"
-                                    onClick={toggle}
+                                    onClick={() => router.push("/expense")}
                                     size={"md"}
                                 >
                                     Save As Draft
@@ -344,8 +368,8 @@ export function ExpenseForm({ trigger, isOpen, open, toggle, reportDate, reportN
                             </div>
                         </form>
                     </Form>
-                </SheetContent>
-            </Sheet>
+                </>
+            </div>
         </>
     );
 }
