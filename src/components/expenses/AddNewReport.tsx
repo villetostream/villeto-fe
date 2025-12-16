@@ -49,7 +49,7 @@ const AddNewReport = ({ isOpen, close, toggle }: { isOpen: boolean, close: any, 
 
     const onSubmit = (data: ReportFormData) => {
         console.log("Form submitted:", data)
-        router.push(`/expenses/new-expense?name=${encodeURIComponent(data.reportName)}&&date=${encodeURIComponent(data.reportDate.toDateString())}`);
+        router.push(`/expenses/new-expense/upload?name=${encodeURIComponent(data.reportName)}&&date=${encodeURIComponent(data.reportDate.toDateString())}`);
 
         // You can add API call here if needed
     }

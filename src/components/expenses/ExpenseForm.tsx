@@ -1,7 +1,7 @@
 "use client"
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, UseFormReturn } from "react-hook-form";
+import { useForm, useFieldArray, UseFormReturn, SubmitHandler, FieldValue, FieldValues } from "react-hook-form";
 import { z } from "zod";
 import {
     Sheet,
@@ -32,6 +32,13 @@ import { SplitExpense } from "./split/SplitExpenseform";
 import { splitExpenseSchema } from "./split/splitSchema";
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface OCRData {
+    vendor: string;
+    amount: number;
+    transactionDate: string;
+    category: string;
+    description: string;
+}
 // Custom debounce hook
 export function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -51,7 +58,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 const expenseItemSchema = z.object({
     vendor: z.string().min(1, "Vendor name is required"),
-    amount: z.coerce.number().min(1, "Amount is required"),
+    amount: z.number().min(1, "Amount is required"),
     transactionDate: z.date().refine((val) => !!val, {
         message: "Transaction date is required",
     }),
@@ -81,31 +88,53 @@ const categories = [
     "Other"
 ];
 
-export interface ExpenseFormProps {
-
-}
-
 export function ExpenseForm() {
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [files, setFiles] = useState<string[]>([]);
     const searchParams = useSearchParams()
     const reportName = decodeURIComponent((searchParams.get("name") ?? "") as string)
     const reportDate = decodeURIComponent(searchParams.get("date") ?? Date.now().toString());
     const { isOpen: IsSuccess, toggle: successToggle } = useModal()
     const router = useRouter()
+    const ocrDataParam = searchParams.get("ocr");
+    // Load receipt images from sessionStorage
+    useEffect(() => {
+        const storedImages = sessionStorage.getItem("uploadedReceipts");
+        if (storedImages) {
+            console.log({ storedImages })
+            setFiles((JSON.parse(storedImages)));
+        }
+    }, []);
+    // Parse OCR data if available
+    const ocrData: OCRData[] = ocrDataParam ? JSON.parse(ocrDataParam) : [];
+
+    const defaultExpense = {
+        vendor: "",
+        amount: 0,
+        transactionDate: new Date(),
+        category: "",
+        description: "",
+        receipt: "",
+    };
+
+    // Pre-fill from OCR data if available
+    const initialExpenses = ocrData.length > 0
+        ? ocrData.map((data) => ({
+            vendor: data.vendor,
+            amount: data.amount,
+            transactionDate: new Date(data.transactionDate),
+            category: data.category,
+            description: data.description,
+            receipt: "receipt-uploaded",
+        }))
+        : [defaultExpense];
+
     const form = useForm<ExpenseFormValues>({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
-            expenses: [{
-                vendor: "",
-                amount: 0 as unknown as number,
-                category: "",
-                description: "",
-                transactionDate: new Date(),
-                receipt: "",
-                splits: []
-            }]
+            expenses: initialExpenses,
         },
-    }) as unknown as UseFormReturn<ExpenseFormValues>;
+    });
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -198,7 +227,7 @@ export function ExpenseForm() {
 
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4 pb-6">
+                        <form onSubmit={form.handleSubmit(onSubmit as SubmitHandler<FieldValues>)} className="space-y-6 px-4 pb-6">
                             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border">
                                 <div>
                                     <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
@@ -299,6 +328,7 @@ export function ExpenseForm() {
                                                             helper="Add Picture or drop here"
                                                             maxSize={5 * 1024 * 1024}
                                                             onUploaded={({ name }) => field.onChange(name)}
+                                                            originalUpload={files[0]}
                                                         />
                                                         <FormMessage />
                                                     </FormItem>

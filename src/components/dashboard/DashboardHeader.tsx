@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { ExpenseForm } from "./ExpenseForm";
 import { PaymentDetails } from "./PaymentDetails";
 
 export function DashboardHeader() {
@@ -17,7 +16,7 @@ export function DashboardHeader() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <ExpenseForm />
+
           <Badge variant="secondary" className="bg-status-warning text-white">
             Reminders 1.1K
           </Badge>
