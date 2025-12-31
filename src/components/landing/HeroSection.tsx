@@ -44,7 +44,8 @@ export const HeroSection = () => {
             </div>
 
             <p className="mb-10 text-base md:text-xl text-[#0d0d0d]">
-              Corporate cards, automated spend tracking, and vendor <br />{" "}
+              Corporate cards, automated spend tracking, and vendor{" "}
+              <br className="hidden md:block" /> {/* Visible only on md+ */}
               payments all under one intelligent platform.
             </p>
 
