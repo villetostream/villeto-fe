@@ -1,34 +1,26 @@
 "use client";
-import React, { Suspense } from "react";
-import { InView } from "react-intersection-observer";
-import {
-  ScrollContextProvider,
-  useScrollContext,
-} from "@/components/landing/Header";
+import { Suspense } from "react";
 import { Header } from "@/components/landing/Header";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeatureSection";
 import { TechSection } from "@/components/landing/TechSection";
-import { ProcessSection } from "@/components/landing/ProcessSection";
+import Testimonials from "@/components/landing/Testimonials";
+import CardsSection from "@/components/landing/CardsSection";
 import TrustedCompanies from "@/components/landing/TrustedCompanies";
 import MaxWidth from "@/lib/constants/MaxWidth";
 import FAQSection from "@/components/landing/FaqSection";
 import CTASection from "@/components/landing/CtaSection";
-import CardsSection from "@/components/landing/CardsSection";
-import Testimonials from "@/components/landing/Testimonials";
 import Footer from "@/components/landing/Footer";
-import AnimatedLanding from "@/components/landing/shared/AnimatedLanding";
 import { LoadingFallback } from "@/components/landing/shared/LoadingFallback";
 
 const LandingContent = () => {
-  // Define sections with their background classes
   const sections = [
     {
       id: "hero",
       bg: "bg-background",
-      dataBgColor: "#FFFFFF", // Fallback: white (adjust if bg-background differs)
+      dataBgColor: "#FFFFFF",
       content: (
-        <div className="px-[6.944%]">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-0 max-w-7xl mx-auto">
           <HeroSection />
           <TrustedCompanies />
           <FeaturesSection />
@@ -38,16 +30,15 @@ const LandingContent = () => {
     {
       id: "tech",
       bg: "bg-navy",
-      dataBgColor: "#191919", // Fallback: navy (Tailwind's gray-900)
+      dataBgColor: "#191919",
       content: <TechSection />,
     },
     {
       id: "process",
       bg: "bg-white",
-      dataBgColor: "#FFFFFF", // White
+      dataBgColor: "#FFFFFF",
       content: (
         <>
-          {/* <ProcessSection /> */}
           <Testimonials />
           <CardsSection />
         </>
@@ -56,34 +47,34 @@ const LandingContent = () => {
     {
       id: "cta",
       bg: "bg-navy",
-      dataBgColor: "#191919", // Navy
+      dataBgColor: "#191919",
       content: <CTASection />,
-      className: "mt-[6.9544%] xl:mt-[120px]",
+      className: "mt-12 md:mt-20 lg:mt-28 xl:mt-32 2xl:mt-40",
     },
     {
       id: "faq",
       bg: "bg-white",
-      dataBgColor: "#FFFFFF", // White
+      dataBgColor: "#FFFFFF",
       content: <FAQSection />,
     },
     {
       id: "footer",
       bg: "bg-navy",
-      dataBgColor: "#1F2937", // Navy
+      dataBgColor: "#1F2937",
       content: <Footer />,
-      className: "mt-[6.9544%] xl:mt-[120px]",
+      className: "mt-12 md:mt-20 lg:mt-28 xl:mt-32 2xl:mt-40",
     },
   ];
 
   return (
-    <div className="overflow-y-auto h-[calc(100vh)]">
-      <MaxWidth className={"py-3.5"} data-bg-color={""}>
+    <div className="min-h-screen overflow-x-hidden">
+      <MaxWidth className="py-3.5" data-bg-color="">
         <Header />
       </MaxWidth>
 
       {sections.map((section) => (
         <MaxWidth
-          key={section.id} // ← Critical fix
+          key={section.id}
           className={`${section.bg} ${section.className || ""}`}
           data-bg-color={section.dataBgColor}
         >

@@ -1,25 +1,28 @@
-import React, { ReactNode, forwardRef } from 'react';
-import { cn } from '../utils';
+import React, { ReactNode, forwardRef } from "react";
+import { cn } from "../utils";
 
 interface MaxWidthProps {
-    children: ReactNode;
-    className?: string;
-    'data-bg-color'?: string; // For explicit color fallbacks
+  children: ReactNode;
+  className?: string;
+  "data-bg-color"?: string;
 }
 
-// Use forwardRef to pass ref to the outer div
 const MaxWidth = forwardRef<HTMLDivElement, MaxWidthProps>(
-    ({ children, className, 'data-bg-color': dataBgColor }, ref) => {
-        return (
-            <div ref={ref} className={cn('w-full h-fit', className)} data-bg-color={dataBgColor}>
-                <div className="max-w-[1560px] mx-auto h-fit">
-                    {children}
-                </div>
-            </div>
-        );
-    }
+  ({ children, className, "data-bg-color": dataBgColor }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn("w-full", className)} // ← Removed h-fit
+        data-bg-color={dataBgColor}
+      >
+        <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+          {children}
+        </div>
+      </div>
+    );
+  }
 );
 
-MaxWidth.displayName = 'MaxWidth'; // For React DevTools
+MaxWidth.displayName = "MaxWidth";
 
 export default MaxWidth;
