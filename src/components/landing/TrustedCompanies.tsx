@@ -45,7 +45,7 @@ const companies = [
       <img
         src="/images/marquee-svgs/cbre.svg"
         alt="CBRE"
-        className="w-20 h-8"
+        className="w-20 h-6"
       />
     ),
   },
