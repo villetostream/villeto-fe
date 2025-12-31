@@ -8,7 +8,7 @@ import QueryProvider from "@/providers/queryClientProvider";
 const geistSans = Figtree({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"]
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -21,7 +21,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   const cookieStore = await cookies();
   const cookie = cookieStore.get("auth-storage")?.value;
   let initialUser = null;
@@ -30,17 +29,16 @@ export default async function RootLayout({
     try {
       const parsed = JSON.parse(cookie);
       initialUser = parsed?.state?.user ?? null;
-    } catch { }
+    } catch {}
   }
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} antialiased bg-white overflow-hidden min-h-svh`}>
+      <body className={`${geistSans.variable} antialiased bg-white min-h-svh`}>
         <QueryProvider>
           {children}
           <Toaster richColors expand />
         </QueryProvider>
-      </body >
-    </html >
+      </body>
+    </html>
   );
 }
