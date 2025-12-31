@@ -1,133 +1,164 @@
-import React, { useState, useCallback, createContext, useContext } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, Menu, MousePointer2Icon, SquareArrowOutUpRightIcon, X } from 'lucide-react';
-import Link from 'next/link';
+"use client";
 
-type ScrollContextType = {
+import React, { createContext, useContext, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  SquareArrowOutUpRight,
+  MousePointer2,
+} from "lucide-react";
+import { cn } from "@/lib/utils"; // Optional: if you have a cn utility for className merging
 
-    isMenuOpen: boolean;
-    setIsMenuOpen: (open: boolean) => void;
+// Context for mobile menu state
+type MobileMenuContextType = {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 };
 
-const ScrollContext = createContext<ScrollContextType>({
-
-    isMenuOpen: false,
-    setIsMenuOpen: () => { },
+const MobileMenuContext = createContext<MobileMenuContextType>({
+  isOpen: false,
+  setIsOpen: () => {},
 });
 
-export const useScrollContext = () => useContext(ScrollContext);
+export const useMobileMenu = () => useContext(MobileMenuContext);
 
-// Context Provider Component
-export const ScrollContextProvider = ({ children }: { children: React.ReactNode }) => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+export const MobileMenuProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-
-    return (
-        <ScrollContext.Provider value={{
-            isMenuOpen,
-            setIsMenuOpen
-        }}>
-            {children}
-        </ScrollContext.Provider>
-    );
+  return (
+    <MobileMenuContext.Provider value={{ isOpen, setIsOpen }}>
+      {children}
+    </MobileMenuContext.Provider>
+  );
 };
 
-export const Header = () => {
-    const { isMenuOpen, setIsMenuOpen } = useScrollContext();
+// Header Component
+export default function Header() {
+  const { isOpen, setIsOpen } = useMobileMenu();
 
-    const menuItems = [
-        { name: 'Company', href: '#company' },
-        { name: 'Products', href: '#products' },
-        { name: 'Solutions', href: '#solutions' },
-        { name: 'Pricing Plans', href: '#pricing' },
-    ];
+  const navItems = [
+    { label: "Company", href: "#company" },
+    { label: "Products", href: "#products" },
+    { label: "Solutions", href: "#solutions" },
+    { label: "Pricing Plans", href: "#pricing" },
+  ];
 
-    return (
-        <header className="fixed top-0 left-0 right-0 z-[999] max-w-[1560px] mx-auto bg-white">
-            <div className="bg-white  border-b border-border/60">
-                <div className={`px-6 py-[14px]  flex items-center justify-between bg-white `}>
-                    {/* Logo */}
-                    <div className="flex items-center space-x-2">
-                        <span className={`font-bold text-xl `}>Villeto</span>
-                    </div>
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
 
-                    {/* Desktop Nav */}
-                    <nav className="hidden md:flex items-center space-x-8">
-                        {menuItems.map((item) => (
-                            <a
-                                key={item.name}
-                                href={item.href}
-                                className={` hover:text-foreground/80 transition-colors font-normal flex text-lg gap-2 items-center`}
-                            >
-                                {item.name}
-                                {item.name !== 'Company' ? <ChevronDown className="mt-1" /> : null}
-                            </a>
-                        ))}
-                    </nav>
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 mx-auto max-w-[1560px] bg-white shadow-sm">
+      <div className="border-b border-border/60">
+        <div className="flex items-center justify-between px-6 py-4">
+          {/* Logo - Clickable to Homepage */}
+          <Link
+            href="/"
+            className="flex items-center space-x-2 text-xl font-bold transition-opacity hover:opacity-80"
+            onClick={closeMenu}
+          >
+            <img
+              src={"/images/villeto-logo.png"}
+              alt="Villeto Logo"
+              className="h-10 w-auto"
+            />
+          </Link>
 
-                    {/* Desktop CTA */}
-                    <div className="hidden md:flex items-center space-x-4">
-                        <Button variant="outlinePrimary" size="lg" asChild className={" rounded-[16px] min-w-[171px]"}>
-                            <Link href="/login" className='flex items-center'>
-
-                                Sign-in
-                                <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
-                            </Link>
-
-                        </Button>
-                        <Button variant="hero" size="md" asChild className={""}>
-                            <Link href="#" className='flex items-center'>
-                                See A demo <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
-                            </Link>
-                        </Button>
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="md:hidden p-2"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    >
-                        {isMenuOpen ? (
-                            <X className={`h-5 w-5 ${""}`} />
-                        ) : (
-                            <Menu className={`h-5 w-5 ${""}`} />
-                        )}
-                    </button>
-                </div>
-
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div
-                        className={`md:hidden bg-white border-t border-border/60 rounded-b-xl `}
-                    >
-                        <div className="px-6 py-4">
-                            <nav className="flex flex-col space-y-4">
-                                {menuItems.map((item) => (
-                                    <a
-                                        key={item.name}
-                                        href={item.href}
-                                        className={` hover:text-foreground/80 transition-colors font-medium py-2`}
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >
-                                        {item.name}
-                                    </a>
-                                ))}
-                                <div className="flex flex-col space-y-3 pt-4 border-t border-border/60">
-                                    <Button variant="glass" size="sm" className={""}>
-                                        Learn More
-                                        <MousePointer2Icon className="ml-1 h-4 w-4" />
-                                    </Button>
-                                    <Button variant="hero" size="lg" asChild className={""}>
-                                        <Link href="/pre-onboarding" className='flex items-center'>
-                                            See A demo <SquareArrowOutUpRightIcon className="ml-2 h-5 w-5" />
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </nav>
-                        </div>
-                    </div>
+          {/* Desktop Navigation */}
+          <nav className="hidden items-center space-x-8 md:flex">
+            {navItems.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-1.5 text-lg font-normal text-foreground transition-colors hover:text-foreground/80"
+              >
+                {item.label}
+                {item.label !== "Company" && (
+                  <ChevronDown className="h-4 w-4" />
                 )}
+              </a>
+            ))}
+          </nav>
+
+          {/* Desktop CTA Buttons */}
+          <div className="hidden items-center space-x-4 md:flex">
+            <Button
+              variant="outlinePrimary"
+              size="lg"
+              asChild
+              className="min-w-[171px] rounded-2xl"
+            >
+              <Link href="/login" className="flex items-center">
+                Sign in
+                <SquareArrowOutUpRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+
+            <Button variant="hero" size="md" asChild>
+              <Link href="/pre-onboarding" className="flex items-center">
+                See a Demo
+                <SquareArrowOutUpRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={toggleMenu}
+            className="rounded-lg p-2 transition-colors hover:bg-gray-100 md:hidden"
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isOpen && (
+          <div className="border-t border-border/60 bg-white md:hidden">
+            <div className="px-6 py-6">
+              <nav className="flex flex-col space-y-5">
+                {navItems.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className="text-lg font-medium text-foreground transition-colors hover:text-foreground/80"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+
+                <div className="space-y-4 border-t border-border/60 pt-6">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="w-full justify-start"
+                  >
+                    Learn More
+                    <MousePointer2 className="ml-2 h-5 w-5" />
+                  </Button>
+
+                  <Button variant="hero" size="lg" asChild className="w-full">
+                    <Link
+                      href="/pre-onboarding"
+                      className="flex items-center justify-center"
+                    >
+                      See a Demo
+                      <SquareArrowOutUpRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </nav>
             </div>
-        </header>
-    );
-};
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

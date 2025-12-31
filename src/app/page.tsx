@@ -1,6 +1,6 @@
 "use client";
 import { Suspense } from "react";
-import { Header } from "@/components/landing/Header";
+import Header from "@/components/landing/Header";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeatureSection";
 import { TechSection } from "@/components/landing/TechSection";
