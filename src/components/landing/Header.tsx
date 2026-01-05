@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, SquareArrowOutUpRight } from "lucide-react";
+import { Menu, X, ChevronDown, RocketIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Mobile Menu Context
@@ -306,15 +306,15 @@ const NavItem: React.FC<NavItemProps> = ({
               setActiveDropdown(null);
             }, 200);
           }}
-          className="flex items-center justify-between w-full py-2 px-3 text-gray-900 border-b border-gray-100 hover:bg-gray-50 md:hover:bg-transparent md:border-0 md:hover:text-primary md:p-0 md:w-auto dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-neutral-700"
+          className="flex items-center justify-between w-full py-3 px-4 text-gray-900 border-b border-gray-100 hover:bg-gray-50 md:hover:bg-transparent md:border-0 md:hover:text-primary md:py-0 md:px-0 md:w-auto dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-neutral-700"
         >
           {item.label}
-          <ChevronDown className="w-2.5 h-2.5 ms-3" />
+          <ChevronDown className="w-4 h-4 ms-3" />
         </button>
       ) : (
         <a
           href={item.href}
-          className="block py-2 px-3 text-gray-900 hover:bg-gray-50 border-b border-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary md:p-0 dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-neutral-700"
+          className="block py-3 px-4 text-gray-900 hover:bg-gray-50 border-b border-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary md:py-0 md:px-0 dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-neutral-700"
           onClick={closeMenu}
         >
           {item.label}
@@ -373,37 +373,30 @@ const DesktopMegaMenu: React.FC<DesktopMegaMenuProps> = ({
     </div>
   ) : null;
 
-// Auth Buttons
+// Auth Buttons (used only on desktop – plain text links)
 type AuthButtonsProps = {
   className?: string;
   closeMenu: () => void;
 };
 const AuthButtons: React.FC<AuthButtonsProps> = ({ className, closeMenu }) => (
-  <div className={className}>
-    <Button
-      variant="outlinePrimary"
-      size="lg"
-      asChild
-      className="py-[7px] px-2.5 inline-flex items-center font-medium text-sm rounded-lg border border-gray-200 bg-white text-gray-800 shadow-xs hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 focus:outline-none focus:bg-gray-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700"
+  <div className={cn("flex items-center gap-8", className)}>
+    <Link
+      href="/login"
+      className="text-base font-medium hover:text-primary"
+      onClick={closeMenu}
     >
-      <Link href="/login" className="flex items-center" onClick={closeMenu}>
-        Sign in
-        <SquareArrowOutUpRight className="ml-2 h-5 w-5" />
-      </Link>
-    </Button>
-    <Button
-      variant="hero"
-      size="md"
-      asChild
-      className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-primary text-white hover:bg-primary/90 focus:outline-none focus:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none dark:bg-primary dark:hover:bg-primary/90 dark:focus:bg-primary/90"
+      Sign in
+    </Link>
+    <Link
+      href="/pre-onboarding"
+      className="text-base font-medium hover:text-primary"
+      onClick={closeMenu}
     >
-      <Link
-        href="/pre-onboarding"
-        className="flex items-center"
-        onClick={closeMenu}
-      >
-        See a Demo
-        <SquareArrowOutUpRight className="ml-2 h-5 w-5" />
+      See a Demo
+    </Link>
+    <Button variant="hero" size="lg" asChild>
+      <Link href="/pre-onboarding" className="flex items-center">
+        Get Started <RocketIcon className="ml-2 w-5 h-5" />
       </Link>
     </Button>
   </div>
@@ -480,11 +473,11 @@ export default function Header() {
         <div
           id="navbar-mega-menu"
           className={cn(
-            "items-center justify-between w-full md:flex md:w-auto md:order-1 md:ml-6 fixed md:relative inset-y-0 right-0 w-80 bg-white dark:bg-neutral-800 shadow-md transform transition-transform duration-300 ease-in-out z-50 md:shadow-none md:bg-transparent dark:md:bg-transparent md:translate-x-0 overflow-y-auto",
-            isOpen ? "translate-x-0" : "translate-x-full"
+            "fixed md:relative top-0 bottom-0 left-0 w-[80vw] md:w-auto h-full md:h-auto bg-white dark:bg-neutral-800 shadow-2xl md:shadow-none flex flex-col md:flex-row md:items-center md:ml-6 transition-transform duration-300 ease-in-out z-50 md:z-auto md:translate-x-0",
+            isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <ul className="flex flex-col font-medium p-4 md:p-0 md:flex-row md:mt-0 md:space-x-8 rtl:space-x-reverse md:items-center">
+          <ul className="flex flex-col font-medium flex-1 overflow-y-auto md:p-0 md:flex-row md:space-x-8 md:items-center">
             {navItems.map((item) => (
               <NavItem
                 key={item.label}
@@ -498,18 +491,48 @@ export default function Header() {
                 timeoutRef={timeoutRef}
               />
             ))}
-            {isOpen && (
-              <li className="flex flex-col gap-2 p-4 md:hidden">
-                <AuthButtons
-                  className="flex flex-col gap-2"
-                  closeMenu={closeMenu}
-                />
-              </li>
-            )}
           </ul>
+          {isOpen && (
+            <div className="sticky bottom-0 bg-white dark:bg-neutral-800 border-t border-gray-200 dark:border-neutral-700 p-6 md:hidden">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full justify-center"
+                    asChild
+                  >
+                    <Link href="/login" onClick={closeMenu}>
+                      Sign in
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full justify-center"
+                    asChild
+                  >
+                    <Link href="/pre-onboarding" onClick={closeMenu}>
+                      See a Demo
+                    </Link>
+                  </Button>
+                </div>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full justify-center"
+                  asChild
+                >
+                  <Link href="/pre-onboarding" onClick={closeMenu}>
+                    Get Started <RocketIcon className="ml-2 w-5 h-5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
         <AuthButtons
-          className="hidden md:flex md:ms-auto mt-2 md:mt-0 items-center gap-x-1.5 md:order-2"
+          className="hidden md:flex md:ms-auto items-center gap-x-8"
           closeMenu={closeMenu}
         />
       </div>
