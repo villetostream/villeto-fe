@@ -5,23 +5,23 @@ import Link from "next/link";
 
 const avatars = [
   {
-    src: "/images/avatars/avatar-1.webp",
+    src: "/images/avatars/avatar-1.jpg",
     alt: "User avatar 1",
   },
   {
-    src: "/images/avatars/avatar-2.webp",
+    src: "/images/avatars/avatar-2.jpg",
     alt: "User avatar 2",
   },
   {
-    src: "/images/avatars/avatar-3.webp",
+    src: "/images/avatars/avatar-3.jpg",
     alt: "User avatar 3",
   },
   {
-    src: "/images/avatars/avatar-4.webp",
+    src: "/images/avatars/avatar-4.jpg",
     alt: "User avatar 4",
   },
   {
-    src: "/images/avatars/avatar-5.webp",
+    src: "/images/avatars/avatar-5.jpg",
     alt: "User avatar 5",
   },
 ];
