@@ -132,7 +132,7 @@ export const HeroSection = () => {
       whitespace-normal
     "
             >
-              Join <span className="font-medium">1,000+</span> finance teams
+              Join <span className="font-medium">100+</span> finance teams
               saving hundreds of hours every month.
             </p>
           </div>
