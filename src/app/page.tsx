@@ -1,6 +1,6 @@
 "use client";
 import { Suspense } from "react";
-import Header from "@/components/landing/Header";
+import Header, { MobileMenuProvider } from "@/components/landing/Header"; // Updated import to include MobileMenuProvider
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeatureSection";
 import { TechSection } from "@/components/landing/TechSection";
@@ -67,21 +67,24 @@ const LandingContent = () => {
   ];
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
-      <MaxWidth className="py-3.5" data-bg-color="">
-        <Header />
-      </MaxWidth>
-
-      {sections.map((section) => (
-        <MaxWidth
-          key={section.id}
-          className={`${section.bg} ${section.className || ""}`}
-          data-bg-color={section.dataBgColor}
-        >
-          {section.content}
+    <MobileMenuProvider>
+      {" "}
+      <div className="min-h-screen overflow-x-hidden">
+        <MaxWidth className="py-3.5" data-bg-color="">
+          <Header />
         </MaxWidth>
-      ))}
-    </div>
+
+        {sections.map((section) => (
+          <MaxWidth
+            key={section.id}
+            className={`${section.bg} ${section.className || ""}`}
+            data-bg-color={section.dataBgColor}
+          >
+            {section.content}
+          </MaxWidth>
+        ))}
+      </div>
+    </MobileMenuProvider>
   );
 };
 
