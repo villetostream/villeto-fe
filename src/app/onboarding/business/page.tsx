@@ -49,10 +49,10 @@ export default function Business() {
     resolver: zodResolver(onboardingBusinessSchemaWithLogo),
     mode: "onChange",
     defaultValues: {
-      business_name: preOnboarding?.companyName || "",
-      contactPhone: businessSnapshot.contactNumber || "",
-      countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-      websiteUrl: businessSnapshot.website || "",
+      business_name: preOnboarding?.companyName ?? "",
+      contactPhone: businessSnapshot?.contactNumber ?? "",
+      countryOfRegistration: businessSnapshot?.countryOfRegistration ?? "",
+      websiteUrl: businessSnapshot?.website ?? "",
       businessLogo: null,
     },
   });
@@ -60,10 +60,10 @@ export default function Business() {
   useEffect(() => {
     if (preOnboarding) {
       form.reset({
-        business_name: preOnboarding?.companyName || "",
-        contactPhone: businessSnapshot.contactNumber || "",
-        countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-        websiteUrl: businessSnapshot.website || "",
+        business_name: preOnboarding?.companyName ?? "",
+        contactPhone: businessSnapshot?.contactNumber ?? "",
+        countryOfRegistration: businessSnapshot?.countryOfRegistration ?? "",
+        websiteUrl: businessSnapshot?.website ?? "",
         businessLogo: null,
       });
     }
@@ -136,27 +136,24 @@ export default function Business() {
     data: z.infer<typeof onboardingBusinessSchemaWithLogo>
   ) {
     try {
-      // Create FormData to handle file upload
-      const formData = new FormData();
-      formData.append("business_name", data.business_name);
-      formData.append("contactPhone", data.contactPhone);
-      formData.append("countryOfRegistration", data.countryOfRegistration);
-      formData.append("websiteUrl", data.websiteUrl);
+      // Prepare payload matching the API schema (without businessLogo)
+      const payload = {
+        business_name: data.business_name ?? "",
+        contactPhone: data.contactPhone ?? "",
+        countryOfRegistration: data.countryOfRegistration ?? "",
+        websiteUrl: data.websiteUrl ?? "",
+      };
 
-      if (data.businessLogo) {
-        formData.append("businessLogo", data.businessLogo);
-      }
-
-      // Pass FormData to your API
-      await updateOnboarding.mutateAsync(formData);
+      // Pass payload to your API
+      await updateOnboarding.mutateAsync(payload);
 
       // Update the store with form data
       updateBusinessSnapshot({
-        businessName: data.business_name,
-        contactNumber: data.contactPhone,
-        countryOfRegistration: data.countryOfRegistration,
-        website: data.websiteUrl,
-        logo: logoFile ? logoPreview : undefined, // Store preview or file reference
+        businessName: data.business_name ?? "",
+        contactNumber: data.contactPhone ?? "",
+        countryOfRegistration: data.countryOfRegistration ?? "",
+        website: data.websiteUrl ?? "",
+        logo: logoFile ? logoPreview ?? undefined : undefined, // Store preview or file reference
       });
 
       router.push("/onboarding/leadership");

@@ -51,7 +51,7 @@ const FormFieldSelect = <T extends Record<string, any>>({
                   // Handle clear option
                   if (val === "__CLEAR__") {
                     field.onChange(
-                      formState.defaultValues?.[name] ?? undefined
+                      formState.defaultValues?.[name] ?? ""
                     );
                     return;
                   }
