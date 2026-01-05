@@ -29,7 +29,7 @@ import Image from "next/image";
 
 // Extended schema to include logo file
 const onboardingBusinessSchemaWithLogo = onboardingBusinessSchema.extend({
-  businessLogo: z.instanceof(File).optional().nullable(),
+  businessLogo: z.any().optional().nullable(),
 });
 
 export default function Business() {
@@ -39,17 +39,18 @@ export default function Business() {
   const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
   const loading = updateOnboarding.isPending;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    businessSnapshot.logo || null
+  );
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  console.log({ businessSnapshot }, { preOnboarding });
 
   const form = useForm({
     resolver: zodResolver(onboardingBusinessSchemaWithLogo),
     mode: "onChange",
     defaultValues: {
-      business_name: preOnboarding?.companyName || "hello",
+      business_name:
+        preOnboarding?.companyName || businessSnapshot.businessName || "",
       contactPhone: businessSnapshot.contactNumber || "",
       countryOfRegistration: businessSnapshot.countryOfRegistration || "",
       websiteUrl: businessSnapshot.website || "",
@@ -58,18 +59,21 @@ export default function Business() {
   });
 
   useEffect(() => {
-    if (preOnboarding) {
+    if (preOnboarding || businessSnapshot) {
       form.reset({
-        business_name: preOnboarding?.companyName || "",
+        business_name:
+          preOnboarding?.companyName || businessSnapshot.businessName || "",
         contactPhone: businessSnapshot.contactNumber || "",
         countryOfRegistration: businessSnapshot.countryOfRegistration || "",
         websiteUrl: businessSnapshot.website || "",
         businessLogo: null,
       });
+      if (businessSnapshot.logo) {
+        setLogoPreview(businessSnapshot.logo);
+      }
     }
-  }, [preOnboarding, businessSnapshot]);
+  }, [preOnboarding, businessSnapshot, form]);
 
-  // Handle file selection and preview
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select a valid image file");
@@ -77,15 +81,13 @@ export default function Business() {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
       toast.error("File size must be less than 5MB");
       return;
     }
 
     setLogoFile(file);
-    form.setValue("businessLogo", file);
+    form.setValue("businessLogo", file, { shouldValidate: true });
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result as string);
@@ -126,7 +128,7 @@ export default function Business() {
   const removeLogo = () => {
     setLogoFile(null);
     setLogoPreview(null);
-    form.setValue("businessLogo", null);
+    form.setValue("businessLogo", null, { shouldValidate: true });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -136,33 +138,46 @@ export default function Business() {
     data: z.infer<typeof onboardingBusinessSchemaWithLogo>
   ) {
     try {
-      // Create FormData to handle file upload
-      const formData = new FormData();
-      formData.append("business_name", data.business_name);
-      formData.append("contactPhone", data.contactPhone);
-      formData.append("countryOfRegistration", data.countryOfRegistration);
-      formData.append("websiteUrl", data.websiteUrl);
+      // Check if we have a file to upload
+      const hasFile = data.businessLogo instanceof File;
 
-      if (data.businessLogo) {
+      if (hasFile) {
+        // If we have a file, we MUST use FormData
+        const formData = new FormData();
+        formData.append("business_name", data.business_name || "");
+        formData.append("contactPhone", data.contactPhone);
+        formData.append("countryOfRegistration", data.countryOfRegistration);
+        formData.append("websiteUrl", data.websiteUrl || "");
         formData.append("businessLogo", data.businessLogo);
+
+        // When using FormData with Axios, we should let Axios set the Content-Type
+        // but we need to make sure the mutation function accepts FormData
+        await updateOnboarding.mutateAsync(formData as any);
+      } else {
+        // If no file, send as regular JSON to avoid potential multipart issues if the API prefers JSON
+        const jsonData = {
+          business_name: data.business_name,
+          contactPhone: data.contactPhone,
+          countryOfRegistration: data.countryOfRegistration,
+          websiteUrl: data.websiteUrl,
+        };
+        await updateOnboarding.mutateAsync(jsonData as any);
       }
 
-      // Pass FormData to your API
-      await updateOnboarding.mutateAsync(formData);
-
-      // Update the store with form data
       updateBusinessSnapshot({
         businessName: data.business_name,
         contactNumber: data.contactPhone,
         countryOfRegistration: data.countryOfRegistration,
         website: data.websiteUrl,
-        logo: logoFile ? logoPreview : undefined, // Store preview or file reference
+        logo: logoPreview || undefined,
       });
 
       router.push("/onboarding/leadership");
     } catch (e: any) {
-      console.warn(e);
-      toast.error(e.response?.data?.message || "An error occurred");
+      console.error("Submission error:", e);
+      const errorMessage =
+        e.response?.data?.message || e.message || "An error occurred";
+      toast.error(errorMessage);
     }
   }
 
@@ -184,7 +199,6 @@ export default function Business() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-          {/* Business Name Field */}
           <FormField
             control={form.control}
             name="business_name"
@@ -204,7 +218,6 @@ export default function Business() {
             )}
           />
 
-          {/* Logo Upload Field */}
           <FormField
             control={form.control}
             name="businessLogo"
@@ -229,7 +242,6 @@ export default function Business() {
                       accept="image/*"
                       onChange={handleFileInputChange}
                       className="hidden"
-                      aria-label="Upload business logo"
                     />
 
                     {logoPreview ? (
@@ -290,7 +302,6 @@ export default function Business() {
             )}
           />
 
-          {/* Country of Registration */}
           <FormFieldSelect
             control={form.control}
             name="countryOfRegistration"
@@ -303,7 +314,6 @@ export default function Business() {
             placeholder="Select Country"
           />
 
-          {/* Contact Phone */}
           <FormFieldInput
             control={form.control}
             name="contactPhone"
@@ -311,7 +321,6 @@ export default function Business() {
             placeholder="Enter contact number"
           />
 
-          {/* Website URL */}
           <FormFieldInput
             control={form.control}
             name="websiteUrl"
@@ -321,11 +330,10 @@ export default function Business() {
             description="start with 'https://'"
           />
 
-          {/* Submit Button */}
           <div className="w-full flex mt-10">
             <Button
               type="submit"
-              className="ml-auto! min-w-[250px] max-w-[250px] self-end"
+              className="!ml-auto min-w-[250px] max-w-[250px] self-end"
               disabled={loading}
             >
               {loading ? "Creating..." : "Continue"}
