@@ -1,9 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Form,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,170 +18,326 @@ import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { Building03FreeIcons } from "@hugeicons/core-free-icons";
-
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
 import FormFieldSelect from "@/components/form fields/formFieldSelect";
 import FormFieldInput from "@/components/form fields/formFieldInput";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
+import Image from "next/image";
 
-
+// Extended schema to include logo file
+const onboardingBusinessSchemaWithLogo = onboardingBusinessSchema.extend({
+  businessLogo: z.instanceof(File).optional().nullable(),
+});
 
 export default function Business() {
-    const router = useRouter();
-    const { businessSnapshot, updateBusinessSnapshot, preOnboarding } = useOnboardingStore();
-    const updateOnboarding = useUpdateOnboardingCompanyDetailsApi()
-    const loading = updateOnboarding.isPending;
-    console.log({ businessSnapshot }, { preOnboarding })
+  const router = useRouter();
+  const { businessSnapshot, updateBusinessSnapshot, preOnboarding } =
+    useOnboardingStore();
+  const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
+  const loading = updateOnboarding.isPending;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-    const form = useForm({
-        resolver: zodResolver(onboardingBusinessSchema), mode: 'onChange',
-        defaultValues: {
-            business_name: preOnboarding?.companyName || "hello",
-            contactPhone: businessSnapshot.contactNumber || "",
-            countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-            websiteUrl: businessSnapshot.website || "",
-        }
-    });
+  console.log({ businessSnapshot }, { preOnboarding });
 
-    useEffect(() => {
-        if (preOnboarding) {
-            form.reset({
-                business_name: preOnboarding?.companyName || "",
-                contactPhone: businessSnapshot.contactNumber || "",
-                countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-                websiteUrl: businessSnapshot.website || "",
-            });
-        }
-    }, [preOnboarding, businessSnapshot]);
+  const form = useForm({
+    resolver: zodResolver(onboardingBusinessSchemaWithLogo),
+    mode: "onChange",
+    defaultValues: {
+      business_name: preOnboarding?.companyName || "hello",
+      contactPhone: businessSnapshot.contactNumber || "",
+      countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+      websiteUrl: businessSnapshot.website || "",
+      businessLogo: null,
+    },
+  });
 
-    async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
-        try {
-            await updateOnboarding.mutateAsync(data);
+  useEffect(() => {
+    if (preOnboarding) {
+      form.reset({
+        business_name: preOnboarding?.companyName || "",
+        contactPhone: businessSnapshot.contactNumber || "",
+        countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+        websiteUrl: businessSnapshot.website || "",
+        businessLogo: null,
+      });
+    }
+  }, [preOnboarding, businessSnapshot]);
 
-            // Update the store with form data
-            updateBusinessSnapshot({
-                businessName: data.business_name,
-                contactNumber: data.contactPhone,
-                countryOfRegistration: data.countryOfRegistration,
-                website: data.websiteUrl,
-            });
-
-            router.push("/onboarding/leadership");
-        }
-        catch (e: any) {
-            console.warn(e)
-            toast.error(e.response.data.message);
-        }
+  // Handle file selection and preview
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
     }
 
-    return (
-        <div className="space-y-8 flex flex-col  justify-center h-full">
-            <div className="text-left ">
-                <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
-                    <HugeiconsIcon icon={Building03FreeIcons} className="size-16 text-primary" />
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      toast.error("File size must be less than 5MB");
+      return;
+    }
 
-                </div>
+    setLogoFile(file);
+    form.setValue("businessLogo", file);
 
-                <OnboardingTitle title="Tell us more about your Business"
-                    subtitle="
-                    Tell us about your business"
-                />
-            </div>
-            <Form {...form}>
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
 
-                    <FormField control={form.control} name="business_name"
-                        render={({ field }) => (
-                            <FormItem>
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
 
-                                <FormLabel>Business Name</FormLabel>
-                                <FormControl>
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
 
-                                    <Input readOnly disabled {...field} placeholder="Enter your business name" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    <FormFieldSelect
-                        control={form.control}
-                        name="countryOfRegistration"
-                        label="Country of Registration"
-                        values={[{ label: "Kenya", value: "KYA" }, { label: "Ghana", value: "GHN" }, { label: "Nigeria", value: "NGA" }]}
-                        placeholder="Select Country"
-                    />
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
 
-                    <FormFieldInput
-                        control={form.control}
-                        name="contactPhone"
-                        label="Contact Number"
-                        placeholder="Enter contact number"
-                    />
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    form.setValue("businessLogo", null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
-                    <FormFieldInput control={form.control} name="websiteUrl"
-                        label="Website"
-                        placeholder="Enter website link "
-                        type="text"
-                        description="start with 'https://'"
-                    />
+  async function onSubmit(
+    data: z.infer<typeof onboardingBusinessSchemaWithLogo>
+  ) {
+    try {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append("business_name", data.business_name);
+      formData.append("contactPhone", data.contactPhone);
+      formData.append("countryOfRegistration", data.countryOfRegistration);
+      formData.append("websiteUrl", data.websiteUrl);
 
-                    {/* <FormField control={form.control} name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
+      if (data.businessLogo) {
+        formData.append("businessLogo", data.businessLogo);
+      }
 
-                                <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
+      // Pass FormData to your API
+      await updateOnboarding.mutateAsync(formData);
 
-                <div className="grid grid-cols-2 gap-3">
+      // Update the store with form data
+      updateBusinessSnapshot({
+        businessName: data.business_name,
+        contactNumber: data.contactPhone,
+        countryOfRegistration: data.countryOfRegistration,
+        website: data.websiteUrl,
+        logo: logoFile ? logoPreview : undefined, // Store preview or file reference
+      });
 
-                    <FormField control={form.control} name="currency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Currency</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a country" />
-                                        </SelectTrigger>
-                                    </FormControl>           <SelectContent>
+      router.push("/onboarding/leadership");
+    } catch (e: any) {
+      console.warn(e);
+      toast.error(e.response?.data?.message || "An error occurred");
+    }
+  }
 
-                                        <SelectItem value="USD">USD</SelectItem>
-                                        <SelectItem value="NGN">NGN</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                </div> */}
-
-                    <div className="w-full flex mt-10">
-
-
-                        <Button
-                            type="submit"
-                            className="!ml-auto min-w-[250px] max-w-[250px] self-end"
-                            disabled={loading}
-                        >
-                            {loading ? "Creating..." : "Continue"}{" "}
-                            {loading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <ArrowRight className="h-4 w-4" />
-                            )}
-                        </Button>
-
-                    </div>
-                </form>
-            </Form>
+  return (
+    <div className="space-y-8 flex flex-col justify-center h-full">
+      <div className="text-left">
+        <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
+          <HugeiconsIcon
+            icon={Building03FreeIcons}
+            className="size-16 text-primary"
+          />
         </div>
-    );
-};
+
+        <OnboardingTitle
+          title="Tell us more about your Business"
+          subtitle="Tell us about your business"
+        />
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          {/* Business Name Field */}
+          <FormField
+            control={form.control}
+            name="business_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Name</FormLabel>
+                <FormControl>
+                  <Input
+                    readOnly
+                    disabled
+                    {...field}
+                    placeholder="Enter your business name"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Logo Upload Field */}
+          <FormField
+            control={form.control}
+            name="businessLogo"
+            render={() => (
+              <FormItem>
+                <FormLabel>Business Logo</FormLabel>
+                <FormControl>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                      isDragging
+                        ? "border-primary bg-primary/5"
+                        : "border-gray-300 hover:border-primary hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                      aria-label="Upload business logo"
+                    />
+
+                    {logoPreview ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="relative w-32 h-32">
+                          <Image
+                            src={logoPreview}
+                            alt="Logo preview"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                          >
+                            Change Logo
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeLogo();
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Drag and drop your logo here
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            or click to select a file
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Country of Registration */}
+          <FormFieldSelect
+            control={form.control}
+            name="countryOfRegistration"
+            label="Country of Registration"
+            values={[
+              { label: "Kenya", value: "KYA" },
+              { label: "Ghana", value: "GHN" },
+              { label: "Nigeria", value: "NGA" },
+            ]}
+            placeholder="Select Country"
+          />
+
+          {/* Contact Phone */}
+          <FormFieldInput
+            control={form.control}
+            name="contactPhone"
+            label="Contact Number"
+            placeholder="Enter contact number"
+          />
+
+          {/* Website URL */}
+          <FormFieldInput
+            control={form.control}
+            name="websiteUrl"
+            label="Website"
+            placeholder="Enter website link"
+            type="text"
+            description="start with 'https://'"
+          />
+
+          {/* Submit Button */}
+          <div className="w-full flex mt-10">
+            <Button
+              type="submit"
+              className="ml-auto! min-w-[250px] max-w-[250px] self-end"
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Continue"}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
