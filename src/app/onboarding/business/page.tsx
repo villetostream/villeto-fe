@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { Building03FreeIcons } from "@hugeicons/core-free-icons";
+
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
@@ -27,33 +28,22 @@ import { useEffect, useRef, useState } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
 import Image from "next/image";
 
-// Extended schema to include logo file
-const onboardingBusinessSchemaWithLogo = onboardingBusinessSchema.extend({
-  businessLogo: z.instanceof(File).optional().nullable(),
-});
-
 export default function Business() {
   const router = useRouter();
   const { businessSnapshot, updateBusinessSnapshot, preOnboarding } =
     useOnboardingStore();
   const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
   const loading = updateOnboarding.isPending;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
   console.log({ businessSnapshot }, { preOnboarding });
 
   const form = useForm({
-    resolver: zodResolver(onboardingBusinessSchemaWithLogo),
+    resolver: zodResolver(onboardingBusinessSchema),
     mode: "onChange",
     defaultValues: {
       business_name: preOnboarding?.companyName || "hello",
       contactPhone: businessSnapshot.contactNumber || "",
       countryOfRegistration: businessSnapshot.countryOfRegistration || "",
       websiteUrl: businessSnapshot.website || "",
-      businessLogo: null,
     },
   });
 
@@ -64,91 +54,13 @@ export default function Business() {
         contactPhone: businessSnapshot.contactNumber || "",
         countryOfRegistration: businessSnapshot.countryOfRegistration || "",
         websiteUrl: businessSnapshot.website || "",
-        businessLogo: null,
       });
     }
   }, [preOnboarding, businessSnapshot]);
 
-  // Handle file selection and preview
-  const handleFileSelect = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      toast.error("File size must be less than 5MB");
-      return;
-    }
-
-    setLogoFile(file);
-    form.setValue("businessLogo", file);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setLogoPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const removeLogo = () => {
-    setLogoFile(null);
-    setLogoPreview(null);
-    form.setValue("businessLogo", null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  async function onSubmit(
-    data: z.infer<typeof onboardingBusinessSchemaWithLogo>
-  ) {
+  async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
     try {
-      // Create FormData to handle file upload
-      const formData = new FormData();
-      formData.append("business_name", data.business_name);
-      formData.append("contactPhone", data.contactPhone);
-      formData.append("countryOfRegistration", data.countryOfRegistration);
-      formData.append("websiteUrl", data.websiteUrl);
-
-      if (data.businessLogo) {
-        formData.append("businessLogo", data.businessLogo);
-      }
-
-      // Pass FormData to your API
-      await updateOnboarding.mutateAsync(formData);
+      await updateOnboarding.mutateAsync(data);
 
       // Update the store with form data
       updateBusinessSnapshot({
@@ -156,19 +68,18 @@ export default function Business() {
         contactNumber: data.contactPhone,
         countryOfRegistration: data.countryOfRegistration,
         website: data.websiteUrl,
-        logo: logoFile ? logoPreview : undefined, // Store preview or file reference
       });
 
       router.push("/onboarding/leadership");
     } catch (e: any) {
       console.warn(e);
-      toast.error(e.response?.data?.message || "An error occurred");
+      toast.error(e.response.data.message);
     }
   }
 
   return (
-    <div className="space-y-8 flex flex-col justify-center h-full">
-      <div className="text-left">
+    <div className="space-y-8 flex flex-col  justify-center h-full">
+      <div className="text-left ">
         <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
           <HugeiconsIcon
             icon={Building03FreeIcons}
@@ -178,13 +89,12 @@ export default function Business() {
 
         <OnboardingTitle
           title="Tell us more about your Business"
-          subtitle="Tell us about your business"
+          subtitle="
+                    Tell us about your business"
         />
       </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-          {/* Business Name Field */}
           <FormField
             control={form.control}
             name="business_name"
@@ -203,94 +113,6 @@ export default function Business() {
               </FormItem>
             )}
           />
-
-          {/* Logo Upload Field */}
-          <FormField
-            control={form.control}
-            name="businessLogo"
-            render={() => (
-              <FormItem>
-                <FormLabel>Business Logo</FormLabel>
-                <FormControl>
-                  <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                      isDragging
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-300 hover:border-primary hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileInputChange}
-                      className="hidden"
-                      aria-label="Upload business logo"
-                    />
-
-                    {logoPreview ? (
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="relative w-32 h-32">
-                          <Image
-                            src={logoPreview}
-                            alt="Logo preview"
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              fileInputRef.current?.click();
-                            }}
-                          >
-                            Change Logo
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeLogo();
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2">
-                        <Upload className="h-8 w-8 text-gray-400" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Drag and drop your logo here
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            or click to select a file
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          PNG, JPG, GIF up to 5MB
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Country of Registration */}
           <FormFieldSelect
             control={form.control}
             name="countryOfRegistration"
@@ -303,7 +125,6 @@ export default function Business() {
             placeholder="Select Country"
           />
 
-          {/* Contact Phone */}
           <FormFieldInput
             control={form.control}
             name="contactPhone"
@@ -311,24 +132,56 @@ export default function Business() {
             placeholder="Enter contact number"
           />
 
-          {/* Website URL */}
           <FormFieldInput
             control={form.control}
             name="websiteUrl"
             label="Website"
-            placeholder="Enter website link"
+            placeholder="Enter website link "
             type="text"
             description="start with 'https://'"
           />
 
-          {/* Submit Button */}
+          {/* <FormField control={form.control} name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+
+                                <Input type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                <div className="grid grid-cols-2 gap-3">
+
+                    <FormField control={form.control} name="currency"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Currency</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a country" />
+                                        </SelectTrigger>
+                                    </FormControl>           <SelectContent>
+
+                                        <SelectItem value="USD">USD</SelectItem>
+                                        <SelectItem value="NGN">NGN</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                </div> */}
+
           <div className="w-full flex mt-10">
             <Button
               type="submit"
-              className="ml-auto! min-w-[250px] max-w-[250px] self-end"
+              className="!ml-auto min-w-[250px] max-w-[250px] self-end"
               disabled={loading}
             >
-              {loading ? "Creating..." : "Continue"}
+              {loading ? "Creating..." : "Continue"}{" "}
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
