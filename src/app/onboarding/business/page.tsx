@@ -3,7 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Form,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +19,7 @@ import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { Building03FreeIcons } from "@hugeicons/core-free-icons";
 
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
 import FormFieldSelect from "@/components/form fields/formFieldSelect";
@@ -20,109 +27,120 @@ import FormFieldInput from "@/components/form fields/formFieldInput";
 import { useEffect } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
 
-
-
 export default function Business() {
-    const router = useRouter();
-    const { businessSnapshot, updateBusinessSnapshot, preOnboarding } = useOnboardingStore();
-    const updateOnboarding = useUpdateOnboardingCompanyDetailsApi()
-    const loading = updateOnboarding.isPending;
-    console.log({ businessSnapshot }, { preOnboarding })
+  const router = useRouter();
+  const { businessSnapshot, updateBusinessSnapshot, preOnboarding } =
+    useOnboardingStore();
+  const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
+  const loading = updateOnboarding.isPending;
+  console.log({ businessSnapshot }, { preOnboarding });
 
-    const form = useForm({
-        resolver: zodResolver(onboardingBusinessSchema), mode: 'onChange',
-        defaultValues: {
-            business_name: preOnboarding?.companyName || "hello",
-            contactPhone: businessSnapshot.contactNumber || "",
-            countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-            websiteUrl: businessSnapshot.website || "",
-        }
-    });
+  const form = useForm({
+    resolver: zodResolver(onboardingBusinessSchema),
+    mode: "onChange",
+    defaultValues: {
+      business_name: preOnboarding?.companyName || "hello",
+      contactPhone: businessSnapshot.contactNumber || "",
+      countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+      websiteUrl: businessSnapshot.website || "",
+    },
+  });
 
-    useEffect(() => {
-        if (preOnboarding) {
-            form.reset({
-                business_name: preOnboarding?.companyName || "",
-                contactPhone: businessSnapshot.contactNumber || "",
-                countryOfRegistration: businessSnapshot.countryOfRegistration || "",
-                websiteUrl: businessSnapshot.website || "",
-            });
-        }
-    }, [preOnboarding, businessSnapshot]);
-
-    async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
-        try {
-            await updateOnboarding.mutateAsync(data);
-
-            // Update the store with form data
-            updateBusinessSnapshot({
-                businessName: data.business_name,
-                contactNumber: data.contactPhone,
-                countryOfRegistration: data.countryOfRegistration,
-                website: data.websiteUrl,
-            });
-
-            router.push("/onboarding/leadership");
-        }
-        catch (e: any) {
-            console.warn(e)
-            toast.error(e.response.data.message);
-        }
+  useEffect(() => {
+    if (preOnboarding) {
+      form.reset({
+        business_name: preOnboarding?.companyName || "",
+        contactPhone: businessSnapshot.contactNumber || "",
+        countryOfRegistration: businessSnapshot.countryOfRegistration || "",
+        websiteUrl: businessSnapshot.website || "",
+      });
     }
+  }, [preOnboarding, businessSnapshot]);
 
-    return (
-        <div className="space-y-8 flex flex-col  justify-center h-full">
-            <div className="text-left ">
-                <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
-                    <HugeiconsIcon icon={Building03FreeIcons} className="size-16 text-primary" />
+  async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
+    try {
+      await updateOnboarding.mutateAsync(data);
 
-                </div>
+      // Update the store with form data
+      updateBusinessSnapshot({
+        businessName: data.business_name,
+        contactNumber: data.contactPhone,
+        countryOfRegistration: data.countryOfRegistration,
+        website: data.websiteUrl,
+      });
 
-                <OnboardingTitle title="Tell us more about your Business"
-                    subtitle="
+      router.push("/onboarding/leadership");
+    } catch (e: any) {
+      console.warn(e);
+      toast.error(e.response.data.message);
+    }
+  }
+
+  return (
+    <div className="space-y-8 flex flex-col  justify-center h-full">
+      <div className="text-left ">
+        <div className="w-16 h-16 bg-primary-light rounded-full flex mb-10">
+          <HugeiconsIcon
+            icon={Building03FreeIcons}
+            className="size-16 text-primary"
+          />
+        </div>
+
+        <OnboardingTitle
+          title="Tell us more about your Business"
+          subtitle="
                     Tell us about your business"
-                />
-            </div>
-            <Form {...form}>
+        />
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <FormField
+            control={form.control}
+            name="business_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Name</FormLabel>
+                <FormControl>
+                  <Input
+                    readOnly
+                    disabled
+                    {...field}
+                    placeholder="Enter your business name"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormFieldSelect
+            control={form.control}
+            name="countryOfRegistration"
+            label="Country of Registration"
+            values={[
+              { label: "Kenya", value: "KYA" },
+              { label: "Ghana", value: "GHN" },
+              { label: "Nigeria", value: "NGA" },
+            ]}
+            placeholder="Select Country"
+          />
 
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <FormFieldInput
+            control={form.control}
+            name="contactPhone"
+            label="Contact Number"
+            placeholder="Enter contact number"
+          />
 
+          <FormFieldInput
+            control={form.control}
+            name="websiteUrl"
+            label="Website"
+            placeholder="Enter website link "
+            type="text"
+            descriptio="start with 'https://'"
+          />
 
-                    <FormField control={form.control} name="business_name"
-                        render={({ field }) => (
-                            <FormItem>
-
-                                <FormLabel>Business Name</FormLabel>
-                                <FormControl>
-
-                                    <Input readOnly disabled {...field} placeholder="Enter your business name" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    <FormFieldSelect
-                        control={form.control}
-                        name="countryOfRegistration"
-                        label="Country of Registration"
-                        values={[{ label: "Kenya", value: "KYA" }, { label: "Ghana", value: "GHN" }, { label: "Nigeria", value: "NGA" }]}
-                        placeholder="Select Country"
-                    />
-
-                    <FormFieldInput
-                        control={form.control}
-                        name="contactPhone"
-                        label="Contact Number"
-                        placeholder="Enter contact number"
-                    />
-
-                    <FormFieldInput control={form.control} name="websiteUrl"
-                        label="Website"
-                        placeholder="Enter website link "
-                        type="text"
-                        description="start with 'https://'"
-                    />
-
-                    {/* <FormField control={form.control} name="password"
+          {/* <FormField control={form.control} name="password"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Password</FormLabel>
@@ -156,25 +174,22 @@ export default function Business() {
                         )} />
                 </div> */}
 
-                    <div className="w-full flex mt-10">
-
-
-                        <Button
-                            type="submit"
-                            className="!ml-auto min-w-[250px] max-w-[250px] self-end"
-                            disabled={loading}
-                        >
-                            {loading ? "Creating..." : "Continue"}{" "}
-                            {loading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <ArrowRight className="h-4 w-4" />
-                            )}
-                        </Button>
-
-                    </div>
-                </form>
-            </Form>
-        </div>
-    );
-};
+          <div className="w-full flex mt-10">
+            <Button
+              type="submit"
+              className="!ml-auto min-w-[250px] max-w-[250px] self-end"
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Continue"}{" "}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
