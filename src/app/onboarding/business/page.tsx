@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   FormControl,
@@ -24,8 +24,9 @@ import { toast } from "sonner";
 import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
 import FormFieldSelect from "@/components/form fields/formFieldSelect";
 import FormFieldInput from "@/components/form fields/formFieldInput";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
+import Image from "next/image";
 
 export default function Business() {
   const router = useRouter();
