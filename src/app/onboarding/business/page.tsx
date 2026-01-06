@@ -137,7 +137,7 @@ export default function Business() {
             label="Website"
             placeholder="Enter website link "
             type="text"
-            descriptio="start with 'https://'"
+            description="start with 'https://'"
           />
 
           {/* <FormField control={form.control} name="password"
