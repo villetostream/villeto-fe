@@ -146,7 +146,7 @@ export function DashboardSidebar() {
               <SidebarMenuButton
                 tooltip={item.label}
                 isActive={isActive(item.href)}
-                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent"
+                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent cursor-pointer"
               >
                 <span className="[&>svg]:size-5 [&>svg]:shrink-0">
                   {item.icon}
@@ -207,7 +207,7 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
+      <SidebarHeader className="border-b border-sidebar-border  py-5">
         <div className="flex flex-col gap-3">
           {/* Villeto Logo Section */}
           <div
@@ -218,7 +218,10 @@ export function DashboardSidebar() {
           >
             {state === "expanded" ? (
               <>
-                <div className="flex items-center justify-center flex-1 min-w-[80%]">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-start cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   <Image
                     src="/images/villeto-logo.png"
                     alt="Villeto Logo"
@@ -227,11 +230,11 @@ export function DashboardSidebar() {
                     className="w-full h-auto max-w-[90px] max-h-[28px] object-contain transition-all duration-200"
                     priority
                   />
-                </div>
-                <SidebarTrigger className="shrink-0" />
+                </Link>
+                <SidebarTrigger className="shrink-0 cursor-pointer" />
               </>
             ) : (
-              <SidebarTrigger className="shrink-0" />
+              <SidebarTrigger className="shrink-0 cursor-pointer" />
             )}
           </div>
 
@@ -240,7 +243,7 @@ export function DashboardSidebar() {
             className={cn(
               "flex items-center transition-all duration-200",
               state === "expanded"
-                ? "pt-2 border-t border-sidebar-border gap-1"
+                ? "pt-2 border-t border-sidebar-border gap-1 justify-start"
                 : "justify-center"
             )}
           >
