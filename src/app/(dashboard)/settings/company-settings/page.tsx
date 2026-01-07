@@ -310,7 +310,7 @@ export default function CompanySettings() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label>Company Logo</Label>
+                        <Label>Business Logo</Label>
                         <div className="border-2 border-dashed border-dashboard-border rounded-lg p-6 text-center">
                           <Building className="w-8 h-8 mx-auto text-dashboard-text-secondary mb-2" />
                           <p className="text-sm text-dashboard-text-secondary">Upload logo (PNG, JPG)</p>

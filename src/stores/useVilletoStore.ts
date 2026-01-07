@@ -23,6 +23,7 @@ export interface BusinessSnapshot {
     countryOfRegistration: string;
     contactNumber: string;
     website: string;
+    logo?: string;
 }
 
 export interface FinancialPulse {
