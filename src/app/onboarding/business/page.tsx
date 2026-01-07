@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   FormControl,
@@ -27,6 +27,7 @@ import FormFieldInput from "@/components/form fields/formFieldInput";
 import FormFieldLogoUpload from "@/components/form fields/formFieldLogoUpload";
 import { useEffect } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
+import Image from "next/image";
 
 export default function Business() {
   const router = useRouter();
