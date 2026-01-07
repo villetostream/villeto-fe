@@ -34,8 +34,48 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<Respon
         mutationFn: async (payload: payload) => {
             const latestPayload = { ...payload }
             delete latestPayload.business_name;
-            const res = await axiosInstance.patch(API_KEYS.ONBOARDING.ONBOARDING_COMPANY_DETAILS(onboardingId), latestPayload,);
-            return res.data;
+            
+            // Check if there's a logo file to upload
+            const hasLogoFile = latestPayload.businessLogo instanceof File;
+            
+            if (hasLogoFile) {
+                // Create FormData for file upload
+                const formData = new FormData();
+                
+                // Append all fields except the logo
+                Object.keys(latestPayload).forEach((key) => {
+                    if (key !== 'businessLogo' && latestPayload[key as keyof typeof latestPayload] !== undefined) {
+                        const value = latestPayload[key as keyof typeof latestPayload];
+                        if (value !== null && value !== undefined) {
+                            formData.append(key, String(value));
+                        }
+                    }
+                });
+                
+                // Append the logo file
+                if (latestPayload.businessLogo instanceof File) {
+                    formData.append('businessLogo', latestPayload.businessLogo);
+                }
+                
+                const res = await axiosInstance.patch(
+                    API_KEYS.ONBOARDING.ONBOARDING_COMPANY_DETAILS(onboardingId),
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    }
+                );
+                return res.data;
+            } else {
+                // Remove logo from payload if it's not a File (could be undefined or string)
+                const { businessLogo, ...payloadWithoutLogo } = latestPayload;
+                const res = await axiosInstance.patch(
+                    API_KEYS.ONBOARDING.ONBOARDING_COMPANY_DETAILS(onboardingId),
+                    payloadWithoutLogo
+                );
+                return res.data;
+            }
         },
     });
 };

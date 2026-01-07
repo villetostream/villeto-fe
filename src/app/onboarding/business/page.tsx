@@ -24,7 +24,8 @@ import { toast } from "sonner";
 import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/update-onboarding-company-details.ts";
 import FormFieldSelect from "@/components/form fields/formFieldSelect";
 import FormFieldInput from "@/components/form fields/formFieldInput";
-import { useEffect, useRef, useState } from "react";
+import FormFieldLogoUpload from "@/components/form fields/formFieldLogoUpload";
+import { useEffect } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
 import Image from "next/image";
 
@@ -44,6 +45,7 @@ export default function Business() {
       contactPhone: businessSnapshot.contactNumber || "",
       countryOfRegistration: businessSnapshot.countryOfRegistration || "",
       websiteUrl: businessSnapshot.website || "",
+      // businessLogo: businessSnapshot.logo || undefined,
     },
   });
 
@@ -54,13 +56,27 @@ export default function Business() {
         contactPhone: businessSnapshot.contactNumber || "",
         countryOfRegistration: businessSnapshot.countryOfRegistration || "",
         websiteUrl: businessSnapshot.website || "",
+        // businessLogo: businessSnapshot.logo || undefined,
       });
     }
-  }, [preOnboarding, businessSnapshot]);
+  }, [preOnboarding, businessSnapshot, form]);
 
   async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
     try {
       await updateOnboarding.mutateAsync(data);
+
+      // Convert logo file to base64 for storage if it's a File
+      let logoUrl: string | undefined = undefined;
+      if (data.businessLogo instanceof File) {
+        logoUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(data.businessLogo as File);
+        });
+      } else if (typeof data.businessLogo === "string") {
+        logoUrl = data.businessLogo;
+      }
 
       // Update the store with form data
       updateBusinessSnapshot({
@@ -68,12 +84,16 @@ export default function Business() {
         contactNumber: data.contactPhone,
         countryOfRegistration: data.countryOfRegistration,
         website: data.websiteUrl,
+        // logo: logoUrl,
       });
 
       router.push("/onboarding/leadership");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.warn(e);
-      toast.error(e.response.data.message);
+      const error = e as { response?: { data?: { message?: string } } };
+      toast.error(
+        error.response?.data?.message || "Failed to update company details"
+      );
     }
   }
 
@@ -113,6 +133,14 @@ export default function Business() {
               </FormItem>
             )}
           />
+          <FormFieldLogoUpload
+            control={form.control}
+            name="businessLogo"
+            label="Business Logo"
+            description="Upload your business logo (optional)"
+            maxSize={5 * 1024 * 1024}
+          />
+
           <FormFieldSelect
             control={form.control}
             name="countryOfRegistration"
@@ -178,7 +206,7 @@ export default function Business() {
           <div className="w-full flex mt-10">
             <Button
               type="submit"
-              className="!ml-auto min-w-[250px] max-w-[250px] self-end"
+              className="ml-auto! min-w-[250px] max-w-[250px] self-end"
               disabled={loading}
             >
               {loading ? "Creating..." : "Continue"}{" "}
