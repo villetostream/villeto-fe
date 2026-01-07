@@ -91,6 +91,7 @@ export const onboardingBusinessSchema = z.object({
     .min(12, "Contact number must be at least 12 characters"),
   countryOfRegistration: z.string().min(1, "Please select a country"),
   websiteUrl: customHttpUrlSchema,
+  businessLogo: z.union([z.instanceof(File), z.string()]).optional(),
 });
 
 // Alternative version with more strict domain validation

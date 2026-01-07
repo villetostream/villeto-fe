@@ -127,7 +127,10 @@ const loadFromCookies = (): Partial<OnboardingState> => {
     const onboardingId = getCookie("onboarding_id");
 
     return {
-        ...(businessSnapshot && { ...businessSnapshot }),
+        // businessSnapshot cookie structure: { businessSnapshot: { businessName, logo, ... } }
+        ...(businessSnapshot && { 
+            businessSnapshot: businessSnapshot.businessSnapshot || businessSnapshot 
+        }),
         ...(leadershipData && { userProfiles: leadershipData.userProfiles }),
         ...(financialData && {
             monthlySpend: financialData.monthlySpend,
@@ -138,10 +141,10 @@ const loadFromCookies = (): Partial<OnboardingState> => {
             showConnectModal: financialData.showConnectModal,
             financialPulse: financialData.financialPulse
         }),
-        ...(productsData && { ...productsData.villetoProducts }),
-        ...(preOnboarding && { ...preOnboarding }),
-        ...(contactEmail && { ...contactEmail }),
-        ...(onboardingId && { ...onboardingId })
+        ...(productsData && { villetoProducts: productsData.villetoProducts }),
+        ...(preOnboarding && { preOnboarding: preOnboarding }),
+        ...(contactEmail && { contactEmail: typeof contactEmail === 'string' ? contactEmail : contactEmail?.contactEmail }),
+        ...(onboardingId && { onboardingId: typeof onboardingId === 'string' ? onboardingId : onboardingId?.onboardingId })
 
     };
 };

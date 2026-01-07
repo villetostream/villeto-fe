@@ -82,6 +82,7 @@ export default function Business() {
         contactNumber: data.contactPhone,
         countryOfRegistration: data.countryOfRegistration,
         website: data.websiteUrl,
+        logo: logoUrl, // Save logo to businessSnapshot
       });
 
       router.push("/onboarding/leadership");
