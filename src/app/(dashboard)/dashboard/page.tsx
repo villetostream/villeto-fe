@@ -141,13 +141,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Owner Dashboard Section */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Owner Dashboard</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+          <Card className="p-6 gap-1.5">
+            <h3 className="text-lg font-semibold">Owner Dashboard</h3>
+            <p className="text-sm text-muted-foreground pb-4 border-b-2 border-muted">
               Special insights and controls for business owners
             </p>
 
-            <p className="mb-4">
+            <p className="mt-4 mb-4">
               As an owner, you have access to all financial data and company
               settings.
             </p>
