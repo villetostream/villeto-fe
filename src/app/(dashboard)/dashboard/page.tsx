@@ -66,14 +66,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-[19.2px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-[1rem]">
             <StatsCard
               title="Total Spend"
               value="$24,536.00"
               subtitle={<>This month you spent $3,000</>}
               trend="up"
               icon={
-                <div className="p-1 rounded bg-success/5 border-[0.5px] border-success text-success font-normal text-[8px] flex items-center justify-center gap-0.5">
+                <div className="p-1 rounded bg-success/5 border-[0.5px] border-success text-success font-normal text-[.5rem] flex items-center justify-center gap-0.5 mr-2">
                   <div className="w-3 h-3  flex items-center justify-center">
                     <HugeiconsIcon
                       icon={ChartUpIcon}

@@ -18,8 +18,8 @@ export const StatsCard = ({
 }: StatsCardProps) => {
   return (
     <Card className="p-1 border border-muted gap-1">
-      <div className="flex items-center justify-between">
-        <div className="p-3 pb-[11px] space-y-1 border border-muted rounded">
+      <div className="flex items-center justify-between border border-muted rounded-lg">
+        <div className="p-3 pb-[.6rem] space-y-1">
           <div className="flex items-center justify-between">
             <p className="text-xs leading-[125%] text-foreground font-normal">
               {title}
