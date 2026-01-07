@@ -430,7 +430,7 @@ const LogoLink: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => (
     <img
       src="/images/villeto-logo.png"
       alt="Villeto Logo"
-      className="h-10 w-auto"
+      className="h-6 w-auto"
     />
   </Link>
 );
