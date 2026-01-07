@@ -22,7 +22,7 @@ interface SubItem {
 }
 
 export const navigationItems: NavItem[] = [
-    { icon: <HugeiconsIcon icon={Home09Icon} />, label: "Overview", href: "/dashboard", permission: [], section: "MAIN MENU" },
+    { icon: <HugeiconsIcon icon={Home09Icon} />, label: "Dashboard", href: "/dashboard", permission: [], section: "MAIN MENU" },
     {
         icon: <HugeiconsIcon icon={MoneySendSquareFreeIcons} />,
         label: "Expenses",
