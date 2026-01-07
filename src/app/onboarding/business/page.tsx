@@ -45,7 +45,6 @@ export default function Business() {
       contactPhone: businessSnapshot.contactNumber || "",
       countryOfRegistration: businessSnapshot.countryOfRegistration || "",
       websiteUrl: businessSnapshot.website || "",
-      // businessLogo: businessSnapshot.logo || undefined,
     },
   });
 
@@ -56,7 +55,6 @@ export default function Business() {
         contactPhone: businessSnapshot.contactNumber || "",
         countryOfRegistration: businessSnapshot.countryOfRegistration || "",
         websiteUrl: businessSnapshot.website || "",
-        // businessLogo: businessSnapshot.logo || undefined,
       });
     }
   }, [preOnboarding, businessSnapshot, form]);
@@ -84,7 +82,6 @@ export default function Business() {
         contactNumber: data.contactPhone,
         countryOfRegistration: data.countryOfRegistration,
         website: data.websiteUrl,
-        // logo: logoUrl,
       });
 
       router.push("/onboarding/leadership");

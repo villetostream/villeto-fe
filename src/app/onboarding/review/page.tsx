@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, FileText, ArrowRight, Building2 } from "lucide-react";
+import { FileText, ArrowRight, Building2 } from "lucide-react";
 import { CongratulationsModal } from "@/components/onboarding/CongratulationModal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
@@ -83,7 +83,6 @@ export default function ReviewConfirmation() {
               )}
             </Avatar>
           </div>
-
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500 mb-1">Business Name</p>
             <p className="font-medium">{businessSnapshot.businessName}</p>
@@ -223,7 +222,7 @@ export default function ReviewConfirmation() {
               <Badge
                 key={product.id}
                 variant="secondary"
-                className={`${product.color}  px-5 py-3 text-sm font-medium rounded-[50px]`}
+                className={`${product.color} px-5 py-3 text-sm font-medium rounded-[50px]`}
               >
                 {product.name}
               </Badge>

@@ -1,0 +1,122 @@
+---
+alwaysApply: true
+---
+
+# project context
+
+- this is a modern, production-grade frontend-first application
+- code quality, clarity, and long-term maintainability matter more than speed
+- architectural decisions should scale from mvp to large product without rewrites
+
+stack assumptions (confirm before coding)
+
+- react + typescript
+- next.js app router
+- tailwindcss
+- shadcn/ui
+- tanstack query for server state
+- state management choice must be confirmed:
+  - local state
+  - react context api
+  - redux toolkit
+  - zustand
+
+decision protocol
+
+- before implementing state, forms, tables, or auth:
+  - ask which state/tooling approach to use
+  - list 2–3 viable options with clear trade-offs
+  - wait for confirmation before proceeding
+- never introduce a new library without approval
+
+architecture & structure
+
+- favor feature-based folder structure
+- colocate components, hooks, and logic by domain
+- keep shared utilities minimal and intentional
+- avoid god-components and oversized files (>300 lines)
+
+components
+
+- functional components only
+- one primary responsibility per component
+- prefer composition over props explosion
+- shadcn components may be wrapped, never forked blindly
+- variants should be defined with cva
+
+state management rules
+
+- keep state minimal and explicit
+- derived state > duplicated state
+- server state must live in tanstack query
+- client ui state must not mirror server state
+
+context api
+
+- allowed only for cross-cutting concerns
+- contexts must be split by domain
+- no business logic inside providers
+
+redux toolkit
+
+- use only for complex, shared, multi-feature state
+- slices must represent real domains
+- async logic via rtk query or thunks (not components)
+
+zustand
+
+- prefer for lightweight global client state
+- stores must be small, focused, and selector-driven
+- avoid single massive store patterns
+
+data & async flows
+
+- loading, error, and empty states are mandatory
+- optimistic updates only with rollback handling
+- no fetch logic inside components unless trivial
+
+styling rules
+
+- tailwind utility-first only
+- readable, intentional classnames
+- extract repeated patterns into components or variants
+- no inline styles unless strictly necessary
+
+accessibility & ux
+
+- semantic html by default
+- keyboard navigation must work
+- aria only when semantics are insufficient
+
+performance
+
+- avoid premature optimization
+- prevent unnecessary re-renders with selectors and memoization only when justified
+- measure before optimizing
+
+error handling
+
+- fail loudly in development
+- return predictable error shapes from apis
+- user-facing errors must be human-readable
+
+debugging & iteration
+
+- identify and explain root cause before fixing
+- minimal fix first, refactor second
+- clearly mark changes or show diffs
+- do not guess—request missing context
+
+communication expectations
+
+- concise, technical, direct
+- assume senior-level understanding
+- highlight trade-offs and risks
+- suggest better approaches when appropriate
+
+quality bar
+
+- no dead code
+- no unused deps
+- no silent failures
+- comments only when they add real clarity
