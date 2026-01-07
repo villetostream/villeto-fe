@@ -25,10 +25,10 @@ const activities = [
 
 export const RecentActivity = () => {
     return (
-        <Card className="p-6 gap-0 pb-0">
+        <Card className="p-6 rounded-[14px] border">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-xl leading-[100%] font-semibold">Recent Activity</h3>
+                    <h3 className="text-lg font-semibold leading-[100%]">Recent Activity</h3>
                     <p className="text-sm text-muted-foreground mt-2">Your recent significant system actions</p>
                 </div>
             </div>
@@ -36,7 +36,7 @@ export const RecentActivity = () => {
             <div className="space-y-3.5">
                 {activities.map((activity, index) => (
                     <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg border hover:bg-muted/50 transition-colors">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                             <activity.icon className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-0.5">
@@ -47,7 +47,7 @@ export const RecentActivity = () => {
                 ))}
             </div>
 
-            <Button variant={"link"} size={"sm"} className="w-full text-xs leading-[125%] text-primary hover:underline !p-0">
+            <Button variant={"link"} size={"sm"} className="w-full text-xs leading-[125%] text-primary hover:underline !p-0 mt-4">
                 See all
             </Button>
         </Card>

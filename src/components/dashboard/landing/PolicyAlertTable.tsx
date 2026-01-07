@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, MoreHorizontal, RefreshCw, ArrowUpDown, ChevronDown } from "lucide-react";
+import { AlertTriangle, MoreHorizontal, RefreshCw } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -54,12 +54,7 @@ export const PolicyAlertsTable = () => {
     const columns: ColumnDef<PolicyAlert>[] = [
         {
             id: "select",
-            header: ({ table }) => (
-                <Checkbox
-                    checked={table.getIsAllPageRowsSelected()}
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                />
-            ),
+            header: () => null,
             cell: ({ row }) => (
                 <Checkbox
                     checked={row.getIsSelected()}
@@ -70,67 +65,19 @@ export const PolicyAlertsTable = () => {
         },
         {
             accessorKey: "id",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        ID NO
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                );
-            },
+            header: () => "ID NO",
         },
         {
             accessorKey: "name",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        NAME OF EMPLOYEE
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                );
-            },
+            header: () => "NAME OF EMPLOYEE",
         },
         {
             accessorKey: "department",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        DEPARTMENT
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                );
-            },
+            header: () => "DEPARTMENT",
         },
         {
             accessorKey: "alert",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        POLICY ALERT
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                );
-            },
+            header: () => "POLICY ALERT",
             cell: ({ row }) => {
                 const alert = row.getValue("alert") as string;
                 return (
@@ -153,19 +100,7 @@ export const PolicyAlertsTable = () => {
         },
         {
             accessorKey: "date",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        DATE
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                );
-            },
+            header: () => "DATE",
         },
         {
             id: "actions",
@@ -198,75 +133,22 @@ export const PolicyAlertsTable = () => {
     });
 
     return (
-        <Card className="p-6">
+        <Card className="p-6 rounded-[14px] border">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-lg font-semibold">Policy Alerts</h3>
-                    <p className="text-sm text-muted-foreground">Your latest policy alerts</p>
+                    <h3 className="text-lg font-semibold leading-[100%]">Policy Alerts</h3>
+                    <p className="text-sm text-muted-foreground mt-2">Your latest policy alerts</p>
                 </div>
                 <Button variant="ghost" size="sm">
                     <RefreshCw className="w-4 h-4" />
                 </Button>
             </div>
 
-            {/* <div className="mb-4 flex items-center gap-2">
-                <Input
-                    placeholder="Search by name, department, or ID..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="max-w-sm"
-                />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                            Filter by Alert <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuCheckboxItem
-                            checked={!table.getColumn("alert")?.getFilterValue()}
-                            onCheckedChange={() => table.getColumn("alert")?.setFilterValue(undefined)}
-                        >
-                            All
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={table.getColumn("alert")?.getFilterValue() === "High"}
-                            onCheckedChange={(checked) =>
-                                table.getColumn("alert")?.setFilterValue(checked ? "High" : undefined)
-                            }
-                        >
-                            High
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={table.getColumn("alert")?.getFilterValue() === "Medium"}
-                            onCheckedChange={(checked) =>
-                                table.getColumn("alert")?.setFilterValue(checked ? "Medium" : undefined)
-                            }
-                        >
-                            Medium
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={table.getColumn("alert")?.getFilterValue() === "Low"}
-                            onCheckedChange={(checked) =>
-                                table.getColumn("alert")?.setFilterValue(checked ? "Low" : undefined)
-                            }
-                        >
-                            Low
-                        </DropdownMenuCheckboxItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                {Object.keys(rowSelection).length > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                        {Object.keys(rowSelection).length} row(s) selected
-                    </span>
-                )}
-            </div> */}
-
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
+                            <TableRow key={headerGroup.id} className="bg-muted/50">
                                 {headerGroup.headers.map((header) => (
                                     <TableHead key={header.id}>
                                         {header.isPlaceholder
