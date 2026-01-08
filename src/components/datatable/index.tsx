@@ -366,7 +366,14 @@ function DataTable<Data extends object, Value = unknown>(
       {paginationProps?.total ? (
         <>
           <div className="flex  md:flex-row items-center justify-between bg-gray-50 py-2 px-4 rounded-b-md w-full mt-[-6px]">
-            <div className="w-full sm:w-auto mb-2 md:mb-0">
+            <div className="flex items-center gap-2 w-full sm:w-auto mb-2 md:mb-0">
+              <span className="text-sm text-gray-700 whitespace-nowrap">
+                {total > 0 ? (
+                  <>Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} of {total} entries</>
+                ) : (
+                  <>Showing 0 of 0 entries</>
+                )}
+              </span>
               <Select
                 value={String(paginationProps.pageSize)}
                 onValueChange={(value) => { handleRowChange({ value: [value] }); paginationProps.setPage(1) }}
