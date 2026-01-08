@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Bell,
@@ -9,6 +9,7 @@ import {
   Calendar as CalendarIcon,
   ChevronDown,
   Home,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Dialog,
@@ -97,6 +98,7 @@ function getCurrentSection(pathname: string): {
 
 export function UserSection() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [timeFrame, setTimeFrame] = useState<TimeFrame | undefined>(undefined);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
@@ -108,6 +110,9 @@ export function UserSection() {
   // Get current section info
   const currentSection = useMemo(() => getCurrentSection(pathname), [pathname]);
 
+  // Check if we're on an expense detail page
+  const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
+
   // Auto-open dropdown when modal opens
   useEffect(() => {
     if (isModalOpen && !timeFrame) {
@@ -118,10 +123,23 @@ export function UserSection() {
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-3">
-        <div className="text-muted-foreground [&>svg]:w-5 [&>svg]:h-5">
-          {currentSection.icon}
-        </div>
-        <h1 className="text-2xl font-bold">{currentSection.label}</h1>
+        {isExpenseDetailPage ? (
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
+            onClick={() => router.push("/expenses")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back</span> {/* Use <span> instead of <p> for inline text */}
+          </Button>
+        ) : (
+          <>
+            <div className="text-muted-foreground [&>svg]:w-5 [&>svg]:h-5">
+              {currentSection.icon}
+            </div>
+            <h1 className="text-2xl font-bold">{currentSection.label}</h1>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
