@@ -1,4 +1,5 @@
 import Marquee from "@/components/landing/Marquee";
+import SectionTitle from "./shared/SectionTitle";
 
 const companies = [
   {
@@ -211,15 +212,7 @@ export default function TrustedCompanies() {
   return (
     <section className="max-w-[1560px] py-12">
       <div className="container">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-2.5 h-2.5 rounded-full border border-[#cdcdcd]" />
-          <div className="w-5 h-0 border-t border-[#cdcdcd]" />
-          <span className="px-5 py-3 bg-[#eaeaea]/30 rounded-[50px] border border-[#eaeaea]/60 text-sm font-medium text-[#0d0d0d] font-['Figtree']">
-            COMPANIES
-          </span>
-          <div className="w-5 h-0 border-t border-[#cdcdcd]" />
-          <div className="w-2.5 h-2.5 rounded-full border border-[#cdcdcd]" />
-        </div>
+        <SectionTitle text="COMPANIES" />
 
         <div className="text-center">
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

@@ -65,83 +65,79 @@ export function TableHeader({
           </div>
         </div>
       )}
-      <div className="flex sm:flex-row flex-col items-center md:space-x-2 space-x-0 space-y-2 md:space-y-0 font-semibold text-md mb-4 bg-white">
-        {tableHeader?.isSearchable && (
-          <div
-            className={`flex items-center border rounded-md focus-within:ring-2 focus-within:ring-primary w-full sm:w-4/5 my-1.5 mx-1`}
-          >
-            <span className="pl-3 text-gray-400 mt-2">
-              <SearchIcon />
-            </span>
+      <div className="flex sm:flex-row flex-col items-center gap-2 md:space-x-2 space-x-0 space-y-2 md:space-y-0 font-semibold text-md mb-4 bg-white justify-end">
+        <div className="flex sm:flex-row flex-col items-center gap-2">
+          {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
+          
+          {tableHeader?.isSearchable && (
+            <div
+              className={`flex items-center border rounded-md focus-within:ring-2 focus-within:ring-primary max-w-sm w-full`}
+            >
+              <span className="pl-3 text-gray-400">
+                <SearchIcon className="w-4 h-4" />
+              </span>
 
-            <input
-              id="searchInput"
-              type="text"
-              placeholder="Search..."
-              value={tableHeader.search}
-              onChange={(e) => tableHeader.searchQuery?.(e.target.value)}
-              className="px-1 py-2 !w-full !focus:outline-none bg-transparent !focus:ring-0 in-focus-visible:ring-0 border-0"
-            />
-          </div>
-        )}
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Search..."
+                value={tableHeader.search}
+                onChange={(e) => tableHeader.searchQuery?.(e.target.value)}
+                className="px-1 py-2 w-full !focus:outline-none bg-transparent !focus:ring-0 in-focus-visible:ring-0 border-0"
+              />
+            </div>
+          )}
 
-        <div className="flex sm:flex-row flex-col justify-end gap-4 w-full pr-1">
+          {tableHeader?.isFilter && (
+            <>
+              {tableHeader?.filterProps && (
+                <Filter filterProps={tableHeader.filterProps} />
+              )}
+            </>
+          )}
+          {enableColumnVisibility && table && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-10">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuItem
+                        key={column.id}
+                        className="capitalize"
+                        onClick={() => column.toggleVisibility(!column.getIsVisible())}
+                      >
+                        <Checkbox
+                          checked={column.getIsVisible()}
+                          onChange={() => { }}
+                          className="mr-2"
+                        />
+                        {typeof column.columnDef.header === 'string'
+                          ? column.columnDef.header
+                          : column.id}
+                      </DropdownMenuItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-          <div className="flex gap-4">
-            {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
-            {tableHeader?.isFilter && (
-              <>
-                {tableHeader?.filterProps && (
-                  <Filter filterProps={tableHeader.filterProps} />
-                )}
-              </>
-            )}
-            {enableColumnVisibility && table && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-10">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return (
-                        <DropdownMenuItem
-                          key={column.id}
-                          className="capitalize"
-                          onClick={() => column.toggleVisibility(!column.getIsVisible())}
-                        >
-                          <Checkbox
-                            checked={column.getIsVisible()}
-                            onChange={() => { }}
-                            className="mr-2"
-                          />
-                          {typeof column.columnDef.header === 'string'
-                            ? column.columnDef.header
-                            : column.id}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {tableHeader?.isExportable && (
-              <div
-                onClick={handleExport}
-                className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 hover:bg-gray-200 cursor-pointer"
-              >
-                <Download />
-              </div>
-            )}
-          </div>
-
-
+          {tableHeader?.isExportable && (
+            <div
+              onClick={handleExport}
+              className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 hover:bg-gray-200 cursor-pointer"
+            >
+              <Download />
+            </div>
+          )}
         </div>
       </div>
     </div>
