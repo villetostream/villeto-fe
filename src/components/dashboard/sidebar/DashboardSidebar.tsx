@@ -53,6 +53,7 @@ export function DashboardSidebar() {
   useEffect(() => {
     // Fetch company logo and name if companyId is available
     const fetchCompanyData = async () => {
+      console.log(`this is the ${user}`);
       if (user?.companyId) {
         try {
           const response = await axios.get(`/companies/${user.companyId}`);

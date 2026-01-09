@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import axios, { AxiosInstance } from "axios";
 import { useMemo } from "react";
@@ -32,12 +32,14 @@ export function useAxios(): AxiosInstance {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes("auth")) {
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !originalRequest.url.includes("auth")
+        ) {
           originalRequest._retry = true;
           try {
-            const refreshRes = await axios.post(
-              `${BASEURL}auth/refresh`
-            );
+            const refreshRes = await axios.post(`${BASEURL}auth/refresh`);
             const newToken = refreshRes.data.data.access_token;
             // update store
             // setUser({ ...(user || {}), access_token: newToken } as AuthUser);
@@ -50,15 +52,16 @@ export function useAxios(): AxiosInstance {
             router.replace("/login");
             return Promise.reject(refreshError);
           }
-        }
-        else {
+        } else {
         }
         if (!originalRequest.url.includes("account-confirmation")) {
-
-          toast.error(error.response.data.message || error.message || "Invalid login credentials.");
-        }
-        else {
-          toast.info("onboarding required!, redirecting to Onboarding ")
+          toast.error(
+            error.response.data.message ||
+              error.message ||
+              "Invalid login credentials."
+          );
+        } else {
+          toast.info("onboarding required!, redirecting to Onboarding ");
         }
         return Promise.reject(error);
       }
