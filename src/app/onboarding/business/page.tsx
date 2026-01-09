@@ -44,6 +44,7 @@ export default function Business() {
       contactPhone: businessSnapshot.contactNumber || "",
       countryOfRegistration: businessSnapshot.countryOfRegistration || "",
       websiteUrl: businessSnapshot.website || "",
+      businessLogo: businessSnapshot.logo || undefined,
     },
   });
 
@@ -54,15 +55,17 @@ export default function Business() {
         contactPhone: businessSnapshot.contactNumber || "",
         countryOfRegistration: businessSnapshot.countryOfRegistration || "",
         websiteUrl: businessSnapshot.website || "",
+        businessLogo: businessSnapshot.logo || undefined,
       });
     }
   }, [preOnboarding, businessSnapshot, form]);
 
   async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
     try {
-      await updateOnboarding.mutateAsync(data);
+      const response = await updateOnboarding.mutateAsync(data);
 
-      // Convert logo file to base64 for storage if it's a File
+      // Convert logo file to base64 for local storage if it's a File
+      // The API action handles conversion for API submission
       let logoUrl: string | undefined = undefined;
       if (data.businessLogo instanceof File) {
         logoUrl = await new Promise<string>((resolve, reject) => {
@@ -73,6 +76,9 @@ export default function Business() {
         });
       } else if (typeof data.businessLogo === "string") {
         logoUrl = data.businessLogo;
+      } else if (response?.data?.logo) {
+        // Use logo from API response if available
+        logoUrl = response.data.logo as string;
       }
 
       // Update the store with form data

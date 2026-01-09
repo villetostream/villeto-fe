@@ -1,15 +1,22 @@
-import { z } from "zod";
 import { type UseMutationResult, useMutation } from "@tanstack/react-query";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
-import { useOnboardingStore } from "@/stores/useVilletoStore";
-import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
+import { useAuthStore } from "@/stores/auth-stores";
+
+interface CompanyUpdatePayload {
+  logo?: File | string;
+  companyName?: string;
+  website?: string;
+  contactPhone?: string;
+  countryOfRegistration?: string;
+  [key: string]: any;
+}
 
 interface Response {
   data: {
     [key: string]: string | number | boolean;
   };
-  error: {
+  error?: {
     error: string;
     message?: string;
     success: boolean;
@@ -20,22 +27,20 @@ interface Response {
   statusText: string;
 }
 
-type payload = z.infer<typeof onboardingBusinessSchema>;
-
-export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
+export const useUpdateCompanyDetailsApi = (): UseMutationResult<
   Response,
   Error,
-  payload
+  CompanyUpdatePayload
 > => {
   const axiosInstance = useAxios();
-  const { onboardingId } = useOnboardingStore();
-  console.log({ onboardingId });
+  const user = useAuthStore((state) => state.user);
 
-  return useMutation<Response, Error, payload>({
+  return useMutation<Response, Error, CompanyUpdatePayload>({
     retry: false,
-    mutationFn: async (payload: payload) => {
-      const latestPayload = { ...payload };
-      delete latestPayload.business_name;
+    mutationFn: async (payload: CompanyUpdatePayload) => {
+      if (!user?.companyId) {
+        throw new Error("Company ID is required");
+      }
 
       // Helper function to extract pure base64 string from data URL
       const extractBase64 = (dataUrl: string): string => {
@@ -46,7 +51,7 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
 
       // Convert logo File to Base64 if it's a File instance
       let logoBase64: string | undefined = undefined;
-      if (latestPayload.businessLogo instanceof File) {
+      if (payload.logo instanceof File) {
         logoBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -56,36 +61,36 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
             resolve(pureBase64);
           };
           reader.onerror = reject;
-          reader.readAsDataURL(latestPayload.businessLogo as File);
+          reader.readAsDataURL(payload.logo as File);
         });
-      } else if (typeof latestPayload.businessLogo === "string") {
+      } else if (typeof payload.logo === "string") {
         // If it's already a string, extract pure base64 if it's a data URL
-        logoBase64 = extractBase64(latestPayload.businessLogo);
+        logoBase64 = extractBase64(payload.logo);
       }
 
       // Prepare the payload for API
       const apiPayload: Record<string, any> = {};
       
-      // Add all fields except businessLogo
-      Object.keys(latestPayload).forEach((key) => {
+      // Add all fields except logo
+      Object.keys(payload).forEach((key) => {
         if (
-          key !== "businessLogo" &&
-          latestPayload[key as keyof typeof latestPayload] !== undefined
+          key !== "logo" &&
+          payload[key as keyof typeof payload] !== undefined
         ) {
-          const value = latestPayload[key as keyof typeof latestPayload];
+          const value = payload[key as keyof typeof payload];
           if (value !== null && value !== undefined) {
             apiPayload[key] = value;
           }
         }
       });
 
-      // Add logo as pure base64 string (API expects field name "logo", not "businessLogo")
+      // Add logo as pure base64 string (no data URL prefix)
       if (logoBase64) {
         apiPayload.logo = logoBase64;
       }
 
       const res = await axiosInstance.patch(
-        API_KEYS.ONBOARDING.ONBOARDING_COMPANY_DETAILS(onboardingId),
+        API_KEYS.COMPANY.COMPANY_DETAILS(user.companyId),
         apiPayload,
         {
           headers: {
