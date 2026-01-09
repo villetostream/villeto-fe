@@ -1,7 +1,5 @@
 "use client";
-
 import { Card } from "@/components/ui/card";
-
 import { Search } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-stores";
 import { Button } from "@/components/ui/button";
@@ -15,16 +13,64 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import { reimbursements } from "../expenses/page";
+import { useAxios } from "@/hooks/useAxios";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const total = reimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(3);
   const [integer, decimal] = total.split(".");
+  const axios = useAxios();
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (!user?.userId) {
+        setCompanyLoading(false);
+        return;
+      }
+
+      setCompanyLoading(true);
+      let fetched = false;
+
+      if (user.companyId) {
+        try {
+          const response = await axios.get(`/companies/${user.companyId}`);
+          const companyData = response?.data?.data || response?.data;
+          if (companyData?.companyName || companyData?.businessName) {
+            setCompanyName(companyData.companyName || companyData.businessName);
+            fetched = true;
+          }
+        } catch (error) {
+          console.error("Primary company fetch failed:", error);
+        }
+      }
+
+      if (!fetched) {
+        try {
+          const userResponse = await axios.get("/users/me");
+          const userData = userResponse?.data?.data || userResponse?.data;
+          const company = userData?.company;
+          if (company?.companyName || company?.businessName) {
+            setCompanyName(company.companyName || company.businessName);
+          }
+        } catch (userError) {
+          console.error("Fallback /users/me fetch failed:", userError);
+        }
+      }
+
+      setCompanyLoading(false);
+    };
+
+    fetchCompanyData();
+  }, [user?.userId, user?.companyId, axios]);
+
   return (
     <>
       <PermissionGuard requiredPermissions={[]}>
         <div className="space-y-5">
-          {/* Header */}
           {/* Apply Banner */}
           <Card className="bg-gradient-to-r from-primary/20 to-primary/10 border-primary/50 !p-0">
             <div className="p-5 flex items-start justify-between">
@@ -49,8 +95,13 @@ export default function DashboardPage() {
           {/* Welcome Section */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">
-                Welcome Back, XYZ Corporation!
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                Welcome Back,
+                {companyLoading ? (
+                  <Skeleton className="h-7 w-64 inline-block" />
+                ) : (
+                  <span>{companyName || "XYZ Corporation"}!</span>
+                )}
               </h2>
               <p className="text-muted-foreground text-sm font-normal">
                 Here&apos;s what&apos;s happening with your expenses today.
@@ -74,7 +125,7 @@ export default function DashboardPage() {
               trend="up"
               icon={
                 <div className="p-1 rounded bg-success/5 border-[0.5px] border-success text-success font-normal text-[.5rem] flex items-center justify-center gap-0.5 mr-2">
-                  <div className="w-3 h-3  flex items-center justify-center">
+                  <div className="w-3 h-3 flex items-center justify-center">
                     <HugeiconsIcon
                       icon={ChartUpIcon}
                       className="w-3 h-3 text-success"
@@ -132,7 +183,7 @@ export default function DashboardPage() {
 
           {/* Table and Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-            <div className="lg:col-span-3   ">
+            <div className="lg:col-span-3">
               <PolicyAlertsTable />
             </div>
             <div>
@@ -146,12 +197,10 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground pb-4 border-b-2 border-muted">
               Special insights and controls for business owners
             </p>
-
             <p className="mt-4 mb-4">
               As an owner, you have access to all financial data and company
               settings.
             </p>
-
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
@@ -173,91 +222,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </PermissionGuard>
-
-      {/* <PermissionGuard requiredPermissions={[]}>
-                <div className="min-h-screen bg-dashboard-bg">
-
-                    <div className="bg-navy rounded-2xl p-3.5 px-11 mb-8 flex items-center justify-between">
-                        <div className='flex flex-col justify-center'>
-                            <h1 className="text-2xl leading-[150%] font-bold text-white mb-2">Good Morning, Goodness.</h1>
-                            <p className="text-white/80 text-base leading-[150%]">Here is an overview of your dashboard</p>
-                        </div>
-
-                        <div style={{ backgroundImage: 'url("/images/card.jpg")' }} className=" bg-no-repeat bg-cover h-[156px] w-[278px]">
-                            <div className="mt-auto flex flex-col h-full justify-end  p-3.5 w-full">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-white/90 text-xs leading-[125%]">Wallet Balance</span>
-                                    <FaEye size={16} className="text-white/80" />
-                                </div>
-                                <p className="text-2xl font-extrabold leading-[150%] text-white font-mono">
-                                    ${integer}.
-                                    <span className="text-xs font-normal leading-[125%] opacity-70">{decimal}</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-              
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-                        <StatsCard
-                            title="Draft"
-                            value="4"
-                            icon={<>
-                                <div className='p-1 flex items-center justify-center bg-[#384A57] rounded-full'>
-                                    <img src={"/images/svgs/draft.svg"} />
-                                </div></>}
-                            subtitle={<span className='text-xs leading-[125%]'>
-                                Manage your saved items
-                            </span>
-                            }
-                        />
-                        <StatsCard
-                            title="Approved"
-                            value="10"
-                            icon={<>
-                                <div className='p-1 flex items-center justify-center bg-[#418341] rounded-full text-white'>
-                                    <img src={"/images/svgs/check.svg"} />
-                                </div></>}
-                            subtitle={<span className='text-xs leading-[125%]'>
-                                View all items that have been reviewed.</span>}
-                        />
-                        <StatsCard
-                            title="Submitted"
-                            value="6"
-                            icon={<>
-                                <div className='p-1 flex items-center justify-center bg-[#5A67D8] rounded-full'>
-                                    <img src={"/images/svgs/submitted.svg"} />
-                                </div></>}
-                            subtitle={<span className='text-xs leading-[125%]'>Track entries that have been sent for review
-                            </span>
-                            }
-                            trend="up"
-                        />
-                        <StatsCard
-                            title="Paid"
-                            value="10"
-                            icon={<>
-                                <div className='p-1 flex items-center justify-center bg-[#38B2AC] rounded-full text-white'>
-                                    <img src={"/images/svgs/money.svg"} className='text-white' />
-                                </div></>}
-                            subtitle={<span className='text-xs leading-[125%]'>
-                                Access records of completed payments.
-                            </span>}
-
-                        />
-                    </div>
-             
-                    <Card className="bg-dashboard-card !border-0 border-transparent shadow-none">
-                        <CardHeader>
-                            <CardTitle className="text-dashboard-text-primary ">Expenses</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ExpenseTable />
-
-                        </CardContent>
-                    </Card>
-                </div>
-            </PermissionGuard > */}
     </>
   );
 }
