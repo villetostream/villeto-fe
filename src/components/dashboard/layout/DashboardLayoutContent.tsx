@@ -22,7 +22,6 @@ export default function DashboardLayoutContent({
   const axios = useAxios();
   const { setUserPermissions, login, user, isLoading } = useAuthStore();
   const router = useRouter();
-  console.log({ user }, { isLoading });
 
   useEffect(() => {
     setIsMounted(true);
@@ -38,12 +37,9 @@ export default function DashboardLayoutContent({
     (async () => {
       try {
         const me = await axios.get("/users/me");
-        console.log("DashboardLayout - /users/me response:", me?.data);
         const responseData = me?.data?.data || me?.data;
         const { role, company, companyId, ...userData } = responseData || {};
 
-        console.log("DashboardLayout - Extracted userData:", userData);
-        console.log("DashboardLayout - companyId:", companyId);
         console.log("DashboardLayout - company object:", company);
 
         if (userData) {
@@ -60,7 +56,6 @@ export default function DashboardLayoutContent({
             companyId: companyId || userData.companyId || user?.companyId,
           };
 
-          console.log("DashboardLayout - User data to save:", userWithCompany);
           login(userWithCompany as User);
         }
 

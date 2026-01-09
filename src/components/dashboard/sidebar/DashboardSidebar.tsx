@@ -1,13 +1,10 @@
 "use client";
-
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-
-// Shadcn components
 import {
   Sidebar,
   SidebarContent,
@@ -33,16 +30,14 @@ import { useAuthStore } from "@/stores/auth-stores";
 import { Logout } from "iconsax-reactjs";
 import { NavItem, navigationItems } from "./sidebar-constants";
 import { useAxios } from "@/hooks/useAxios";
-
-// const bottomItems: NavItem[] = [
-//     { icon: HelpCircle, label: "Chat for help", href: "/dashboard/help", permission: PERMISSIONS.VIEW_HELP },
-// ];
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function DashboardSidebar() {
   const location = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const [businessLogo, setBusinessLogo] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const logout = useAuthStore((state) => state.logout);
   const hasPermission = useAuthStore((state) => state.hasPermission);
   const user = useAuthStore((state) => state.user);
@@ -51,46 +46,54 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
 
   useEffect(() => {
-    // Fetch company logo and name if companyId is available
     const fetchCompanyData = async () => {
-      console.log(`this is the ${user}`);
-      if (user?.companyId) {
+      if (!user?.userId) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      let fetched = false;
+
+      // Only attempt primary fetch if companyId exists
+      if (user.companyId) {
         try {
           const response = await axios.get(`/companies/${user.companyId}`);
-          // Try different response structures
           const companyData = response?.data?.data || response?.data;
-
-          console.log("Company data response:", { response, companyData });
-
-          if (companyData?.logo) {
-            setBusinessLogo(companyData.logo);
-          }
-          if (companyData?.companyName || companyData?.businessName) {
+          if (companyData) {
+            setBusinessLogo(companyData.logoUrl ?? null);
             setBusinessName(
-              companyData.companyName || companyData.businessName
+              companyData.companyName || companyData.businessName || null
             );
+            fetched = true;
           }
         } catch (error) {
-          console.error("Error fetching company data:", error);
-          // Try to get company data from user endpoint as fallback
-          try {
-            const userResponse = await axios.get("/users/me");
-            const userData = userResponse?.data?.data || userResponse?.data;
-            if (userData?.company) {
-              const company = userData.company;
-              if (company?.logo) setBusinessLogo(company.logo);
-              if (company?.companyName || company?.businessName) {
-                setBusinessName(company.companyName || company.businessName);
-              }
-            }
-          } catch (userError) {
-            console.error("Error fetching user company data:", userError);
-          }
+          console.error("Primary company fetch failed:", error);
         }
       }
+
+      // Fallback to /users/me if primary didn't succeed or companyId was missing
+      if (!fetched) {
+        try {
+          const userResponse = await axios.get("/users/me");
+          const userData = userResponse?.data?.data || userResponse?.data;
+          const company = userData?.company;
+          if (company) {
+            setBusinessLogo(company.logoUrl ?? null);
+            setBusinessName(
+              company.companyName || company.businessName || null
+            );
+          }
+        } catch (userError) {
+          console.error("Fallback /users/me fetch failed:", userError);
+        }
+      }
+
+      setLoading(false);
     };
+
     fetchCompanyData();
-  }, [user?.companyId, axios]);
+  }, [user?.userId, user?.companyId, axios]);
 
   const toggleMenu = (label: string) => {
     setExpandedMenus((prev) =>
@@ -134,6 +137,54 @@ export function DashboardSidebar() {
     acc[item.section].push(item);
     return acc;
   }, {} as Record<string, NavItem[]>);
+
+  const renderLogo = () => {
+    if (loading) return <Skeleton className="w-full h-full rounded-full" />;
+    if (businessLogo)
+      return (
+        <Image
+          src={businessLogo}
+          alt="Business Logo"
+          width={36}
+          height={36}
+          className="w-full h-full object-contain"
+          unoptimized={
+            businessLogo.startsWith("data:") || businessLogo.startsWith("http")
+          }
+        />
+      );
+    return (
+      <div className="w-full h-full rounded-full bg-dashboard-accent/10 flex items-center justify-center shrink-0">
+        <span className="text-sm font-semibold text-dashboard-accent">
+          {businessName?.charAt(0).toUpperCase() || "B"}
+        </span>
+      </div>
+    );
+  };
+
+  const renderCollapsedLogo = () => {
+    if (loading) return <Skeleton className="w-6 h-6 rounded-full" />;
+    if (businessLogo)
+      return (
+        <Image
+          src={businessLogo}
+          alt="Business Logo"
+          width={40}
+          height={40}
+          className="w-6 h-6 object-contain"
+          unoptimized={
+            businessLogo.startsWith("data:") || businessLogo.startsWith("http")
+          }
+        />
+      );
+    return (
+      <div className="w-10 h-10 rounded-full bg-dashboard-accent/10 flex items-center justify-center shrink-0">
+        <span className="text-lg font-semibold text-dashboard-accent">
+          {businessName?.charAt(0).toUpperCase() || "B"}
+        </span>
+      </div>
+    );
+  };
 
   const renderMenuItem = (item: NavItem) => {
     if (item.subItems && item.subItems.length > 0) {
@@ -181,9 +232,7 @@ export function DashboardSidebar() {
         </SidebarMenuItem>
       );
     }
-
     if (!item.href) return null;
-
     return (
       <SidebarMenuItem key={item.label}>
         <SidebarMenuButton
@@ -208,7 +257,7 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border  py-5">
+      <SidebarHeader className="border-b border-sidebar-border py-5">
         <div className="flex flex-col gap-3">
           {/* Villeto Logo Section */}
           <div
@@ -239,7 +288,7 @@ export function DashboardSidebar() {
             )}
           </div>
 
-          {/* Business Logo Section - Circular with business name */}
+          {/* Business Logo & Name Section */}
           <div
             className={cn(
               "flex items-center transition-all duration-200",
@@ -249,58 +298,22 @@ export function DashboardSidebar() {
             )}
           >
             {state === "expanded" ? (
-              <>
-                {/* Circular logo container */}
-                <div className="rounded-full bg-white p-1.5 flex items-center justify-center shrink-0 w-12 h-12 aspect-square">
-                  {businessLogo ? (
-                    <Image
-                      src={businessLogo}
-                      alt="Business Logo"
-                      width={36}
-                      height={36}
-                      className="w-9 h-9 object-cover rounded-full"
-                      unoptimized={
-                        businessLogo.startsWith("data:") ||
-                        businessLogo.startsWith("http")
-                      }
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-dashboard-accent/10 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-semibold text-dashboard-accent">
-                        {businessName?.charAt(0).toUpperCase() || "B"}
-                      </span>
-                    </div>
-                  )}
+              <div className="w-full flex items-center bg-gray-200 rounded-md px-2 py-1 gap-2 h-12">
+                <div className="rounded-full p-1.5 flex items-center justify-center shrink-0 w-10 h-10 aspect-square">
+                  {renderLogo()}
                 </div>
-                {/* Business name */}
                 <span className="flex-1 text-sm font-medium text-dashboard-text-primary truncate">
-                  {businessName || "Business Name"}
+                  {loading ? (
+                    <Skeleton className="h-5 w-40" />
+                  ) : (
+                    businessName || "Business Name"
+                  )}
                 </span>
-                {/* Chevron icon */}
                 <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
-              </>
+              </div>
             ) : (
-              /* Collapsed state - just circular logo */
-              <div className="rounded-full bg-white p-1.5 flex items-center justify-center shrink-0 w-12 h-12 aspect-square">
-                {businessLogo ? (
-                  <Image
-                    src={businessLogo}
-                    alt="Business Logo"
-                    width={36}
-                    height={36}
-                    className="w-9 h-9 object-cover rounded-full"
-                    unoptimized={
-                      businessLogo.startsWith("data:") ||
-                      businessLogo.startsWith("http")
-                    }
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-dashboard-accent/10 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-dashboard-accent">
-                      {businessName?.charAt(0).toUpperCase() || "B"}
-                    </span>
-                  </div>
-                )}
+              <div className="rounded-full p-1.5 flex items-center justify-center shrink-0 w-12 h-12 aspect-square">
+                {renderCollapsedLogo()}
               </div>
             )}
           </div>
