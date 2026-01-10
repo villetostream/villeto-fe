@@ -30,7 +30,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion, AnimatePresence } from "framer-motion"; // Add this import
-
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
@@ -265,6 +264,7 @@ function Sidebar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
+                className="flex flex-col h-full"
               >
                 {children}
               </motion.div>
@@ -275,7 +275,7 @@ function Sidebar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col items-center justify-center h-full"
+                className="flex flex-col items-center h-full"
               >
                 {/* Render icon-only content here if needed */}
                 {children} {/* Adjust to show icons only */}
