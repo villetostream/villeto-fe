@@ -40,8 +40,6 @@ export default function DashboardLayoutContent({
         const responseData = me?.data?.data || me?.data;
         const { role, company, companyId, ...userData } = responseData || {};
 
-        console.log("DashboardLayout - company object:", company);
-
         if (userData) {
           // Check if password change is required BEFORE updating the store
           if (userData.shouldChangePassword) {
