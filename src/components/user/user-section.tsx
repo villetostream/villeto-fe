@@ -151,7 +151,7 @@ export function UserSection() {
           <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
         </Button>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={() => setIsModalOpen(true)}
@@ -172,7 +172,7 @@ export function UserSection() {
             <span>Pick a date range</span>
           )}
           <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-        </Button>
+        </Button> */}
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="w-[30%] h-full max-w-none translate-x-0! translate-y-0! top-0! right-0! left-auto! p-6 shadow-lg">
