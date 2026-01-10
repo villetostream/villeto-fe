@@ -15,12 +15,8 @@ import {
   SidebarMenuItem,
   SidebarMenuSubButton,
   SidebarTrigger,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,7 +27,6 @@ import { Logout } from "iconsax-reactjs";
 import { NavItem, navigationItems } from "./sidebar-constants";
 import { useAxios } from "@/hooks/useAxios";
 import { Skeleton } from "@/components/ui/skeleton";
-
 export function DashboardSidebar() {
   const location = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
@@ -44,18 +39,14 @@ export function DashboardSidebar() {
   const router = useRouter();
   const axios = useAxios();
   const { state } = useSidebar();
-
   useEffect(() => {
     const fetchCompanyData = async () => {
       if (!user?.userId) {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       let fetched = false;
-
-      // Only attempt primary fetch if companyId exists
       if (user.companyId) {
         try {
           const response = await axios.get(`/companies/${user.companyId}`);
@@ -71,8 +62,6 @@ export function DashboardSidebar() {
           console.error("Primary company fetch failed:", error);
         }
       }
-
-      // Fallback to /users/me if primary didn't succeed or companyId was missing
       if (!fetched) {
         try {
           const userResponse = await axios.get("/users/me");
@@ -88,13 +77,10 @@ export function DashboardSidebar() {
           console.error("Fallback /users/me fetch failed:", userError);
         }
       }
-
       setLoading(false);
     };
-
     fetchCompanyData();
   }, [user?.userId, user?.companyId, axios]);
-
   const toggleMenu = (label: string) => {
     setExpandedMenus((prev) =>
       prev.includes(label)
@@ -102,14 +88,12 @@ export function DashboardSidebar() {
         : [...prev, label]
     );
   };
-
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return location === href;
     }
     return location.startsWith(href);
   };
-
   const filterItems = (items: NavItem[]): NavItem[] => {
     return items
       .map((item) => {
@@ -127,17 +111,7 @@ export function DashboardSidebar() {
       })
       .filter(Boolean) as NavItem[];
   };
-
   const filteredNavigationItems = filterItems(navigationItems);
-
-  const groupedItems = filteredNavigationItems.reduce((acc, item) => {
-    if (!acc[item.section]) {
-      acc[item.section] = [];
-    }
-    acc[item.section].push(item);
-    return acc;
-  }, {} as Record<string, NavItem[]>);
-
   const renderLogo = () => {
     if (loading) return <Skeleton className="w-full h-full rounded-full" />;
     if (businessLogo)
@@ -161,9 +135,8 @@ export function DashboardSidebar() {
       </div>
     );
   };
-
   const renderCollapsedLogo = () => {
-    if (loading) return <Skeleton className="w-6 h-6 rounded-full" />;
+    if (loading) return <Skeleton className="w-10 h-10 rounded-full" />;
     if (businessLogo)
       return (
         <Image
@@ -171,7 +144,7 @@ export function DashboardSidebar() {
           alt="Business Logo"
           width={40}
           height={40}
-          className="w-6 h-6 object-contain"
+          className="w-10 h-10 object-contain rounded-full"
           unoptimized={
             businessLogo.startsWith("data:") || businessLogo.startsWith("http")
           }
@@ -185,20 +158,22 @@ export function DashboardSidebar() {
       </div>
     );
   };
-
   const renderMenuItem = (item: NavItem) => {
-    if (item.subItems && item.subItems.length > 0) {
+    const hasExpandable =
+      item.label === "Expenses" || (item.subItems && item.subItems.length > 0);
+    if (hasExpandable) {
+      const isOpen = expandedMenus.includes(item.label);
       return (
         <SidebarMenuItem key={item.label}>
           <Collapsible
-            open={expandedMenus.includes(item.label)}
+            open={isOpen}
             onOpenChange={() => toggleMenu(item.label)}
           >
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
                 tooltip={item.label}
                 isActive={isActive(item.href)}
-                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent cursor-pointer"
+                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
               >
                 <span className="[&>svg]:size-5 [&>svg]:shrink-0">
                   {item.icon}
@@ -207,13 +182,13 @@ export function DashboardSidebar() {
                 <ChevronRight
                   className={cn(
                     "ml-auto h-4 w-4 transition-transform duration-200",
-                    expandedMenus.includes(item.label) && "rotate-90"
+                    isOpen && "rotate-90"
                   )}
                 />
               </SidebarMenuButton>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 space-y-1 pl-8 overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-              {item.subItems.map((sub) => (
+            <CollapsibleContent className="mt-1 space-y-1 pl-8">
+              {item.subItems?.map((sub) => (
                 <SidebarMenuSubButton
                   key={sub.label}
                   asChild
@@ -239,45 +214,39 @@ export function DashboardSidebar() {
           asChild
           isActive={isActive(item.href)}
           tooltip={item.label}
-          className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent"
+          className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
         >
           <Link href={item.href}>
             <span className="[&>svg]:size-5 [&>svg]:shrink-0">{item.icon}</span>
             <span>{item.label}</span>
-            {item.badge && (
-              <Badge variant="default" className="ml-auto">
-                {item.badge}
-              </Badge>
-            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
   };
-
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border py-5">
-        <div className="flex flex-col gap-3">
-          {/* Villeto Logo Section */}
+      <SidebarHeader className="border-b border-sidebar-border pt-4 pb-0! px-0!">
+        <div className="flex flex-col gap-4">
+          {/* Villeto Logo + Toggle */}
           <div
             className={cn(
-              "flex items-center gap-2",
-              state === "expanded" ? "justify-between" : "justify-center"
+              "flex items-center",
+              state === "expanded" ? "justify-between px-4" : "justify-center"
             )}
           >
             {state === "expanded" ? (
               <>
                 <Link
                   href="/dashboard"
-                  className="flex items-center justify-start cursor-pointer hover:opacity-80 transition-opacity"
+                  className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
                 >
                   <Image
                     src="/images/villeto-logo.png"
                     alt="Villeto Logo"
                     width={90}
                     height={28}
-                    className="w-full h-auto max-w-[90px] max-h-[28px] object-contain transition-all duration-200"
+                    className="h-auto max-h-7 object-contain"
                     priority
                   />
                 </Link>
@@ -287,19 +256,18 @@ export function DashboardSidebar() {
               <SidebarTrigger className="shrink-0 cursor-pointer" />
             )}
           </div>
-
-          {/* Business Logo & Name Section */}
+          {/* Company Selector */}
           <div
             className={cn(
-              "flex items-center transition-all duration-200",
+              "flex items-center transition-all duration-300 border-t border-sidebar-border",
               state === "expanded"
-                ? "pt-2 border-t border-sidebar-border gap-1 justify-start"
+                ? " border-t border-sidebar-border"
                 : "justify-center"
             )}
           >
             {state === "expanded" ? (
-              <div className="w-full flex items-center bg-gray-200 rounded-md px-2 py-1 gap-2 h-12">
-                <div className="rounded-full p-1.5 flex items-center justify-center shrink-0 w-10 h-10 aspect-square">
+              <div className="w-full flex items-center bg-muted rounded-lg px-3 my-1 gap-3 h-12">
+                <div className=" flex items-center justify-center shrink-0 w-6 h-6 overflow-hidden">
                   {renderLogo()}
                 </div>
                 <span className="flex-1 text-sm font-medium text-dashboard-text-primary truncate">
@@ -309,32 +277,21 @@ export function DashboardSidebar() {
                     businessName || "Business Name"
                   )}
                 </span>
-                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
               </div>
             ) : (
-              <div className="rounded-full p-1.5 flex items-center justify-center shrink-0 w-12 h-12 aspect-square">
+              <div className="flex items-center justify-center w-6 h-6 my-2">
                 {renderCollapsedLogo()}
               </div>
             )}
           </div>
         </div>
       </SidebarHeader>
-
-      <SidebarContent className="px-2 py-4 gap-4 overflow-y-auto">
-        {Object.entries(groupedItems).map(([section, items]) => (
-          <SidebarGroup key={section} className="space-y-1">
-            <SidebarGroupLabel className="text-xs font-semibold text-[#7F7F7F] uppercase tracking-wider px-2">
-              {section}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {items.map((item) => renderMenuItem(item))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+      <SidebarContent className="py-4">
+        <SidebarMenu className="space-y-1 px-3">
+          {filteredNavigationItems.map((item) => renderMenuItem(item))}
+        </SidebarMenu>
       </SidebarContent>
-
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <SidebarMenu>
           <SidebarMenuItem>
