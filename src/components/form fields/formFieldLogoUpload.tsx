@@ -148,11 +148,11 @@ const LogoUploadContent: React.FC<LogoUploadContentProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 p-8 min-h-[200px]">
-            <div className="relative w-32 h-32 bg-muted rounded-lg overflow-hidden">
+            <div className="relative w-13 h-13 bg-muted rounded-lg overflow-hidden">
               <img
                 src={previewUrl}
                 alt="Business logo preview"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain place-self-center"
               />
             </div>
             <div className="flex gap-2">

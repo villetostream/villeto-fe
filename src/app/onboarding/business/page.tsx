@@ -142,7 +142,7 @@ export default function Business() {
             name="businessLogo"
             label="Business Logo"
             description="Upload your business logo (optional)"
-            maxSize={5 * 1024 * 1024}
+            maxSize={1 * 1024 * 1024}
           />
 
           <FormFieldSelect
