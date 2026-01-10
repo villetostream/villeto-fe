@@ -141,7 +141,7 @@ export function DashboardSidebar() {
       return (
         <Image
           src={businessLogo}
-          alt="Business Logo"
+          alt={businessName || "Business Logo"}
           width={40}
           height={40}
           className="w-10 h-10 object-contain rounded-full"
