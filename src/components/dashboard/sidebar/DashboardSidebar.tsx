@@ -226,7 +226,7 @@ export function DashboardSidebar() {
   };
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border pt-4 pb-0! px-0!">
+      <SidebarHeader className="w-full border-b border-sidebar-border px-0! pt-4 pb-0!">
         <div className="flex flex-col gap-4">
           {/* Villeto Logo + Toggle */}
           <div
