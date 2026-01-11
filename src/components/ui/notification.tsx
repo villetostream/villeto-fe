@@ -90,7 +90,7 @@ export default function Notification({ onClose }) {
           <span className="text-foreground">Mark all as read</span>
           <input
             type="checkbox"
-            className="w-4 h-4 rounded border text-primary accent-primary"
+            className="w-4 h-4 rounded border text-primary accent-primary cursor-pointer"
             checked={allRead}
             onChange={(e) =>
               setNotifications((prev) =>
