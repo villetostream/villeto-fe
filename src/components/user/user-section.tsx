@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import Notification from "../ui/notification";
 import {
   Select,
   SelectContent,
@@ -100,6 +101,7 @@ export function UserSection() {
   const pathname = usePathname();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [timeFrame, setTimeFrame] = useState<TimeFrame | undefined>(undefined);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [fromDate, setFromDate] = useState<Date | undefined>(
@@ -147,10 +149,21 @@ export function UserSection() {
           <Bot className="w-5 h-5 text-purple-600" />
           <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full" />
         </Button>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => setIsNotifOpen(true)}
+        >
           <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
         </Button>
+
+        <Dialog open={isNotifOpen} onOpenChange={setIsNotifOpen}>
+          <DialogContent className="w-full max-w-120! p-0 rounded-lg">
+            <Notification onClose={() => setIsNotifOpen(false)} />
+          </DialogContent>
+        </Dialog>
         {/* <Button
           variant="outline"
           size="sm"
@@ -174,7 +187,7 @@ export function UserSection() {
           <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
         </Button> */}
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="w-[30%] h-full max-w-none translate-x-0! translate-y-0! top-0! right-0! left-auto! p-6 shadow-lg">
             <DialogHeader className="text-left pb-8 border-b">
               <DialogTitle className="text-xl font-semibold">
@@ -292,7 +305,7 @@ export function UserSection() {
               )}
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     </div>
   );
