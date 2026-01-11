@@ -174,6 +174,7 @@ export function DashboardSidebar() {
                 tooltip={item.label}
                 isActive={isActive(item.href)}
                 className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
+                onClick={() => item.href && router.push(item.href)}
               >
                 <span className="[&>svg]:size-5 [&>svg]:shrink-0">
                   {item.icon}
