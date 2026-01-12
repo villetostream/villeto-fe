@@ -5,7 +5,7 @@ import { columns } from './column';
 import { DataTable } from '@/components/datatable';
 import { reimbursements } from '@/app/(dashboard)/expenses/page';
 
-const ExpenseTable = ({ actionButton = <></> }: { actionButton: React.ReactElement }) => {
+const ExpenseTable = ({ actionButton = <></>, statusFilter = null }: { actionButton: React.ReactElement; statusFilter?: string | null }) => {
 
     const [filteredData, setFilteredData] = useState(reimbursements);
     const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>({});
@@ -23,6 +23,11 @@ const ExpenseTable = ({ actionButton = <></> }: { actionButton: React.ReactEleme
     useEffect(() => {
         let filtered = [...reimbursements];
 
+        // Apply status filter from tab
+        if (statusFilter) {
+            filtered = filtered.filter(item => item.status === statusFilter);
+        }
+
         // Apply search filter
         if (globalSearch && globalSearch.trim() !== '') {
             const searchTerm = globalSearch.toLowerCase().trim();
@@ -36,7 +41,7 @@ const ExpenseTable = ({ actionButton = <></> }: { actionButton: React.ReactEleme
             );
         }
 
-        // Apply status filter
+        // Apply status filter from dropdown
         if (appliedFilters['filters[status]']) {
             filtered = filtered.filter(item => item.status === appliedFilters['filters[status]']);
         }
@@ -49,7 +54,7 @@ const ExpenseTable = ({ actionButton = <></> }: { actionButton: React.ReactEleme
         setFilteredData(filtered);
         setTotalItems(filtered.length);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [globalSearch, appliedFilters]);
+    }, [globalSearch, appliedFilters, statusFilter]);
     return (
         <DataTable
             data={filteredData}
