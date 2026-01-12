@@ -115,9 +115,7 @@ export function UserSection() {
   // Check if we're on an expense detail page or audit trail page
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
-  
-  // Extract expense ID from pathname for audit trail back navigation
-  const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
+  const isExpensesListPage = pathname === "/expenses";
 
   // Auto-open dropdown when modal opens
   useEffect(() => {
@@ -155,6 +153,31 @@ export function UserSection() {
       </div>
 
       <div className="flex items-center gap-3">
+        {isExpensesListPage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className={cn(
+              "w-[240px] justify-start text-left font-normal",
+              !fromDate && !toDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {fromDate && toDate ? (
+              <>
+                {format(fromDate, "LLL dd, yyyy")} -{" "}
+                {format(toDate, "LLL dd, yyyy")}
+              </>
+            ) : fromDate ? (
+              format(fromDate, "LLL dd, yyyy")
+            ) : (
+              <span>Pick a date range</span>
+            )}
+            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+          </Button>
+        )}
+
         <Button variant="ghost" size="icon" className="relative">
           <Bot className="w-5 h-5 text-purple-600" />
           <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full" />
@@ -174,28 +197,6 @@ export function UserSection() {
             <Notification onClose={() => setIsNotifOpen(false)} />
           </DialogContent>
         </Dialog>
-        {/* <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsModalOpen(true)}
-          className={cn(
-            "w-[240px] justify-start text-left font-normal",
-            !fromDate && !toDate && "text-muted-foreground"
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {fromDate && toDate ? (
-            <>
-              {format(fromDate, "LLL dd, yyyy")} -{" "}
-              {format(toDate, "LLL dd, yyyy")}
-            </>
-          ) : fromDate ? (
-            format(fromDate, "LLL dd, yyyy")
-          ) : (
-            <span>Pick a date range</span>
-          )}
-          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-        </Button> */}
 
         {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="w-[30%] h-full max-w-none translate-x-0! translate-y-0! top-0! right-0! left-auto! p-6 shadow-lg">
