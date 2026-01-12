@@ -326,7 +326,11 @@ export default function Reimbursements() {
                 />
               </div>
               {/* <ExpenseTable actionButton={<><NewExpenseButtonTrigger /></>} /> */}
-              <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+              <Tabs
+                defaultValue="all"
+                value={activeTab}
+                onValueChange={setActiveTab}
+              >
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="draft">Draft</TabsTrigger>
@@ -337,25 +341,46 @@ export default function Reimbursements() {
                   <TabsTrigger value="paid">Paid</TabsTrigger>
                 </TabsList>
                 <TabsContent value="all">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["all"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["all"]}
+                  />
                 </TabsContent>
                 <TabsContent value="draft">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["draft"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["draft"]}
+                  />
                 </TabsContent>
                 <TabsContent value="submitted">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["submitted"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["submitted"]}
+                  />
                 </TabsContent>
                 <TabsContent value="approved">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["approved"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["approved"]}
+                  />
                 </TabsContent>
                 <TabsContent value="rejected">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["rejected"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["rejected"]}
+                  />
                 </TabsContent>
                 <TabsContent value="pending">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["pending"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["pending"]}
+                  />
                 </TabsContent>
                 <TabsContent value="paid">
-                  <ExpenseTable actionButton={<></>} statusFilter={statusMap["paid"]} />
+                  <ExpenseTable
+                    actionButton={<></>}
+                    statusFilter={statusMap["paid"]}
+                  />
                 </TabsContent>
               </Tabs>
             </div>

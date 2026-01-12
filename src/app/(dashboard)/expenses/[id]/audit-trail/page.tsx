@@ -72,18 +72,6 @@ const page = () => {
 
   return (
     <div className="space-y-6">
-      {/* Back Button Section */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </Button>
-      </div>
-
       {/* Audit Trail Table */}
       <AuditTrailTable
         expenseId="EXP-2025"
