@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
@@ -11,29 +11,15 @@ import {
   Home,
   ArrowLeft,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { Dialog, DialogContent } from "../ui/dialog";
 import Notification from "../ui/notification";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Label } from "../ui/label";
 import { navigationItems } from "@/components/dashboard/sidebar/sidebar-constants";
-
-type TimeFrame = "this-week" | "this-month" | "this-year" | "custom";
+import { useDateFilterStore } from "@/stores/useDateFilterStore";
 
 // Get current section info based on pathname
 function getCurrentSection(pathname: string): {
@@ -100,14 +86,28 @@ function getCurrentSection(pathname: string): {
 export function UserSection() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [timeFrame, setTimeFrame] = useState<TimeFrame | undefined>(undefined);
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const [fromDate, setFromDate] = useState<Date | undefined>(
-    new Date(2025, 8, 26)
-  ); // Sep 26, 2025
-  const [toDate, setToDate] = useState<Date | undefined>(new Date(2025, 9, 13)); // Oct 13, 2025
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isToOpen, setIsToOpen] = useState(false);
+  const [fromMonth, setFromMonth] = useState<Date>(new Date());
+  const [toMonth, setToMonth] = useState<Date>(new Date());
+
+  // Use the date filter store
+  const { fromDate, toDate, setFromDate, setToDate } = useDateFilterStore();
+
+  // Initialize with 30-day default range if not already set
+  const getInitialDates = () => {
+    if (!fromDate && !toDate) {
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      return { from: thirtyDaysAgo, to: today };
+    }
+    return { from: fromDate, to: toDate };
+  };
+
+  const { from: displayFromDate, to: displayToDate } = getInitialDates();
 
   // Get current section info
   const currentSection = useMemo(() => getCurrentSection(pathname), [pathname]);
@@ -115,14 +115,8 @@ export function UserSection() {
   // Check if we're on an expense detail page or audit trail page
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
+  const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   const isExpensesListPage = pathname === "/expenses";
-
-  // Auto-open dropdown when modal opens
-  useEffect(() => {
-    if (isModalOpen && !timeFrame) {
-      setIsSelectOpen(true);
-    }
-  }, [isModalOpen, timeFrame]);
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -154,28 +148,272 @@ export function UserSection() {
 
       <div className="flex items-center gap-3">
         {isExpensesListPage && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsModalOpen(true)}
-            className={cn(
-              "w-[240px] justify-start text-left font-normal",
-              !fromDate && !toDate && "text-muted-foreground"
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className={cn(
+                "w-60 justify-start text-left font-normal",
+                !displayFromDate && !displayToDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {displayFromDate && displayToDate ? (
+                <>
+                  {format(displayFromDate, "MMM dd, yyyy")} -{" "}
+                  {format(displayToDate, "MMM dd, yyyy")}
+                </>
+              ) : displayFromDate ? (
+                format(displayFromDate, "MMM dd, yyyy")
+              ) : (
+                <span>Pick a date range</span>
+              )}
+              <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+
+            {/* Modern Dropdown */}
+            {isDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Filter by Date Range
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* From Date */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">From</Label>
+                      <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-10 text-sm",
+                              !displayFromDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {displayFromDate ? (
+                              format(displayFromDate, "MMM dd, yyyy")
+                            ) : (
+                              <span>Select date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <div className="space-y-2 p-3">
+                            {/* Month/Year Navigation */}
+                            <div className="flex items-center justify-between mb-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const prev = new Date(fromMonth);
+                                  prev.setMonth(prev.getMonth() - 1);
+                                  setFromMonth(prev);
+                                }}
+                              >
+                                ←
+                              </Button>
+                              <div className="flex gap-2">
+                                <select
+                                  aria-label="Select month"
+                                  value={fromMonth.getMonth()}
+                                  onChange={(e) => {
+                                    const newDate = new Date(fromMonth);
+                                    newDate.setMonth(Number(e.target.value));
+                                    setFromMonth(newDate);
+                                  }}
+                                  className="border rounded px-2 py-1 text-sm"
+                                >
+                                  {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i} value={i}>
+                                      {new Date(2000, i).toLocaleString("default", { month: "short" })}
+                                    </option>
+                                  ))}
+                                </select>
+                                <select
+                                  aria-label="Select year"
+                                  value={fromMonth.getFullYear()}
+                                  onChange={(e) => {
+                                    const newDate = new Date(fromMonth);
+                                    newDate.setFullYear(Number(e.target.value));
+                                    setFromMonth(newDate);
+                                  }}
+                                  className="border rounded px-2 py-1 text-sm"
+                                >
+                                  {Array.from({ length: 10 }, (_, i) => {
+                                    const year = new Date().getFullYear() - 5 + i;
+                                    return (
+                                      <option key={year} value={year}>
+                                        {year}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const next = new Date(fromMonth);
+                                  next.setMonth(next.getMonth() + 1);
+                                  setFromMonth(next);
+                                }}
+                              >
+                                →
+                              </Button>
+                            </div>
+                          </div>
+                          <Calendar
+                            mode="single"
+                            selected={displayFromDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                setFromDate(date);
+                                setIsFromOpen(false);
+                              }
+                            }}
+                            month={fromMonth}
+                            onMonthChange={setFromMonth}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {/* To Date */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">To</Label>
+                      <Popover open={isToOpen} onOpenChange={setIsToOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-10 text-sm",
+                              !displayToDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {displayToDate ? (
+                              format(displayToDate, "MMM dd, yyyy")
+                            ) : (
+                              <span>Select date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <div className="space-y-2 p-3">
+                            {/* Month/Year Navigation */}
+                            <div className="flex items-center justify-between mb-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const prev = new Date(toMonth);
+                                  prev.setMonth(prev.getMonth() - 1);
+                                  setToMonth(prev);
+                                }}
+                              >
+                                ←
+                              </Button>
+                              <div className="flex gap-2">
+                                <select
+                                  aria-label="Select month"
+                                  value={toMonth.getMonth()}
+                                  onChange={(e) => {
+                                    const newDate = new Date(toMonth);
+                                    newDate.setMonth(Number(e.target.value));
+                                    setToMonth(newDate);
+                                  }}
+                                  className="border rounded px-2 py-1 text-sm"
+                                >
+                                  {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i} value={i}>
+                                      {new Date(2000, i).toLocaleString("default", { month: "short" })}
+                                    </option>
+                                  ))}
+                                </select>
+                                <select
+                                  aria-label="Select year"
+                                  value={toMonth.getFullYear()}
+                                  onChange={(e) => {
+                                    const newDate = new Date(toMonth);
+                                    newDate.setFullYear(Number(e.target.value));
+                                    setToMonth(newDate);
+                                  }}
+                                  className="border rounded px-2 py-1 text-sm"
+                                >
+                                  {Array.from({ length: 10 }, (_, i) => {
+                                    const year = new Date().getFullYear() - 5 + i;
+                                    return (
+                                      <option key={year} value={year}>
+                                        {year}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const next = new Date(toMonth);
+                                  next.setMonth(next.getMonth() + 1);
+                                  setToMonth(next);
+                                }}
+                              >
+                                →
+                              </Button>
+                            </div>
+                          </div>
+                          <Calendar
+                            mode="single"
+                            selected={displayToDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                setToDate(date);
+                                setIsToOpen(false);
+                              }
+                            }}
+                            month={toMonth}
+                            onMonthChange={setToMonth}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setFromDate(undefined);
+                        setToDate(undefined);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      Apply Filter
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {fromDate && toDate ? (
-              <>
-                {format(fromDate, "LLL dd, yyyy")} -{" "}
-                {format(toDate, "LLL dd, yyyy")}
-              </>
-            ) : fromDate ? (
-              format(fromDate, "LLL dd, yyyy")
-            ) : (
-              <span>Pick a date range</span>
-            )}
-            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-          </Button>
+          </div>
         )}
 
         <Button variant="ghost" size="icon" className="relative">
@@ -197,126 +435,6 @@ export function UserSection() {
             <Notification onClose={() => setIsNotifOpen(false)} />
           </DialogContent>
         </Dialog>
-
-        {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="w-[30%] h-full max-w-none translate-x-0! translate-y-0! top-0! right-0! left-auto! p-6 shadow-lg">
-            <DialogHeader className="text-left pb-8 border-b">
-              <DialogTitle className="text-xl font-semibold">
-                Set Timing
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground mt-1">
-                Adjust your timing to show your entries over a period of time
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="time-frame" className="text-sm font-medium">
-                  Time Frame
-                </Label>
-                <Select
-                  open={isSelectOpen}
-                  onOpenChange={setIsSelectOpen}
-                  value={timeFrame}
-                  onValueChange={(value) => {
-                    setTimeFrame(value as TimeFrame);
-                    setIsSelectOpen(false);
-                  }}
-                >
-                  <SelectTrigger
-                    id="time-frame"
-                    className="w-full h-10 text-sm"
-                  >
-                    <SelectValue placeholder="Select time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="this-week">This Week</SelectItem>
-                    <SelectItem value="this-month">This Month</SelectItem>
-                    <SelectItem value="this-year">This Year</SelectItem>
-                    <SelectItem value="custom">Custom Search</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {timeFrame === "custom" && (
-                <div className="space-y-4 pt-2">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">From:</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-10",
-                              !fromDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {fromDate ? (
-                              format(fromDate, "LLL dd, yyyy")
-                            ) : (
-                              <span>Select Date</span>
-                            )}
-                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={fromDate}
-                            onSelect={setFromDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">To:</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-10",
-                              !toDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {toDate ? (
-                              format(toDate, "LLL dd, yyyy")
-                            ) : (
-                              <span>Select Date</span>
-                            )}
-                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={toDate}
-                            onSelect={setToDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <Calendar
-                      initialFocus
-                      mode="single"
-                      defaultMonth={fromDate || new Date()}
-                      selected={fromDate}
-                      onSelect={setFromDate}
-                      className="rounded-md"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog> */}
       </div>
     </div>
   );

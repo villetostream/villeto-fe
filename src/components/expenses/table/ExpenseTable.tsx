@@ -1,9 +1,9 @@
-import React, { ReactNode, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useDataTable } from "@/components/datatable/useDataTable";
-import NewExpenseButtonTrigger from "../NewExpenseButtonTrigger";
 import { columns } from "./column";
 import { DataTable } from "@/components/datatable";
 import { reimbursements } from "@/app/(dashboard)/expenses/page";
+import { useDateFilterStore } from "@/stores/useDateFilterStore";
 
 const ExpenseTable = ({
   actionButton = <></>,
@@ -16,6 +16,8 @@ const ExpenseTable = ({
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
     {}
   );
+  const { fromDate, toDate } = useDateFilterStore();
+
   const tableprops = useDataTable({
     initialPage: 1,
     initialPageSize: 10,
@@ -25,6 +27,20 @@ const ExpenseTable = ({
     manualPagination: false,
   });
   const { globalSearch, setTotalItems } = tableprops;
+
+  // Helper function to parse date strings
+  const parseDate = (dateString: string): Date | null => {
+    try {
+      // Try parsing common formats
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
 
   // Combine search and filter logic
   useEffect(() => {
@@ -63,10 +79,27 @@ const ExpenseTable = ({
       );
     }
 
+    // Apply date range filter from date picker
+    if (fromDate && toDate) {
+      filtered = filtered.filter((item) => {
+        const itemDate = parseDate(item.date);
+        if (!itemDate) return true; // Include items with invalid dates
+
+        // Create date range (inclusive on both ends)
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return itemDate >= startOfDay && itemDate <= endOfDay;
+      });
+    }
+
     setFilteredData(filtered);
     setTotalItems(filtered.length);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalSearch, appliedFilters, statusFilter]);
+  }, [globalSearch, appliedFilters, statusFilter, fromDate, toDate]);
   return (
     <DataTable
       data={filteredData}
@@ -113,9 +146,9 @@ const ExpenseTable = ({
               ],
             },
           ],
-          onFilter: (filters) => {
+          onFilter: (filters: Record<string, unknown>) => {
             console.log("Filters applied:", filters);
-            setAppliedFilters(filters);
+            setAppliedFilters(filters as Record<string, string>);
           },
         },
         bulkActions: [
