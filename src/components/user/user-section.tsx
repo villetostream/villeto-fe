@@ -112,8 +112,12 @@ export function UserSection() {
   // Get current section info
   const currentSection = useMemo(() => getCurrentSection(pathname), [pathname]);
 
-  // Check if we're on an expense detail page
+  // Check if we're on an expense detail page or audit trail page
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
+  const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
+  
+  // Extract expense ID from pathname for audit trail back navigation
+  const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
 
   // Auto-open dropdown when modal opens
   useEffect(() => {
@@ -125,11 +129,17 @@ export function UserSection() {
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-3">
-        {isExpenseDetailPage ? (
+        {isExpenseDetailPage || isAuditTrailPage ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
-            onClick={() => router.push("/expenses")}
+            onClick={() => {
+              if (isAuditTrailPage && expenseIdFromPath) {
+                router.push(`/expenses/${expenseIdFromPath}`);
+              } else {
+                router.push("/expenses");
+              }
+            }}
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Back</span> {/* Use <span> instead of <p> for inline text */}
