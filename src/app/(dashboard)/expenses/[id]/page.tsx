@@ -88,10 +88,16 @@ const Page = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src="" />
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {employeeInitials}
-            </AvatarFallback>
+            {expenseData.avatar ? (
+              <AvatarImage
+                src={expenseData.avatar}
+                alt={expenseData.employee}
+              />
+            ) : (
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {employeeInitials}
+              </AvatarFallback>
+            )}
           </Avatar>
           <span className="font-medium text-foreground">
             {expenseData.employee}

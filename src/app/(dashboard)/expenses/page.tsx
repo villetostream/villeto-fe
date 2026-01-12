@@ -36,6 +36,8 @@ export const reimbursements = [
     amount: 145.5,
     date: "Nov 12, 2024",
     employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
     status: "pending",
     category: "Meals & Entertainment",
   },
@@ -45,6 +47,8 @@ export const reimbursements = [
     amount: 67.25,
     date: "Nov 10, 2024",
     employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
     status: "approved",
     category: "Transportation",
   },
@@ -54,6 +58,8 @@ export const reimbursements = [
     amount: 89.99,
     date: "Nov 8, 2024",
     employee: "Emma Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
+    department: { departmentName: "Operations", departmentId: 3 },
     status: "declined",
     category: "Office Supplies",
   },
@@ -63,6 +69,8 @@ export const reimbursements = [
     amount: 299.99,
     date: "Nov 5, 2024",
     employee: "John Smith",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john-smith",
+    department: { departmentName: "Finance", departmentId: 4 },
     status: "approved",
     category: "Travel",
   },
@@ -72,6 +80,8 @@ export const reimbursements = [
     amount: 199.99,
     date: "Nov 3, 2024",
     employee: "Lisa Wang",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa-wang",
+    department: { departmentName: "IT", departmentId: 5 },
     status: "pending",
     category: "Software",
   },
@@ -81,6 +91,8 @@ export const reimbursements = [
     amount: 145.5,
     date: "Nov 12, 2024",
     employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
     status: "pending",
     category: "Meals & Entertainment",
   },
@@ -90,6 +102,8 @@ export const reimbursements = [
     amount: 67.25,
     date: "Nov 10, 2024",
     employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
     status: "approved",
     category: "Transportation",
   },
@@ -99,6 +113,8 @@ export const reimbursements = [
     amount: 89.99,
     date: "Nov 8, 2024",
     employee: "Emma Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
+    department: { departmentName: "Operations", departmentId: 3 },
     status: "draft",
     category: "Office Supplies",
   },
@@ -108,6 +124,8 @@ export const reimbursements = [
     amount: 299.99,
     date: "Nov 5, 2024",
     employee: "John Smith",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john-smith",
+    department: { departmentName: "Finance", departmentId: 4 },
     status: "paid",
     category: "Travel",
   },
@@ -117,6 +135,8 @@ export const reimbursements = [
     amount: 199.99,
     date: "Nov 3, 2024",
     employee: "Lisa Wang",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa-wang",
+    department: { departmentName: "IT", departmentId: 5 },
     status: "pending",
     category: "Software",
   },
@@ -142,7 +162,7 @@ export default function Reimbursements() {
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src={"/images/svgs/draft.svg"} />
+                        <img src={"/images/svgs/draft.svg"} alt="draft icon" />
                       </div>
                     </>
                   }
@@ -158,7 +178,7 @@ export default function Reimbursements() {
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
-                        <img src={"/images/svgs/check.svg"} />
+                        <img src={"/images/svgs/check.svg"} alt="check icon" />
                       </div>
                     </>
                   }
@@ -173,8 +193,11 @@ export default function Reimbursements() {
                   value="6"
                   icon={
                     <>
-                      <div className="p-1 mr-3-[#5A67D8] rounded-full">
-                        <img src={"/images/svgs/submitted.svg"} />
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
+                        <img
+                          src={"/images/svgs/submitted.svg"}
+                          alt="submitted icon"
+                        />
                       </div>
                     </>
                   }
@@ -193,6 +216,7 @@ export default function Reimbursements() {
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
                         <img
                           src={"/images/svgs/money.svg"}
+                          alt="money icon"
                           className="text-white"
                         />
                       </div>
@@ -219,7 +243,7 @@ export default function Reimbursements() {
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src={"/images/svgs/draft.svg"} />
+                        <img src={"/images/svgs/draft.svg"} alt="draft icon" />
                       </div>
                     </>
                   }
@@ -235,7 +259,10 @@ export default function Reimbursements() {
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                        <img src={"/images/receipt-pending.png"} />
+                        <img
+                          src={"/images/receipt-pending.png"}
+                          alt="pending icon"
+                        />
                       </div>
                     </>
                   }
@@ -251,7 +278,10 @@ export default function Reimbursements() {
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
-                        <img src={"/images/svgs/submitted.svg"} />
+                        <img
+                          src={"/images/svgs/submitted.svg"}
+                          alt="submitted icon"
+                        />
                       </div>
                     </>
                   }
@@ -270,6 +300,7 @@ export default function Reimbursements() {
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
                         <img
                           src={"/images/svgs/money.svg"}
+                          alt="money icon"
                           className="text-white"
                         />
                       </div>
