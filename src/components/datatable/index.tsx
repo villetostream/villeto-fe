@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useMemo, useCallback, useState, useEffect, type JSX } from "react";
+import React, {
+  useMemo,
+  useCallback,
+  useState,
+  useEffect,
+  type JSX,
+} from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { FaSortDown, FaSortUp } from "react-icons/fa";
 import {
@@ -21,11 +27,30 @@ import {
 // import MyLoader from "../loader-components";
 import exportCSV from "@/lib/exportCSV";
 import { ITableHeader, TableHeader } from "./tableHeader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../ui/pagination";
 import { Checkbox } from "../ui/checkbox";
-import { Table, TableHeader as TableHead, TableBody, TableRow, TableCell } from "../ui/table";
-
+import {
+  Table,
+  TableHeader as TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "../ui/table";
 
 const PAGE_SIZE_OPTIONS = [
   { label: "5", value: "5" },
@@ -100,7 +125,8 @@ function DataTable<Data extends object, Value = unknown>(
   } = props;
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
+  const [columnFilters, setColumnFilters] =
+    useState<ColumnFiltersState>(initialColumnFilters);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -108,28 +134,32 @@ function DataTable<Data extends object, Value = unknown>(
   const memoizedData = useMemo(() => data, [data]);
 
   // Create select column for multi-select
-  const selectColumn = enableRowSelection ? {
-    id: "select",
-    header: ({ table }: any) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }: any) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  } : null;
+  const selectColumn = enableRowSelection
+    ? {
+        id: "select",
+        header: ({ table }: any) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }: any) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      }
+    : null;
 
   const allColumns = useMemo(() => {
     return selectColumn ? [selectColumn, ...memoizedColumns] : memoizedColumns;
@@ -162,12 +192,14 @@ function DataTable<Data extends object, Value = unknown>(
     manualFiltering,
     onSortingChange: setSorting,
     onColumnVisibilityChange: (updater) => {
-      const newVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+      const newVisibility =
+        typeof updater === "function" ? updater(columnVisibility) : updater;
       setColumnVisibility(newVisibility);
       onColumnVisibilityChange?.(newVisibility);
     },
     onRowSelectionChange: (updater) => {
-      const newSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+      const newSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater;
       setRowSelection(newSelection);
       onRowSelectionChange?.(newSelection);
     },
@@ -220,8 +252,8 @@ function DataTable<Data extends object, Value = unknown>(
     });
 
     // Only update if there's an actual change to prevent loops
-    const currentIds = Array.from(selectedDataIds).sort().join(',');
-    const newIds = Array.from(newSelectedIds).sort().join(',');
+    const currentIds = Array.from(selectedDataIds).sort().join(",");
+    const newIds = Array.from(newSelectedIds).sort().join(",");
 
     if (currentIds !== newIds) {
       setSelectedDataIds(newSelectedIds);
@@ -275,9 +307,7 @@ function DataTable<Data extends object, Value = unknown>(
         enableColumnVisibility={enableColumnVisibility}
         table={table}
       />
-      <div
-        className="overflow-x-auto rounded-md border bg-white h-full "
-      >
+      <div className="overflow-x-auto rounded-md border bg-white h-full ">
         <Table className="min-w-full divide-y divide-gray-200">
           <TableHead className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -293,26 +323,29 @@ function DataTable<Data extends object, Value = unknown>(
                           ? header.column.getToggleSortingHandler()
                           : undefined
                       }
-                      className={`px-4 py-3 text-center text-xs font-semibold text-gray-700  tracking-wider cursor-${canSort ? "pointer" : "default"
-                        } select-none`}
+                      className={`px-4 py-3 text-center text-xs font-semibold text-gray-700  tracking-wider cursor-${
+                        canSort ? "pointer" : "default"
+                      } select-none`}
                     >
                       <div className="flex items-center justify-start gap-1">
-                        {enableRowSelection && header.id === "select" && (
+                        {/* {enableRowSelection && header.id === "select" && (
                           <Checkbox
                             checked={
                               table.getIsAllPageRowsSelected() ||
-                              (table.getIsSomePageRowsSelected() && "indeterminate")
+                              (table.getIsSomePageRowsSelected() &&
+                                "indeterminate")
                             }
                             onCheckedChange={(value) =>
                               table.toggleAllPageRowsSelected(!!value)
                             }
                             aria-label="Select all"
                           />
-                        )}
-                        {header.id !== "select" && flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        )} */}
+                        {header.id !== "select" &&
+                          flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                         {isSorted && header.id !== "select" && (
                           <span className="ml-1">
                             {isSorted === "asc" ? <FaSortUp /> : <FaSortDown />}
@@ -331,7 +364,10 @@ function DataTable<Data extends object, Value = unknown>(
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-2.5 whitespace-nowrap text-left text-[#181D27]">
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-2.5 whitespace-nowrap text-left text-[#181D27]"
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -369,14 +405,20 @@ function DataTable<Data extends object, Value = unknown>(
             <div className="flex items-center gap-2 w-full sm:w-auto mb-2 md:mb-0">
               <span className="text-sm text-gray-700 whitespace-nowrap">
                 {total > 0 ? (
-                  <>Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} of {total} entries</>
+                  <>
+                    Showing {(currentPage - 1) * pageSize + 1}-
+                    {Math.min(currentPage * pageSize, total)} of {total} entries
+                  </>
                 ) : (
                   <>Showing 0 of 0 entries</>
                 )}
               </span>
               <Select
                 value={String(paginationProps.pageSize)}
-                onValueChange={(value) => { handleRowChange({ value: [value] }); paginationProps.setPage(1) }}
+                onValueChange={(value) => {
+                  handleRowChange({ value: [value] });
+                  paginationProps.setPage(1);
+                }}
               >
                 <SelectTrigger className="w-fit min-w-[80px]">
                   <SelectValue />
@@ -397,11 +439,15 @@ function DataTable<Data extends object, Value = unknown>(
                     <PaginationPrevious
                       onClick={(e) => {
                         e.preventDefault();
-                        paginationProps.setPage(Math.max(1, paginationProps.page - 1))
+                        paginationProps.setPage(
+                          Math.max(1, paginationProps.page - 1)
+                        );
                       }}
                       href="#"
                       isDisabled={currentPage === 1}
-                      isActive={currentPage > 1} size={"sm"} />
+                      isActive={currentPage > 1}
+                      size={"sm"}
+                    />
                   </PaginationItem>
                   {/* First page + Ellipsis */}
                   {pageNumbers[0] > 1 && (
@@ -410,12 +456,12 @@ function DataTable<Data extends object, Value = unknown>(
                         <PaginationLink
                           onClick={(e) => {
                             e.preventDefault();
-                            paginationProps.setPage(1)
-
+                            paginationProps.setPage(1);
                           }}
                           href="#"
-
-                          isActive={1 === paginationProps.page} size={"sm"}                  >
+                          isActive={1 === paginationProps.page}
+                          size={"sm"}
+                        >
                           1
                         </PaginationLink>
                       </PaginationItem>
@@ -427,19 +473,23 @@ function DataTable<Data extends object, Value = unknown>(
                     </>
                   )}
                   <div className="hidden md:flex ">
-
                     {/* Visible page numbers */}
                     {pageNumbers.map((page) => (
                       <PaginationItem key={page}>
                         <PaginationLink
-                          className={`${paginationProps.page !== page ? "text-muted-foreground" : ""}`}
+                          className={`${
+                            paginationProps.page !== page
+                              ? "text-muted-foreground"
+                              : ""
+                          }`}
                           onClick={(e) => {
                             e.preventDefault();
-                            paginationProps.setPage(page)
+                            paginationProps.setPage(page);
                           }}
                           href="#"
-
-                          isActive={page === paginationProps.page} size={"sm"}                >
+                          isActive={page === paginationProps.page}
+                          size={"sm"}
+                        >
                           {page}
                         </PaginationLink>
                       </PaginationItem>
@@ -448,8 +498,11 @@ function DataTable<Data extends object, Value = unknown>(
                     {/* Ellipsis + Last page */}
                     {pageNumbers[pageNumbers.length - 1] < totalPages && (
                       <>
-                        {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-                          <PaginationItem><PaginationEllipsis /></PaginationItem>
+                        {pageNumbers[pageNumbers.length - 1] <
+                          totalPages - 1 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
                         )}
                         <PaginationItem>
                           <PaginationLink
@@ -466,14 +519,11 @@ function DataTable<Data extends object, Value = unknown>(
                         </PaginationItem>
                       </>
                     )}
-
                   </div>
                   <div className="md:hidden block">
                     {/* Current Page - always visible */}
                     <PaginationItem>
-                      <PaginationLink
-                        isActive
-                        size="sm" href={""}                >
+                      <PaginationLink isActive size="sm" href={""}>
                         {paginationProps.page}
                       </PaginationLink>
                     </PaginationItem>
@@ -483,7 +533,7 @@ function DataTable<Data extends object, Value = unknown>(
                     <PaginationNext
                       onClick={(e) => {
                         e.preventDefault();
-                        paginationProps.setPage(paginationProps.page + 1)
+                        paginationProps.setPage(paginationProps.page + 1);
                       }}
                       href="#"
                       size={"sm"}
@@ -493,12 +543,9 @@ function DataTable<Data extends object, Value = unknown>(
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-
             </div>
           </div>
-
         </>
-
       ) : null}
     </div>
   );

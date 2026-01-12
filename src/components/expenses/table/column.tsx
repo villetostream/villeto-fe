@@ -1,7 +1,8 @@
 "use client";
 
-import { Reimbursement } from "@/app/dashboard/expenses/page";
+import { Reimbursement } from "@/app/(dashboard)/expenses/page";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getStatusIcon } from "@/lib/helper";
 import {
@@ -65,20 +66,39 @@ function ActionsCell({ row }: { row: any }) {
 
 export const columns: ColumnDef<Reimbursement>[] = [
   {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-dashboard-accent/10 flex items-center justify-center">
-          <Receipt className="w-4 h-4 text-dashboard-accent" />
+    accessorKey: "employee",
+    header: "Requested By",
+    cell: ({ row }) => {
+      const emp = row.original as any;
+      return (
+        <div className="flex items-center gap-3">
+          <Avatar>
+            {emp.avatar ? (
+              <AvatarImage src={emp.avatar} alt={emp.employee} />
+            ) : (
+              <AvatarImage
+                src="/images/avatars/default.jpg"
+                alt={emp.employee}
+              />
+            )}
+          </Avatar>
+          <div>
+            <div className="font-medium">{emp.employee}</div>
+            <div className="text-sm text-muted-foreground">
+              {emp.description}
+            </div>
+          </div>
         </div>
-        <span className="font-medium">{row.getValue("description")}</span>
-      </div>
-    ),
+      );
+    },
   },
   {
-    accessorKey: "employee",
-    header: "Employee",
+    accessorKey: "department",
+    header: "Department",
+    cell: ({ row }) => {
+      const dept = row.original?.department;
+      return <span>{dept?.departmentName ?? String(dept ?? "")}</span>;
+    },
   },
   {
     accessorKey: "category",
@@ -90,10 +110,6 @@ export const columns: ColumnDef<Reimbursement>[] = [
     cell: ({ row }) => (
       <span className="font-semibold">${row.getValue("amount")}</span>
     ),
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
   },
   {
     accessorKey: "status",
@@ -113,8 +129,12 @@ export const columns: ColumnDef<Reimbursement>[] = [
     },
   },
   {
+    accessorKey: "date",
+    header: "Date",
+  },
+  {
     display: "actions",
-    header: "Actions",
+    header: "Action",
     cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];

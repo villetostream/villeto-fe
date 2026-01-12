@@ -159,8 +159,7 @@ export function DashboardSidebar() {
     );
   };
   const renderMenuItem = (item: NavItem) => {
-    const hasExpandable =
-      item.label === "Expenses" || (item.subItems && item.subItems.length > 0);
+    const hasExpandable = item.subItems && item.subItems.length > 0;
     if (hasExpandable) {
       const isOpen = expandedMenus.includes(item.label);
       return (
