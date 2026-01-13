@@ -194,6 +194,7 @@ export type Reimbursement = (typeof reimbursements)[0];
 export default function Reimbursements() {
   const [activeTab, setActiveTab] = useState("all");
   const [expenseData, setExpenseData] = useState(reimbursements);
+  const [filteredExpenseData, setFilteredExpenseData] = useState(reimbursements);
 
   // Load updated statuses from localStorage on component mount
   useEffect(() => {
@@ -205,7 +206,35 @@ export default function Reimbursements() {
       return expense;
     });
     setExpenseData(updatedReimbursements);
+    setFilteredExpenseData(updatedReimbursements);
   }, []);
+
+  // Calculate stats based on current data
+  const calculateStats = (data: typeof reimbursements) => {
+    const totalExpenses = data.length;
+    const pendingApprovals = data.filter(
+      (item) => item.status === "pending"
+    ).length;
+    const approvedExpenses = data.filter(
+      (item) => item.status === "approved"
+    ).length;
+    const paidExpenses = data.filter((item) => item.status === "paid").length;
+
+    return {
+      totalExpenses,
+      pendingApprovals,
+      approvedExpenses,
+      paidExpenses,
+    };
+  };
+
+  // Use filtered data for stats if available, otherwise use all data
+  const stats = calculateStats(filteredExpenseData);
+
+  // Handle filtered data changes from ExpenseTable
+  const handleFilteredDataChange = (filteredData: typeof reimbursements) => {
+    setFilteredExpenseData(filteredData);
+  };
 
   return (
     <>
@@ -301,7 +330,7 @@ export default function Reimbursements() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
                 <StatsCard
                   title="Total Expenses"
-                  value="4"
+                  value={stats.totalExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
@@ -317,7 +346,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Pending Approvals"
-                  value="10"
+                  value={stats.pendingApprovals.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
@@ -336,7 +365,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Approved Expenses"
-                  value="6"
+                  value={stats.approvedExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
@@ -356,7 +385,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Paid"
-                  value="10"
+                  value={stats.paidExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
@@ -395,6 +424,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["all"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="draft">
@@ -402,6 +432,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["draft"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="submitted">
@@ -409,6 +440,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["submitted"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="approved">
@@ -416,6 +448,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["approved"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="rejected">
@@ -423,6 +456,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["rejected"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="pending">
@@ -430,6 +464,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["pending"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
                 <TabsContent value="paid">
@@ -437,6 +472,7 @@ export default function Reimbursements() {
                     actionButton={<></>}
                     statusFilter={statusMap["paid"]}
                     data={expenseData}
+                    onFilteredDataChange={handleFilteredDataChange}
                   />
                 </TabsContent>
               </Tabs>
