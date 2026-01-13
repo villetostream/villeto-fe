@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "./button";
 
-export default function Notification({ onClose }) {
+export default function Notification({ onClose, onUnreadChange }) {
   const initialNotifications = [
     {
       id: 1,
@@ -48,22 +48,21 @@ export default function Notification({ onClose }) {
     },
   ];
 
-  const [notifications, setNotifications] = useState(initialNotifications);
+  // Initialize state from localStorage if available, otherwise use defaults
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem("villeto.notifications");
+      return saved ? JSON.parse(saved) : initialNotifications;
+    } catch (e) {
+      // ignore parse errors
+      return initialNotifications;
+    }
+  });
   const [showAll, setShowAll] = useState(false);
   const visibleNotifications = showAll
     ? notifications
     : notifications.slice(0, 3);
   const allRead = notifications.every((n) => !n.unread);
-
-  // Load saved notifications from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("villeto.notifications");
-      if (saved) setNotifications(JSON.parse(saved));
-    } catch (e) {
-      // ignore parse errors
-    }
-  }, []);
 
   // Persist notifications whenever they change
   useEffect(() => {
@@ -76,6 +75,14 @@ export default function Notification({ onClose }) {
       // ignore quota errors
     }
   }, [notifications]);
+
+  // Notify parent component of unread notification count
+  useEffect(() => {
+    const unreadCount = notifications.filter((n) => n.unread).length;
+    if (onUnreadChange) {
+      onUnreadChange(unreadCount);
+    }
+  }, [notifications, onUnreadChange]);
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-lg overflow-hidden">

@@ -92,6 +92,7 @@ export function UserSection() {
   const [isToOpen, setIsToOpen] = useState(false);
   const [fromMonth, setFromMonth] = useState<Date>(new Date());
   const [toMonth, setToMonth] = useState<Date>(new Date());
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Use the date filter store
   const { fromDate, toDate, setFromDate, setToDate } = useDateFilterStore();
@@ -146,7 +147,7 @@ export function UserSection() {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-5">
         {isExpensesListPage && (
           <div className="relative">
             <Button
@@ -229,7 +230,10 @@ export function UserSection() {
                                 >
                                   {Array.from({ length: 12 }, (_, i) => (
                                     <option key={i} value={i}>
-                                      {new Date(2000, i).toLocaleString("default", { month: "short" })}
+                                      {new Date(2000, i).toLocaleString(
+                                        "default",
+                                        { month: "short" }
+                                      )}
                                     </option>
                                   ))}
                                 </select>
@@ -244,7 +248,8 @@ export function UserSection() {
                                   className="border rounded px-2 py-1 text-sm"
                                 >
                                   {Array.from({ length: 10 }, (_, i) => {
-                                    const year = new Date().getFullYear() - 5 + i;
+                                    const year =
+                                      new Date().getFullYear() - 5 + i;
                                     return (
                                       <option key={year} value={year}>
                                         {year}
@@ -331,7 +336,10 @@ export function UserSection() {
                                 >
                                   {Array.from({ length: 12 }, (_, i) => (
                                     <option key={i} value={i}>
-                                      {new Date(2000, i).toLocaleString("default", { month: "short" })}
+                                      {new Date(2000, i).toLocaleString(
+                                        "default",
+                                        { month: "short" }
+                                      )}
                                     </option>
                                   ))}
                                 </select>
@@ -346,7 +354,8 @@ export function UserSection() {
                                   className="border rounded px-2 py-1 text-sm"
                                 >
                                   {Array.from({ length: 10 }, (_, i) => {
-                                    const year = new Date().getFullYear() - 5 + i;
+                                    const year =
+                                      new Date().getFullYear() - 5 + i;
                                     return (
                                       <option key={year} value={year}>
                                         {year}
@@ -416,23 +425,28 @@ export function UserSection() {
           </div>
         )}
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bot className="w-5 h-5 text-purple-600" />
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full" />
+        <Button variant="ghost" size="icon" className="relative h-4 w-4">
+          <Bot className="h-5 w-5" />
+          <div className="absolute -top-1 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className="relative w-4 h-4"
           onClick={() => setIsNotifOpen(true)}
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 right-0.5 w-2 h-2 bg-destructive rounded-full" />
+          )}
         </Button>
 
         <Dialog open={isNotifOpen} onOpenChange={setIsNotifOpen}>
           <DialogContent className="w-full max-w-120! p-0 rounded-lg">
-            <Notification onClose={() => setIsNotifOpen(false)} />
+            <Notification
+              onClose={() => setIsNotifOpen(false)}
+              onUnreadChange={setUnreadCount}
+            />
           </DialogContent>
         </Dialog>
       </div>
