@@ -1,4 +1,5 @@
 import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ExpenseData {
   title: string;
@@ -10,15 +11,21 @@ interface ExpenseData {
   paymentMethod: string;
   policyCompliance: "within" | "exceeded";
   currency: string;
-  status: "approved" | "rejected" | "pending";
+  status: "approved" | "rejected" | "pending" | "draft" | "submitted";
   description: string;
 }
 
 interface ExpenseDetailCardProps {
   expense: ExpenseData;
+  onApprove?: () => void;
+  onReject?: () => void;
 }
 
-export function ExpenseDetailCard({ expense }: ExpenseDetailCardProps) {
+export function ExpenseDetailCard({
+  expense,
+  onApprove,
+  onReject,
+}: ExpenseDetailCardProps) {
   return (
     <div className="space-y-4">
       {/* Grid of details */}
@@ -62,7 +69,9 @@ export function ExpenseDetailCard({ expense }: ExpenseDetailCardProps) {
             ) : (
               <>
                 <AlertTriangle size={16} className="text-destructive" />
-                <span className="detail-value text-destructive">Exceeded Limit</span>
+                <span className="detail-value text-destructive">
+                  Exceeded Limit
+                </span>
               </>
             )}
           </div>
@@ -74,13 +83,15 @@ export function ExpenseDetailCard({ expense }: ExpenseDetailCardProps) {
         <div className="detail-card">
           <p className="detail-label">Status</p>
           <div className="mt-1">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-              expense.status === "approved" 
-                ? "bg-success/10 text-success" 
-                : expense.status === "rejected" 
-                ? "bg-destructive/10 text-destructive"
-                : "bg-warning/10 text-warning"
-            }`}>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                expense.status === "approved"
+                  ? "bg-success/10 text-success"
+                  : expense.status === "rejected"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-warning/10 text-warning"
+              }`}
+            >
               {expense.status === "approved" && <CheckCircle2 size={12} />}
               {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
             </span>
@@ -93,6 +104,26 @@ export function ExpenseDetailCard({ expense }: ExpenseDetailCardProps) {
         <p className="detail-label">Description</p>
         <p className="detail-value">{expense.description}</p>
       </div>
+
+      {/* Action Buttons - Show only when status is pending */}
+      {expense.status === "pending" && (
+        <div className="flex gap-3 pt-4">
+          <Button
+            onClick={onApprove}
+            className="bg-primary hover:bg-primary/90 text-white"
+            size="lg"
+          >
+            Approve
+          </Button>
+          <Button
+            onClick={onReject}
+            className="bg-destructive/10 hover:bg-destructive/20 text-destructive"
+            size="lg"
+          >
+            Reject
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
