@@ -8,11 +8,13 @@ import { useDateFilterStore } from "@/stores/useDateFilterStore";
 const ExpenseTable = ({
   actionButton = <></>,
   statusFilter = null,
+  data = reimbursements,
 }: {
   actionButton: React.ReactElement;
   statusFilter?: string | null;
+  data?: typeof reimbursements;
 }) => {
-  const [filteredData, setFilteredData] = useState(reimbursements);
+  const [filteredData, setFilteredData] = useState(data);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
     {}
   );
@@ -44,7 +46,7 @@ const ExpenseTable = ({
 
   // Combine search and filter logic
   useEffect(() => {
-    let filtered = [...reimbursements];
+    let filtered = [...data];
 
     // Apply status filter from tab
     if (statusFilter) {
@@ -99,7 +101,7 @@ const ExpenseTable = ({
     setFilteredData(filtered);
     setTotalItems(filtered.length);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalSearch, appliedFilters, statusFilter, fromDate, toDate]);
+  }, [data, globalSearch, appliedFilters, statusFilter, fromDate, toDate]);
   return (
     <DataTable
       data={filteredData}

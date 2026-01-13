@@ -1,33 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Receipt,
-  Plus,
-  Search,
-  Filter,
-  Clock,
-  CheckCircle,
-  XCircle,
-  DollarSign,
-  MoreHorizontal,
-} from "lucide-react";
-import { PageLoader } from "@/components/PageLoader/PageLoader";
-import { DataTable } from "@/components/datatable";
-import { ColumnDef } from "@tanstack/react-table";
-import { useDataTable } from "@/components/datatable/useDataTable";
-import { useState } from "react";
-import { Eye } from "iconsax-reactjs";
-import { StatsCard } from "@/components/dashboard/landing/StatCard";
-import Link from "next/link";
-import ExpenseTable from "@/components/expenses/table/ExpenseTable";
-import PermissionGuard from "@/components/permissions/permission-protected-components";
-
-import ExpenseEmptyState from "@/components/expenses/EmptyState";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigger";
+import { StatsCard } from "@/components/dashboard/landing/StatCard";
+import ExpenseTable from "@/components/expenses/table/ExpenseTable";
+import PermissionGuard from "@/components/permissions/permission-protected-components";
+import ExpenseEmptyState from "@/components/expenses/EmptyState";
 
 const statusMap: Record<string, string | null> = {
   all: null,
@@ -50,6 +29,7 @@ export const reimbursements = [
     department: { departmentName: "Sales", departmentId: 1 },
     status: "pending",
     category: "Meals & Entertainment",
+    hasReceipt: true,
   },
   {
     id: 2,
@@ -61,6 +41,7 @@ export const reimbursements = [
     department: { departmentName: "Marketing", departmentId: 2 },
     status: "approved",
     category: "Transportation",
+    hasReceipt: true,
   },
   {
     id: 3,
@@ -72,6 +53,7 @@ export const reimbursements = [
     department: { departmentName: "Operations", departmentId: 3 },
     status: "declined",
     category: "Office Supplies",
+    hasReceipt: false,
   },
   {
     id: 4,
@@ -83,6 +65,7 @@ export const reimbursements = [
     department: { departmentName: "Finance", departmentId: 4 },
     status: "approved",
     category: "Travel",
+    hasReceipt: true,
   },
   {
     id: 5,
@@ -94,6 +77,7 @@ export const reimbursements = [
     department: { departmentName: "IT", departmentId: 5 },
     status: "pending",
     category: "Software",
+    hasReceipt: true,
   },
   {
     id: 6,
@@ -105,6 +89,7 @@ export const reimbursements = [
     department: { departmentName: "Sales", departmentId: 1 },
     status: "pending",
     category: "Meals & Entertainment",
+    hasReceipt: true,
   },
   {
     id: 7,
@@ -116,6 +101,7 @@ export const reimbursements = [
     department: { departmentName: "Marketing", departmentId: 2 },
     status: "approved",
     category: "Transportation",
+    hasReceipt: true,
   },
   {
     id: 8,
@@ -127,6 +113,7 @@ export const reimbursements = [
     department: { departmentName: "Operations", departmentId: 3 },
     status: "draft",
     category: "Office Supplies",
+    hasReceipt: false,
   },
   {
     id: 9,
@@ -138,6 +125,7 @@ export const reimbursements = [
     department: { departmentName: "Finance", departmentId: 4 },
     status: "paid",
     category: "Travel",
+    hasReceipt: true,
   },
   {
     id: 10,
@@ -149,6 +137,7 @@ export const reimbursements = [
     department: { departmentName: "IT", departmentId: 5 },
     status: "pending",
     category: "Software",
+    hasReceipt: true,
   },
   {
     id: 11,
@@ -160,6 +149,7 @@ export const reimbursements = [
     department: { departmentName: "Sales", departmentId: 1 },
     status: "approved",
     category: "Travel",
+    hasReceipt: true,
   },
   {
     id: 12,
@@ -171,6 +161,7 @@ export const reimbursements = [
     department: { departmentName: "Operations", departmentId: 3 },
     status: "pending",
     category: "Travel",
+    hasReceipt: false,
   },
   {
     id: 13,
@@ -182,6 +173,7 @@ export const reimbursements = [
     department: { departmentName: "IT", departmentId: 5 },
     status: "approved",
     category: "Software",
+    hasReceipt: true,
   },
   {
     id: 14,
@@ -193,6 +185,7 @@ export const reimbursements = [
     department: { departmentName: "Operations", departmentId: 3 },
     status: "pending",
     category: "Office Equipment",
+    hasReceipt: true,
   },
 ];
 
@@ -200,6 +193,19 @@ export type Reimbursement = (typeof reimbursements)[0];
 
 export default function Reimbursements() {
   const [activeTab, setActiveTab] = useState("all");
+  const [expenseData, setExpenseData] = useState(reimbursements);
+
+  // Load updated statuses from localStorage on component mount
+  useEffect(() => {
+    const updatedReimbursements = reimbursements.map((expense) => {
+      const savedStatus = localStorage.getItem(`expense-status-${expense.id}`);
+      if (savedStatus) {
+        return { ...expense, status: savedStatus };
+      }
+      return expense;
+    });
+    setExpenseData(updatedReimbursements);
+  }, []);
 
   return (
     <>
@@ -388,42 +394,49 @@ export default function Reimbursements() {
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["all"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="draft">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["draft"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="submitted">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["submitted"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="approved">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["approved"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="rejected">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["rejected"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="pending">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["pending"]}
+                    data={expenseData}
                   />
                 </TabsContent>
                 <TabsContent value="paid">
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["paid"]}
+                    data={expenseData}
                   />
                 </TabsContent>
               </Tabs>
