@@ -9,10 +9,12 @@ const ExpenseTable = ({
   actionButton = <></>,
   statusFilter = null,
   data = reimbursements,
+  onFilteredDataChange,
 }: {
   actionButton: React.ReactElement;
   statusFilter?: string | null;
   data?: typeof reimbursements;
+  onFilteredDataChange?: (filteredData: typeof reimbursements) => void;
 }) => {
   const [filteredData, setFilteredData] = useState(data);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
@@ -100,6 +102,11 @@ const ExpenseTable = ({
 
     setFilteredData(filtered);
     setTotalItems(filtered.length);
+    
+    // Notify parent component of filtered data changes
+    if (onFilteredDataChange) {
+      onFilteredDataChange(filtered);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, globalSearch, appliedFilters, statusFilter, fromDate, toDate]);
   return (
