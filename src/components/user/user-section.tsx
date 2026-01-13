@@ -116,18 +116,22 @@ export function UserSection() {
   // Check if we're on an expense detail page or audit trail page
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
+  const isSplitExpensePage = pathname.match(/^\/expenses\/\d+\/split-expense$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   const isExpensesListPage = pathname === "/expenses";
 
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-3">
-        {isExpenseDetailPage || isAuditTrailPage ? (
+        {isExpenseDetailPage || isAuditTrailPage || isSplitExpensePage ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
             onClick={() => {
-              if (isAuditTrailPage && expenseIdFromPath) {
+              if (
+                isAuditTrailPage ||
+                (isSplitExpensePage && expenseIdFromPath)
+              ) {
                 router.push(`/expenses/${expenseIdFromPath}`);
               } else {
                 router.push("/expenses");
