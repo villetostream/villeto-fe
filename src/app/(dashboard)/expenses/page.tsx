@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigger";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import ExpenseTable from "@/components/expenses/table/ExpenseTable";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
+import {
+  personalExpenseColumns,
+  type PersonalExpenseRow,
+} from "@/components/expenses/table/personalColumns";
+import { useSearchParams } from "next/navigation";
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
 
 const statusMap: Record<string, string | null> = {
@@ -192,9 +197,29 @@ export const reimbursements = [
 export type Reimbursement = (typeof reimbursements)[0];
 
 export default function Reimbursements() {
+  const searchParams = useSearchParams();
+  const initialOuterTab =
+    searchParams.get("tab") === "personal-expenses"
+      ? "personal-expenses"
+      : "company-expenses";
+
   const [activeTab, setActiveTab] = useState("all");
   const [expenseData, setExpenseData] = useState(reimbursements);
-  const [filteredExpenseData, setFilteredExpenseData] = useState(reimbursements);
+  const [filteredExpenseData, setFilteredExpenseData] =
+    useState(reimbursements);
+  const [personalExpenses, setPersonalExpenses] = useState<
+    PersonalExpenseRow[]
+  >([]);
+
+  const loadPersonalExpenses = () => {
+    try {
+      const raw = localStorage.getItem("personal-expenses");
+      const parsed = raw ? (JSON.parse(raw) as PersonalExpenseRow[]) : [];
+      setPersonalExpenses(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setPersonalExpenses([]);
+    }
+  };
 
   // Load updated statuses from localStorage on component mount
   useEffect(() => {
@@ -207,6 +232,29 @@ export default function Reimbursements() {
     });
     setExpenseData(updatedReimbursements);
     setFilteredExpenseData(updatedReimbursements);
+  }, []);
+
+  // Load personal expenses from localStorage
+  useEffect(() => {
+    loadPersonalExpenses();
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "personal-expenses") loadPersonalExpenses();
+    };
+    const onPersonalUpdated = () => loadPersonalExpenses();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(
+      "personal-expenses-updated",
+      onPersonalUpdated as EventListener
+    );
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(
+        "personal-expenses-updated",
+        onPersonalUpdated as EventListener
+      );
+    };
   }, []);
 
   // Calculate stats based on current data
@@ -236,9 +284,28 @@ export default function Reimbursements() {
     setFilteredExpenseData(filteredData);
   };
 
+  const personalStats = useMemo(() => {
+    const counts = {
+      draft: 0,
+      approved: 0,
+      submitted: 0,
+      paid: 0,
+    };
+
+    for (const e of personalExpenses ?? []) {
+      const status = (e as any)?.status;
+      if (status === "draft") counts.draft += 1;
+      if (status === "approved") counts.approved += 1;
+      if (status === "pending") counts.submitted += 1; // "Submitted" tab uses pending
+      if (status === "paid") counts.paid += 1;
+    }
+
+    return counts;
+  }, [personalExpenses]);
+
   return (
     <>
-      <Tabs defaultValue="company-expenses">
+      <Tabs defaultValue={initialOuterTab}>
         <TabsList className="mb-10">
           <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
           <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>
@@ -249,7 +316,7 @@ export default function Reimbursements() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
                 <StatsCard
                   title="Draft"
-                  value="4"
+                  value={personalStats.draft.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
@@ -265,7 +332,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Approved"
-                  value="10"
+                  value={personalStats.approved.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
@@ -281,7 +348,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Submitted"
-                  value="6"
+                  value={personalStats.submitted.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
@@ -301,7 +368,7 @@ export default function Reimbursements() {
                 />
                 <StatsCard
                   title="Paid"
-                  value="10"
+                  value={personalStats.paid.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
@@ -320,7 +387,81 @@ export default function Reimbursements() {
                   }
                 />
               </div>
-              <ExpenseEmptyState />
+              {personalExpenses.length === 0 ? (
+                <ExpenseEmptyState />
+              ) : (
+                <>
+                  {/* Personal Expenses table (matches screenshot layout) */}
+                  <Tabs defaultValue="all">
+                    <TabsList>
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="draft">Draft</TabsTrigger>
+                      <TabsTrigger value="submitted">Submitted</TabsTrigger>
+                      <TabsTrigger value="approved">Approved</TabsTrigger>
+                      <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                      <TabsTrigger value="pending">Pending</TabsTrigger>
+                      <TabsTrigger value="paid">Paid</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="all">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={null}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    <TabsContent value="draft">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"draft"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    <TabsContent value="submitted">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"pending"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    <TabsContent value="pending">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"pending"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    {/* Keep other tabs for visual parity; personal data is draft/pending in this demo */}
+                    <TabsContent value="approved">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"approved"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    <TabsContent value="rejected">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"declined"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                    <TabsContent value="paid">
+                      <ExpenseTable
+                        actionButton={<NewExpenseButtonTrigger />}
+                        statusFilter={"paid"}
+                        data={personalExpenses as any}
+                        columnsOverride={personalExpenseColumns as any}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </>
+              )}
             </div>
           </PermissionGuard>
         </TabsContent>

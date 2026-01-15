@@ -31,7 +31,10 @@ const NewExpenseButtonTrigger = () => {
           <Button size="lg">New Report</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
-          <DropdownMenuItem onClick={toggle} className="">
+          <DropdownMenuItem
+            onClick={toggle}
+            className="bg-primary hover:bg-primary/80!"
+          >
             <PlusCircle className="w-4 h-4 mr-2" />
             Start New Report
           </DropdownMenuItem>

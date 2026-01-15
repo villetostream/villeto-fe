@@ -4,17 +4,20 @@ import { columns } from "./column";
 import { DataTable } from "@/components/datatable";
 import { reimbursements } from "@/app/(dashboard)/expenses/page";
 import { useDateFilterStore } from "@/stores/useDateFilterStore";
+import type { ColumnDef } from "@tanstack/react-table";
 
 const ExpenseTable = ({
   actionButton = <></>,
   statusFilter = null,
   data = reimbursements,
   onFilteredDataChange,
+  columnsOverride,
 }: {
   actionButton: React.ReactElement;
   statusFilter?: string | null;
   data?: typeof reimbursements;
   onFilteredDataChange?: (filteredData: typeof reimbursements) => void;
+  columnsOverride?: ColumnDef<any, any>[];
 }) => {
   const [filteredData, setFilteredData] = useState(data);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
@@ -102,7 +105,7 @@ const ExpenseTable = ({
 
     setFilteredData(filtered);
     setTotalItems(filtered.length);
-    
+
     // Notify parent component of filtered data changes
     if (onFilteredDataChange) {
       onFilteredDataChange(filtered);
@@ -112,7 +115,7 @@ const ExpenseTable = ({
   return (
     <DataTable
       data={filteredData}
-      columns={columns}
+      columns={(columnsOverride ?? columns) as any}
       paginationProps={tableprops.paginationProps}
       enableRowSelection={true}
       enableColumnVisibility={true}
