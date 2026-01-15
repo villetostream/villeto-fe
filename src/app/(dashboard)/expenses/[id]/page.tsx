@@ -148,6 +148,9 @@ const Page = () => {
               <Link
                 href={`/expenses/${expense.id}/split-expense`}
                 className="text-sm text-primary hover:underline font-medium"
+                onClick={() => {
+                  sessionStorage.setItem("expensePreviousPage", "detail");
+                }}
               >
                 View Split Expense
               </Link>
@@ -155,6 +158,9 @@ const Page = () => {
               <Link
                 href={`/expenses/${expense.id}/audit-trail`}
                 className="text-sm text-primary hover:underline font-medium"
+                onClick={() => {
+                  sessionStorage.setItem("expensePreviousPage", "detail");
+                }}
               >
                 View Audit Trail
               </Link>

@@ -6,7 +6,10 @@ import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigg
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import ExpenseTable from "@/components/expenses/table/ExpenseTable";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
-import { personalExpenseColumns, type PersonalExpenseRow } from "@/components/expenses/table/personalColumns";
+import {
+  personalExpenseColumns,
+  type PersonalExpenseRow,
+} from "@/components/expenses/table/personalColumns";
 import { useSearchParams, useRouter } from "next/navigation";
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
 
@@ -189,6 +192,190 @@ export const reimbursements = [
     category: "Office Equipment",
     hasReceipt: true,
   },
+  // Batch expenses for Goodness Swift
+  {
+    id: 15,
+    description: "Lunch with Clients",
+    amount: 3000.0,
+    date: "15 Oct 2025",
+    employee: "Goodness Swift",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "approved",
+    category: "Meals & Entertainment",
+    hasReceipt: true,
+  },
+  {
+    id: 16,
+    description: "Lunch with Clients",
+    amount: 3000.0,
+    date: "15 Oct 2025",
+    employee: "Goodness Swift",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "declined",
+    category: "Meals & Entertainment",
+    hasReceipt: true,
+  },
+  {
+    id: 17,
+    description: "Lunch with Clients",
+    amount: 3000.0,
+    date: "15 Oct 2025",
+    employee: "Goodness Swift",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "approved",
+    category: "Meals & Entertainment",
+    hasReceipt: true,
+  },
+  {
+    id: 18,
+    description: "Lunch with Clients",
+    amount: 3000.0,
+    date: "15 Oct 2025",
+    employee: "Goodness Swift",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "pending",
+    category: "Meals & Entertainment",
+    hasReceipt: true,
+  },
+  // Batch expenses for Sarah Chen
+  {
+    id: 19,
+    description: "Trip to Abuja",
+    amount: 2500.0,
+    date: "20 Oct 2025",
+    employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
+    status: "pending",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  {
+    id: 20,
+    description: "Trip to Abuja",
+    amount: 2500.0,
+    date: "20 Oct 2025",
+    employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
+    status: "approved",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  {
+    id: 21,
+    description: "Trip to Abuja",
+    amount: 2500.0,
+    date: "20 Oct 2025",
+    employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
+    status: "declined",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  {
+    id: 22,
+    description: "Trip to Abuja",
+    amount: 2500.0,
+    date: "20 Oct 2025",
+    employee: "Sarah Chen",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
+    department: { departmentName: "Sales", departmentId: 1 },
+    status: "pending",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  // Batch expenses for Michael Rodriguez
+  {
+    id: 23,
+    description: "Software Subscription",
+    amount: 5000.0,
+    date: "18 Oct 2025",
+    employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "approved",
+    category: "Software Subscription",
+    hasReceipt: true,
+  },
+  {
+    id: 24,
+    description: "Software Subscription",
+    amount: 5000.0,
+    date: "18 Oct 2025",
+    employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "pending",
+    category: "Software Subscription",
+    hasReceipt: true,
+  },
+  {
+    id: 25,
+    description: "Software Subscription",
+    amount: 5000.0,
+    date: "18 Oct 2025",
+    employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "approved",
+    category: "Software Subscription",
+    hasReceipt: true,
+  },
+  {
+    id: 26,
+    description: "Software Subscription",
+    amount: 5000.0,
+    date: "18 Oct 2025",
+    employee: "Michael Rodriguez",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
+    department: { departmentName: "Marketing", departmentId: 2 },
+    status: "declined",
+    category: "Software Subscription",
+    hasReceipt: true,
+  },
+  // Batch expenses for Emma Thompson
+  {
+    id: 27,
+    description: "Conference Expenses",
+    amount: 1500.0,
+    date: "22 Oct 2025",
+    employee: "Emma Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
+    department: { departmentName: "Operations", departmentId: 3 },
+    status: "pending",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  {
+    id: 28,
+    description: "Conference Expenses",
+    amount: 1500.0,
+    date: "22 Oct 2025",
+    employee: "Emma Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
+    department: { departmentName: "Operations", departmentId: 3 },
+    status: "approved",
+    category: "Travel",
+    hasReceipt: true,
+  },
+  {
+    id: 29,
+    description: "Conference Expenses",
+    amount: 1500.0,
+    date: "22 Oct 2025",
+    employee: "Emma Thompson",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
+    department: { departmentName: "Operations", departmentId: 3 },
+    status: "pending",
+    category: "Travel",
+    hasReceipt: true,
+  },
 ];
 
 export type Reimbursement = (typeof reimbursements)[0];
@@ -196,12 +383,18 @@ export type Reimbursement = (typeof reimbursements)[0];
 export default function Reimbursements() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialOuterTab = searchParams.get("tab") === "personal-expenses" ? "personal-expenses" : "company-expenses";
+  const initialOuterTab =
+    searchParams.get("tab") === "personal-expenses"
+      ? "personal-expenses"
+      : "company-expenses";
   const [outerTab, setOuterTab] = useState(initialOuterTab);
 
   // Sync outerTab with URL parameter changes
   useEffect(() => {
-    const tabFromUrl = searchParams.get("tab") === "personal-expenses" ? "personal-expenses" : "company-expenses";
+    const tabFromUrl =
+      searchParams.get("tab") === "personal-expenses"
+        ? "personal-expenses"
+        : "company-expenses";
     setOuterTab(tabFromUrl);
   }, [searchParams]);
 
@@ -215,8 +408,11 @@ export default function Reimbursements() {
 
   const [activeTab, setActiveTab] = useState("all");
   const [expenseData, setExpenseData] = useState(reimbursements);
-  const [filteredExpenseData, setFilteredExpenseData] = useState(reimbursements);
-  const [personalExpenses, setPersonalExpenses] = useState<PersonalExpenseRow[]>([]);
+  const [filteredExpenseData, setFilteredExpenseData] =
+    useState(reimbursements);
+  const [personalExpenses, setPersonalExpenses] = useState<
+    PersonalExpenseRow[]
+  >([]);
 
   const loadPersonalExpenses = () => {
     try {
@@ -251,10 +447,16 @@ export default function Reimbursements() {
     const onPersonalUpdated = () => loadPersonalExpenses();
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener("personal-expenses-updated", onPersonalUpdated as EventListener);
+    window.addEventListener(
+      "personal-expenses-updated",
+      onPersonalUpdated as EventListener
+    );
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("personal-expenses-updated", onPersonalUpdated as EventListener);
+      window.removeEventListener(
+        "personal-expenses-updated",
+        onPersonalUpdated as EventListener
+      );
     };
   }, []);
 

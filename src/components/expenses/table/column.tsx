@@ -1,6 +1,6 @@
 "use client";
 
-import { Reimbursement } from "@/app/(dashboard)/expenses/page";
+import { Reimbursement, reimbursements } from "@/app/(dashboard)/expenses/page";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
 import { CloseCircle, MessageEdit } from "iconsax-reactjs";
-import { Receipt, MoreHorizontal, Eye, Send, Trash } from "lucide-react";
+import { Receipt, MoreHorizontal, Eye, Send, Trash, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function ActionsCell({ row }: { row: any }) {
   const status = row.getValue("status") as string;
   const router = useRouter();
   const expense = row.original;
+
+  // Check if employee has multiple expenses
+  const employeeExpenseCount = reimbursements.filter(
+    (r) => r.employee === expense.employee
+  ).length;
+  const hasMultipleExpenses = employeeExpenseCount > 1;
+
+  // Create URL-friendly employee name for batch route
+  const employeeSlug = expense.employee.toLowerCase().replace(/\s+/g, "-");
 
   return (
     <DropdownMenu>
@@ -29,6 +38,32 @@ function ActionsCell({ row }: { row: any }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {hasMultipleExpenses && (
+          <DropdownMenuItem
+            onClick={() => {
+              // Store current expenses page state before navigating to batch
+              const currentTab = new URLSearchParams(window.location.search).get("tab") || "company-expenses";
+              sessionStorage.setItem("expensesTab", currentTab);
+              
+              // Store any filters
+              const urlParams = new URLSearchParams(window.location.search);
+              const filters: Record<string, string> = {};
+              urlParams.forEach((value, key) => {
+                if (key !== "tab") {
+                  filters[key] = value;
+                }
+              });
+              if (Object.keys(filters).length > 0) {
+                sessionStorage.setItem("expensesFilters", JSON.stringify(filters));
+              }
+              
+              router.push(`/expenses/batch/${employeeSlug}`);
+            }}
+          >
+            <Layers className="size-5" />
+            View Batch Details
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={() => router.push(`/expenses/${expense.id}`)}
         >

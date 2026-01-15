@@ -120,6 +120,7 @@ export function UserSection() {
   const isPersonalExpenseDetailPage = pathname.match(
     /^\/expenses\/personal\/\d+$/
   );
+  const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
@@ -133,7 +134,8 @@ export function UserSection() {
         isSplitExpensePage ||
         isPersonalExpenseDetailPage ||
         isUploadReceiptPage ||
-        isNewExpensePage ? (
+        isNewExpensePage ||
+        isBatchExpensePage ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
@@ -175,14 +177,56 @@ export function UserSection() {
                 router.push("/expenses?tab=personal-expenses");
                 return;
               }
-              if (
-                isAuditTrailPage ||
-                (isSplitExpensePage && expenseIdFromPath)
-              ) {
-                router.push(`/expenses/${expenseIdFromPath}`);
-              } else {
-                router.push("/expenses");
+              if (isBatchExpensePage) {
+                // Get preserved state from sessionStorage
+                const preservedTab =
+                  sessionStorage.getItem("expensesTab") || "company-expenses";
+                const preservedFilters =
+                  sessionStorage.getItem("expensesFilters");
+
+                // Build URL with preserved state
+                const params = new URLSearchParams();
+                params.set("tab", preservedTab);
+                if (preservedFilters) {
+                  try {
+                    const filters = JSON.parse(preservedFilters);
+                    Object.entries(filters).forEach(([key, value]) => {
+                      if (value) params.set(key, String(value));
+                    });
+                  } catch (e) {
+                    // Ignore parse errors
+                  }
+                }
+
+                router.push(`/expenses?${params.toString()}`);
+                return;
               }
+              if (isAuditTrailPage || isSplitExpensePage) {
+                // Check if we came from batch page or regular detail page
+                const previousPage = sessionStorage.getItem(
+                  "expensePreviousPage"
+                );
+
+                if (previousPage === "batch" && expenseIdFromPath) {
+                  // Get the employee slug from the batch page
+                  const batchEmployeeSlug =
+                    sessionStorage.getItem("batchEmployeeSlug");
+                  if (batchEmployeeSlug) {
+                    router.push(`/expenses/batch/${batchEmployeeSlug}`);
+                    return;
+                  }
+                }
+
+                // Default: go back to regular detail page
+                if (expenseIdFromPath) {
+                  router.push(`/expenses/${expenseIdFromPath}`);
+                } else {
+                  router.push("/expenses");
+                }
+                return;
+              }
+              // Default for expense detail page
+              router.push("/expenses");
             }}
           >
             <ArrowLeft className="w-5 h-5" />
