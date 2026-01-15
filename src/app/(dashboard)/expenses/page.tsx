@@ -23,7 +23,13 @@ const statusMap: Record<string, string | null> = {
   paid: "paid",
 };
 
-export const reimbursements = [
+// Helper function to parse date strings and convert to Date object
+const parseDate = (dateStr: string): Date => {
+  // Handle formats like "Nov 12, 2024" and "15 Oct 2025"
+  return new Date(dateStr);
+};
+
+const unsortedReimbursements = [
   {
     id: 1,
     description: "Client dinner at Restaurant ABC",
@@ -197,7 +203,7 @@ export const reimbursements = [
     id: 15,
     description: "Lunch with Clients",
     amount: 3000.0,
-    date: "15 Oct 2025",
+    date: "13 May 2025",
     employee: "Goodness Swift",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -209,7 +215,7 @@ export const reimbursements = [
     id: 16,
     description: "Lunch with Clients",
     amount: 3000.0,
-    date: "15 Oct 2025",
+    date: "09 Sep 2025",
     employee: "Goodness Swift",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -221,7 +227,7 @@ export const reimbursements = [
     id: 17,
     description: "Lunch with Clients",
     amount: 3000.0,
-    date: "15 Oct 2025",
+    date: "17 Jul 2025",
     employee: "Goodness Swift",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -245,8 +251,8 @@ export const reimbursements = [
   {
     id: 19,
     description: "Trip to Abuja",
-    amount: 2500.0,
-    date: "20 Oct 2025",
+    amount: 1500.0,
+    date: "20 Oct 2024",
     employee: "Sarah Chen",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
     department: { departmentName: "Sales", departmentId: 1 },
@@ -257,8 +263,8 @@ export const reimbursements = [
   {
     id: 20,
     description: "Trip to Abuja",
-    amount: 2500.0,
-    date: "20 Oct 2025",
+    amount: 2400.0,
+    date: "5 Jan 2026",
     employee: "Sarah Chen",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
     department: { departmentName: "Sales", departmentId: 1 },
@@ -269,8 +275,8 @@ export const reimbursements = [
   {
     id: 21,
     description: "Trip to Abuja",
-    amount: 2500.0,
-    date: "20 Oct 2025",
+    amount: 2900.0,
+    date: "21 Feb 2025",
     employee: "Sarah Chen",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
     department: { departmentName: "Sales", departmentId: 1 },
@@ -294,8 +300,8 @@ export const reimbursements = [
   {
     id: 23,
     description: "Software Subscription",
-    amount: 5000.0,
-    date: "18 Oct 2025",
+    amount: 1500.0,
+    date: "27 Aug 2025",
     employee: "Michael Rodriguez",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -306,8 +312,8 @@ export const reimbursements = [
   {
     id: 24,
     description: "Software Subscription",
-    amount: 5000.0,
-    date: "18 Oct 2025",
+    amount: 2000.0,
+    date: "06 Jun 2025",
     employee: "Michael Rodriguez",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -318,8 +324,8 @@ export const reimbursements = [
   {
     id: 25,
     description: "Software Subscription",
-    amount: 5000.0,
-    date: "18 Oct 2025",
+    amount: 4500.0,
+    date: "10 Mar 2025",
     employee: "Michael Rodriguez",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
     department: { departmentName: "Marketing", departmentId: 2 },
@@ -330,7 +336,7 @@ export const reimbursements = [
   {
     id: 26,
     description: "Software Subscription",
-    amount: 5000.0,
+    amount: 3300.0,
     date: "18 Oct 2025",
     employee: "Michael Rodriguez",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
@@ -344,7 +350,7 @@ export const reimbursements = [
     id: 27,
     description: "Conference Expenses",
     amount: 1500.0,
-    date: "22 Oct 2025",
+    date: "11 Dec 2025",
     employee: "Emma Thompson",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
     department: { departmentName: "Operations", departmentId: 3 },
@@ -355,8 +361,8 @@ export const reimbursements = [
   {
     id: 28,
     description: "Conference Expenses",
-    amount: 1500.0,
-    date: "22 Oct 2025",
+    amount: 2800.0,
+    date: "2 Apr 2025",
     employee: "Emma Thompson",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
     department: { departmentName: "Operations", departmentId: 3 },
@@ -367,7 +373,7 @@ export const reimbursements = [
   {
     id: 29,
     description: "Conference Expenses",
-    amount: 1500.0,
+    amount: 3000.0,
     date: "22 Oct 2025",
     employee: "Emma Thompson",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
@@ -377,6 +383,11 @@ export const reimbursements = [
     hasReceipt: true,
   },
 ];
+
+// Sort reimbursements by date from most recent to oldest
+export const reimbursements = unsortedReimbursements.sort((a, b) => {
+  return parseDate(b.date).getTime() - parseDate(a.date).getTime();
+});
 
 export type Reimbursement = (typeof reimbursements)[0];
 
