@@ -6,11 +6,8 @@ import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigg
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import ExpenseTable from "@/components/expenses/table/ExpenseTable";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
-import {
-  personalExpenseColumns,
-  type PersonalExpenseRow,
-} from "@/components/expenses/table/personalColumns";
-import { useSearchParams } from "next/navigation";
+import { personalExpenseColumns, type PersonalExpenseRow } from "@/components/expenses/table/personalColumns";
+import { useSearchParams, useRouter } from "next/navigation";
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
 
 const statusMap: Record<string, string | null> = {
@@ -198,18 +195,28 @@ export type Reimbursement = (typeof reimbursements)[0];
 
 export default function Reimbursements() {
   const searchParams = useSearchParams();
-  const initialOuterTab =
-    searchParams.get("tab") === "personal-expenses"
-      ? "personal-expenses"
-      : "company-expenses";
+  const router = useRouter();
+  const initialOuterTab = searchParams.get("tab") === "personal-expenses" ? "personal-expenses" : "company-expenses";
+  const [outerTab, setOuterTab] = useState(initialOuterTab);
+
+  // Sync outerTab with URL parameter changes
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab") === "personal-expenses" ? "personal-expenses" : "company-expenses";
+    setOuterTab(tabFromUrl);
+  }, [searchParams]);
+
+  // Update URL when tab changes (but not on initial mount to avoid conflicts)
+  const handleTabChange = (value: string) => {
+    setOuterTab(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    router.replace(`/expenses?${params.toString()}`, { scroll: false });
+  };
 
   const [activeTab, setActiveTab] = useState("all");
   const [expenseData, setExpenseData] = useState(reimbursements);
-  const [filteredExpenseData, setFilteredExpenseData] =
-    useState(reimbursements);
-  const [personalExpenses, setPersonalExpenses] = useState<
-    PersonalExpenseRow[]
-  >([]);
+  const [filteredExpenseData, setFilteredExpenseData] = useState(reimbursements);
+  const [personalExpenses, setPersonalExpenses] = useState<PersonalExpenseRow[]>([]);
 
   const loadPersonalExpenses = () => {
     try {
@@ -244,16 +251,10 @@ export default function Reimbursements() {
     const onPersonalUpdated = () => loadPersonalExpenses();
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener(
-      "personal-expenses-updated",
-      onPersonalUpdated as EventListener
-    );
+    window.addEventListener("personal-expenses-updated", onPersonalUpdated as EventListener);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener(
-        "personal-expenses-updated",
-        onPersonalUpdated as EventListener
-      );
+      window.removeEventListener("personal-expenses-updated", onPersonalUpdated as EventListener);
     };
   }, []);
 
@@ -305,7 +306,7 @@ export default function Reimbursements() {
 
   return (
     <>
-      <Tabs defaultValue={initialOuterTab}>
+      <Tabs value={outerTab} onValueChange={handleTabChange}>
         <TabsList className="mb-10">
           <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
           <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>

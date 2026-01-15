@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import useModal from "@/hooks/useModal";
 import FlightBooking from "./reservations/FlightReservations";
 import { PenLine, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const NewExpenseButtonTrigger = () => {
   const { open, close, toggle, isOpen } = useModal();
@@ -18,6 +19,24 @@ const NewExpenseButtonTrigger = () => {
     toggle: toggleReservation,
     isOpen: isOpenReservation,
   } = useModal();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Check for openAddReport query param and open modal
+  useEffect(() => {
+    if (searchParams.get("openAddReport") === "true") {
+      open();
+      // Remove openAddReport param but keep tab param
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("openAddReport");
+      const tabParam = searchParams.get("tab");
+      const newUrl = tabParam 
+        ? `/expenses?tab=${tabParam}${params.toString() ? `&${params.toString()}` : ''}`
+        : `/expenses${params.toString() ? `?${params.toString()}` : ''}`;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, open, router]);
+
   return (
     <div>
       <AddNewReport isOpen={isOpen} close={close} toggle={toggle} />

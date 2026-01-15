@@ -55,7 +55,7 @@ export function ApprovalModal({
   return (
     <>
       <Dialog open={open && !showSuccessToast} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-lg">
           <>
             <DialogHeader>
               <DialogTitle>Approve Expense</DialogTitle>

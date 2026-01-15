@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Eye, MoreHorizontal, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export type PersonalExpenseStatus =
   | "draft"
@@ -37,6 +38,7 @@ function ReceiptCell({ hasReceipt }: { hasReceipt: boolean }) {
 function ActionsCell({ row }: { row: any }) {
   const status = row.getValue("status") as PersonalExpenseStatus;
   const expense = row.original as PersonalExpenseRow;
+  const router = useRouter();
 
   return (
     <DropdownMenu>
@@ -46,7 +48,7 @@ function ActionsCell({ row }: { row: any }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => console.log("View", expense.id)}>
+        <DropdownMenuItem onClick={() => router.push(`/expenses/personal/${expense.id}`)}>
           <Eye className="size-5" />
           View Details
         </DropdownMenuItem>
@@ -77,9 +79,7 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
   {
     accessorKey: "hasReceipt",
     header: "RECEIPT",
-    cell: ({ row }) => (
-      <ReceiptCell hasReceipt={Boolean(row.getValue("hasReceipt"))} />
-    ),
+    cell: ({ row }) => <ReceiptCell hasReceipt={Boolean(row.getValue("hasReceipt"))} />,
   },
   {
     accessorKey: "status",
@@ -110,3 +110,4 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
     cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];
+
