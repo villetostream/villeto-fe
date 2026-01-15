@@ -1,107 +1,122 @@
-"use client"
-import React from 'react'
-import { Button } from '../ui/button'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet'
-import { CalendarIcon, PlusIcon } from 'lucide-react'
-import { Label } from '../ui/label'
-import { Input } from '../ui/input'
-import { ExpenseForm } from './ExpenseForm'
-import useModal from '@/hooks/useModal'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import FormFieldInput from '../form fields/formFieldInput'
-import { Form } from '../ui/form'
-import FormFieldCalendar from '../form fields/FormFieldCalendar'
-import { useRouter } from 'next/navigation'
+"use client";
+
+import React from "react";
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import FormFieldInput from "../form fields/formFieldInput";
+import { Form } from "../ui/form";
+import FormFieldCalendar from "../form fields/FormFieldCalendar";
+import { useRouter } from "next/navigation";
 
 // Zod schema for form validation
 const reportSchema = z.object({
-    reportName: z.string().min(1, "Report name is required").max(100, "Report name is too long"),
-    reportDate: z.date().refine((val) => !!val, {
-        message: "Report date is required",
-    }),
-})
+  reportName: z
+    .string()
+    .min(1, "Report name is required")
+    .max(100, "Report name is too long"),
+  reportDate: z.date().refine((val) => !!val, {
+    message: "Report date is required",
+  }),
+});
 
-type ReportFormData = z.infer<typeof reportSchema>
+type ReportFormData = z.infer<typeof reportSchema>;
 
-const AddNewReport = ({ isOpen, close, toggle }: { isOpen: boolean, close: any, toggle: any }) => {
+const AddNewReport = ({
+  isOpen,
+  close,
+  toggle,
+}: {
+  isOpen: boolean;
+  close: () => void;
+  toggle: (open: boolean) => void;
+}) => {
+  const router = useRouter();
 
-    const router = useRouter()
+  // Initialize react-hook-form with zod resolver
+  const formHook = useForm<ReportFormData>({
+    resolver: zodResolver(reportSchema),
+    mode: "onChange",
+    defaultValues: {
+      reportName: "",
+      // Start empty to match the UI/validation expectation.
+      reportDate: undefined as unknown as Date,
+    },
+  });
+  const {
+    handleSubmit,
+    formState: { isSubmitting, isValid },
+    reset,
+    control,
+  } = formHook;
 
-    // Initialize react-hook-form with zod resolver
-    const formHook = useForm<ReportFormData>({
-        resolver: zodResolver(reportSchema),
-        mode: "onChange",
-        defaultValues: {
-            reportName: "",
-            reportDate: new Date()
-        }
-    })
-    const {
-        handleSubmit,
-        formState: { isSubmitting, isValid },
-        reset,
-        control,
-    } = formHook;
-
-    const { reportName, reportDate } = formHook.getValues();
-
-    const onSubmit = (data: ReportFormData) => {
-        console.log("Form submitted:", data)
-        router.push(`/expenses/new-expense/upload?name=${encodeURIComponent(data.reportName)}&&date=${encodeURIComponent(data.reportDate.toDateString())}`);
-
-        // You can add API call here if needed
+  const onSubmit = (data: ReportFormData) => {
+    // Ensure a brand-new report starts with a clean receipt state.
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("uploadedReceipts");
     }
-
-    const defaultTrigger = (
-        <Button variant={"ghost"} className='hover:bg-primary/5'>
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Start New Report
-        </Button>
+    router.push(
+      `/expenses/new-expense/upload?name=${encodeURIComponent(
+        data.reportName
+      )}&date=${encodeURIComponent(data.reportDate.toDateString())}`
     );
-    console.log("in the add new report")
+    close();
+    reset();
+  };
 
-    return (
-        <>
+  return (
+    <>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open: boolean) => (open ? toggle(true) : close())}
+      >
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-xl font-semibold text-dashboard-text-primary">
+              Add New Report
+            </DialogTitle>
+            <DialogDescription className="text-dashboard-text-secondary">
+              Kindly enter the following information to continue
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...formHook}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid gap-6">
+                <FormFieldInput
+                  label="Name of Report"
+                  name="reportName"
+                  placeholder="Enter name of report"
+                  control={control}
+                />
+                <FormFieldCalendar
+                  control={control}
+                  label="Report Date"
+                  name="reportDate"
+                />
+              </div>
 
-            <Sheet open={isOpen} onOpenChange={toggle}>
+              <Button
+                size={"md"}
+                type="submit"
+                disabled={!isValid || isSubmitting}
+                className="w-fit min-w-40 bg-[#7FE3DB] hover:bg-[#7FE3DB]/90 text-[#344054]"
+              >
+                {isSubmitting ? "Processing..." : "Proceed"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
-                <SheetContent side="right" className="w-full overflow-y-auto">
-                    <SheetHeader>
-                        <SheetTitle className="text-xl font-semibold text-dashboard-text-primary">
-                            Add New Report
-                        </SheetTitle>
-                        <SheetDescription className="text-dashboard-text-secondary">
-                            Kindly enter the following information to continue
-                        </SheetDescription>
-                    </SheetHeader>
-                    <Form {...formHook}>
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-5">
-                            <div className="grid gap-6">
-
-                                <FormFieldInput label='Report Name' name="reportName" placeholder="Enter report name" control={control} />
-                                <FormFieldCalendar
-                                    control={control}
-                                    label='Report Date' name="reportDate"
-                                />
-
-                            </div>
-
-                            <Button
-                                size={"md"}
-                                type="submit"
-                                disabled={!isValid || isSubmitting}
-                                className="w-fit min-w-40"
-                            >
-                                {isSubmitting ? "Processing..." : "Proceed"}
-                            </Button>
-                        </form>
-                    </Form>
-                </SheetContent>
-            </Sheet>
-        </>
-    )
-}
-
-export default AddNewReport
+export default AddNewReport;

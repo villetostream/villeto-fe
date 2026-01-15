@@ -119,15 +119,25 @@ export function UserSection() {
   const isSplitExpensePage = pathname.match(/^\/expenses\/\d+\/split-expense$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   const isExpensesListPage = pathname === "/expenses";
+  const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
+  const isNewExpensePage = pathname === "/expenses/new-expense";
 
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-3">
-        {isExpenseDetailPage || isAuditTrailPage || isSplitExpensePage ? (
+        {isExpenseDetailPage ||
+        isAuditTrailPage ||
+        isSplitExpensePage ||
+        isUploadReceiptPage ||
+        isNewExpensePage ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
             onClick={() => {
+              if (isUploadReceiptPage) {
+                router.back();
+                return;
+              }
               if (
                 isAuditTrailPage ||
                 (isSplitExpensePage && expenseIdFromPath)
@@ -278,7 +288,7 @@ export function UserSection() {
                           <Calendar
                             mode="single"
                             selected={displayFromDate}
-                            onSelect={(date) => {
+                            onSelect={(date: Date | undefined) => {
                               if (date) {
                                 setFromDate(date);
                                 setIsFromOpen(false);
@@ -384,7 +394,7 @@ export function UserSection() {
                           <Calendar
                             mode="single"
                             selected={displayToDate}
-                            onSelect={(date) => {
+                            onSelect={(date: Date | undefined) => {
                               if (date) {
                                 setToDate(date);
                                 setIsToOpen(false);

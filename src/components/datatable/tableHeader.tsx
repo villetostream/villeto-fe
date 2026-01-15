@@ -3,7 +3,14 @@ import { Table } from "@tanstack/react-table";
 
 import { Filter, FilterData } from "./filter";
 import { Download, SearchIcon, Settings } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 
@@ -39,7 +46,6 @@ export function TableHeader({
   enableColumnVisibility?: boolean;
   table?: Table<any>;
 }) {
-
   return (
     <div>
       {/* Bulk Actions Bar - Show when items are selected */}
@@ -65,10 +71,10 @@ export function TableHeader({
           </div>
         </div>
       )}
-      <div className="flex sm:flex-row flex-col items-center gap-2 md:space-x-2 space-x-0 space-y-2 md:space-y-0 font-semibold text-md mb-4 bg-white justify-end">
-        <div className="flex sm:flex-row flex-col items-center gap-2">
+      <div className="flex sm:flex-row flex-col items-center gap-2 md:space-x-2 space-x-0 space-y-2 md:space-y-0 font-semibold text-md mb-4 bg-white justify-end relative">
+        <div className="flex sm:flex-row flex-col items-center gap-2 absolute right-0 -top-12.5">
           {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
-          
+
           {tableHeader?.isSearchable && (
             <div
               className={`flex items-center border rounded-md focus-within:ring-2 focus-within:ring-primary max-w-sm w-full`}
@@ -113,14 +119,16 @@ export function TableHeader({
                       <DropdownMenuItem
                         key={column.id}
                         className="capitalize"
-                        onClick={() => column.toggleVisibility(!column.getIsVisible())}
+                        onClick={() =>
+                          column.toggleVisibility(!column.getIsVisible())
+                        }
                       >
                         <Checkbox
                           checked={column.getIsVisible()}
-                          onChange={() => { }}
+                          onChange={() => {}}
                           className="mr-2"
                         />
-                        {typeof column.columnDef.header === 'string'
+                        {typeof column.columnDef.header === "string"
                           ? column.columnDef.header
                           : column.id}
                       </DropdownMenuItem>
