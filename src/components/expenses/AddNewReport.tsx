@@ -41,6 +41,26 @@ const AddNewReport = ({
 }) => {
   const router = useRouter();
 
+  // Get preserved values from sessionStorage
+  const getPreservedValues = () => {
+    if (typeof window === "undefined")
+      return { reportName: "", reportDate: undefined };
+    const reportName = sessionStorage.getItem("pendingReportName") || "";
+    const reportDateStr = sessionStorage.getItem("pendingReportDate");
+    let reportDate: Date | undefined = undefined;
+    if (reportDateStr) {
+      try {
+        reportDate = new Date(reportDateStr);
+        if (isNaN(reportDate.getTime())) {
+          reportDate = undefined;
+        }
+      } catch {
+        reportDate = undefined;
+      }
+    }
+    return { reportName, reportDate };
+  };
+
   // Initialize react-hook-form with zod resolver
   const formHook = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema),
@@ -51,6 +71,24 @@ const AddNewReport = ({
       reportDate: undefined as unknown as Date,
     },
   });
+
+  // Restore values when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      const { reportName, reportDate } = getPreservedValues();
+      if (reportName) {
+        formHook.setValue("reportName", reportName);
+      }
+      if (reportDate) {
+        formHook.setValue("reportDate", reportDate);
+      }
+      // Clear sessionStorage after restoring
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("pendingReportName");
+        sessionStorage.removeItem("pendingReportDate");
+      }
+    }
+  }, [isOpen]);
   const {
     handleSubmit,
     formState: { isSubmitting, isValid },
@@ -78,7 +116,7 @@ const AddNewReport = ({
         open={isOpen}
         onOpenChange={(open: boolean) => (open ? toggle(true) : close())}
       >
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="sm:max-w-[560px] rounded-lg">
           <DialogHeader className="text-left">
             <DialogTitle className="text-xl font-semibold text-dashboard-text-primary">
               Add New Report

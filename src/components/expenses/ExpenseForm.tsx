@@ -159,7 +159,7 @@ export function ExpenseForm() {
       setFiles(JSON.parse(storedImages));
     }
   }, []);
-  // Parse OCR data if available
+  // Parse OCR data if available (not used for pre-filling, fields should be empty)
   const ocrData: OCRData[] = ocrDataParam ? JSON.parse(ocrDataParam) : [];
 
   const defaultExpense = {
@@ -171,18 +171,8 @@ export function ExpenseForm() {
     receipt: "",
   };
 
-  // Pre-fill from OCR data if available
-  const initialExpenses =
-    ocrData.length > 0
-      ? ocrData.map((data) => ({
-          vendor: data.vendor,
-          amount: data.amount,
-          transactionDate: new Date(data.transactionDate),
-          category: data.category,
-          description: data.description,
-          receipt: "",
-        }))
-      : [defaultExpense];
+  // Always start with empty fields - user should input their information manually
+  const initialExpenses = [defaultExpense];
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -306,8 +296,16 @@ export function ExpenseForm() {
 
     const newRows: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
       const receiptImage = files[idx] || expense.receipt || undefined;
+      const expenseId = nextId++;
+
+      // Store report name and date for this expense
+      if (typeof window !== "undefined" && reportName && reportDate) {
+        sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
+        sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
+      }
+
       return {
-        id: nextId++,
+        id: expenseId,
         date: formatDateForTable(expense.transactionDate),
         vendor: expense.vendor,
         category: expense.category,
@@ -507,15 +505,17 @@ export function ExpenseForm() {
                           placeholder=""
                         />
 
-                        {/* Add Another Button */}
-                        <Button
-                          type="button"
-                          variant={"link"}
-                          className="text-primary underline text-base font-bold leading-[150%] w-fit ml-auto place-self-end"
-                          onClick={addExpense}
-                        >
-                          Add Another
-                        </Button>
+                        {/* Add Another Button - Only show on last expense */}
+                        {index === fields.length - 1 && (
+                          <Button
+                            type="button"
+                            variant={"link"}
+                            className="text-primary underline text-base font-bold leading-[150%] w-fit ml-auto place-self-end"
+                            onClick={addExpense}
+                          >
+                            Add Another
+                          </Button>
+                        )}
                       </div>
                       {/* Receipt Preview (no scrolling container) */}
                       <div className="w-full">

@@ -117,6 +117,9 @@ export function UserSection() {
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
   const isSplitExpensePage = pathname.match(/^\/expenses\/\d+\/split-expense$/);
+  const isPersonalExpenseDetailPage = pathname.match(
+    /^\/expenses\/personal\/\d+$/
+  );
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
@@ -128,6 +131,7 @@ export function UserSection() {
         {isExpenseDetailPage ||
         isAuditTrailPage ||
         isSplitExpensePage ||
+        isPersonalExpenseDetailPage ||
         isUploadReceiptPage ||
         isNewExpensePage ? (
           <Button
@@ -135,7 +139,40 @@ export function UserSection() {
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
             onClick={() => {
               if (isUploadReceiptPage) {
-                router.back();
+                // Get report name and date from URL params
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportName = urlParams.get("name") || "";
+                const reportDate = urlParams.get("date") || "";
+
+                // Store in sessionStorage to restore in modal
+                if (reportName && reportDate) {
+                  sessionStorage.setItem("pendingReportName", reportName);
+                  sessionStorage.setItem("pendingReportDate", reportDate);
+                }
+
+                // Navigate back to expenses page with personal expenses tab active and trigger modal open
+                router.push(
+                  "/expenses?tab=personal-expenses&openAddReport=true"
+                );
+                return;
+              }
+              if (isNewExpensePage) {
+                // Get report name and date from URL params
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportName = urlParams.get("name") || "";
+                const reportDate = urlParams.get("date") || "";
+
+                // Navigate back to upload page with same query params to preserve uploaded file
+                const params = new URLSearchParams();
+                if (reportName) params.set("name", reportName);
+                if (reportDate) params.set("date", reportDate);
+                router.push(
+                  `/expenses/new-expense/upload?${params.toString()}`
+                );
+                return;
+              }
+              if (isPersonalExpenseDetailPage) {
+                router.push("/expenses?tab=personal-expenses");
                 return;
               }
               if (
