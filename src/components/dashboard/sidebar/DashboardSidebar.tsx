@@ -54,7 +54,7 @@ export function DashboardSidebar() {
           if (companyData) {
             setBusinessLogo(companyData.logoUrl ?? null);
             setBusinessName(
-              companyData.companyName || companyData.businessName || null
+              companyData.companyName || companyData.businessName || null,
             );
             fetched = true;
           }
@@ -70,7 +70,7 @@ export function DashboardSidebar() {
           if (company) {
             setBusinessLogo(company.logoUrl ?? null);
             setBusinessName(
-              company.companyName || company.businessName || null
+              company.companyName || company.businessName || null,
             );
           }
         } catch (userError) {
@@ -85,7 +85,7 @@ export function DashboardSidebar() {
     setExpandedMenus((prev) =>
       prev.includes(label)
         ? prev.filter((item) => item !== label)
-        : [...prev, label]
+        : [...prev, label],
     );
   };
   const isActive = (href: string) => {
@@ -99,7 +99,7 @@ export function DashboardSidebar() {
       .map((item) => {
         if (item.subItems) {
           const filteredSubs = item.subItems.filter((sub) =>
-            hasPermission(sub.permission)
+            hasPermission(sub.permission),
           );
           if (!hasPermission(item.permission) && filteredSubs.length === 0)
             return null;
@@ -182,7 +182,7 @@ export function DashboardSidebar() {
                 <ChevronRight
                   className={cn(
                     "ml-auto h-4 w-4 transition-transform duration-200",
-                    isOpen && "rotate-90"
+                    isOpen && "rotate-90",
                   )}
                 />
               </SidebarMenuButton>
@@ -196,7 +196,7 @@ export function DashboardSidebar() {
                   className={cn(
                     "text-xs",
                     isActive(sub.href!) &&
-                      "bg-sidebar-accent/20 font-medium text-dashboard-accent"
+                      "bg-sidebar-accent/20 font-medium text-dashboard-accent",
                   )}
                 >
                   <Link href={sub.href!}>{sub.label}</Link>
@@ -227,12 +227,12 @@ export function DashboardSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="w-full border-b border-sidebar-border px-0! pt-4 pb-0!">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {/* Villeto Logo + Toggle */}
           <div
             className={cn(
-              "flex items-center",
-              state === "expanded" ? "justify-between px-4" : "justify-center"
+              "flex items-center mb-1",
+              state === "expanded" ? "justify-between px-4" : "justify-center",
             )}
           >
             {state === "expanded" ? (
@@ -262,7 +262,7 @@ export function DashboardSidebar() {
               "flex items-center transition-all duration-300 border-t border-sidebar-border",
               state === "expanded"
                 ? " border-t border-sidebar-border"
-                : "justify-center"
+                : "justify-center",
             )}
           >
             {state === "expanded" ? (
