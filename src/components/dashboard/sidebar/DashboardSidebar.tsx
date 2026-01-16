@@ -266,7 +266,7 @@ export function DashboardSidebar() {
             )}
           >
             {state === "expanded" ? (
-              <div className="w-full flex items-center bg-muted rounded-lg px-3 my-1 gap-3 h-12">
+              <div className="w-full flex items-center bg-muted rounded-lg px-3 my-1 gap-3 h-10">
                 <div className=" flex items-center justify-center shrink-0 w-6 h-6 overflow-hidden">
                   {renderLogo()}
                 </div>
