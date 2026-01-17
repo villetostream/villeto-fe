@@ -59,7 +59,7 @@ export function RejectionModal({
   return (
     <>
       <Dialog open={open && !showSuccessToast} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-lg">
           <>
             <DialogHeader>
               <DialogTitle>Reject Expense</DialogTitle>

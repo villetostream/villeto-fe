@@ -106,6 +106,7 @@ type PersonalExpenseRow = {
   hasReceipt: boolean;
   status: PersonalExpenseStatus;
   receiptImage?: string;
+  reportName?: string;
 };
 
 function formatDateForTable(d: Date): string {
@@ -314,6 +315,7 @@ export function ExpenseForm() {
         hasReceipt: Boolean(receiptImage),
         status,
         receiptImage,
+        reportName: reportName || undefined,
       };
     });
 
@@ -485,12 +487,11 @@ export function ExpenseForm() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                  <FormFieldSelect
+                                  <FormFieldInput
                                     control={form.control}
                                     name={`expenses.${index}.vendor`}
-                                    values={merchants.map((m) => ({ label: m, value: m }))}
-                                    placeholder="Select Merchant"
                                     label="Merchant"
+                                    placeholder="Enter Merchant"
                                   />
                                   <FormFieldCalendar
                                     control={form.control}
@@ -606,12 +607,11 @@ export function ExpenseForm() {
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
-                            <FormFieldSelect
+                            <FormFieldInput
                               control={form.control}
                               name={`expenses.${index}.vendor`}
-                              values={merchants.map((m) => ({ label: m, value: m }))}
-                              placeholder="Select Merchant"
                               label="Merchant"
+                              placeholder="Enter Merchant"
                             />
                             <FormFieldCalendar
                               control={form.control}
