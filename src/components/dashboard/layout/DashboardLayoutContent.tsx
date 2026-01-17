@@ -7,7 +7,7 @@ import { UserSection } from "@/components/user/user-section";
 import { useEffect, useState } from "react";
 import { useAuthStore, User } from "@/stores/auth-stores";
 import { useAxios } from "@/hooks/useAxios";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +22,7 @@ export default function DashboardLayoutContent({
   const axios = useAxios();
   const { setUserPermissions, login, user, isLoading } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsMounted(true);
@@ -85,7 +86,7 @@ export default function DashboardLayoutContent({
             <UserSection />
           </header>
 
-          <main className="  p-5 overflow-auto h-[calc(100vh-4rem)]">
+          <main className="  p-5 overflow-auto h-[calc(100vh-4rem)]" key={pathname}>
             {children}
           </main>
         </div>

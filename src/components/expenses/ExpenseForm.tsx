@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
 import Link from "next/link";
@@ -143,10 +144,10 @@ export function ExpenseForm() {
   const [files, setFiles] = useState<string[]>([]);
   const searchParams = useSearchParams();
   const reportName = decodeURIComponent(
-    (searchParams.get("name") ?? "") as string
+    (searchParams.get("name") ?? "") as string,
   );
   const reportDate = decodeURIComponent(
-    searchParams.get("date") ?? Date.now().toString()
+    searchParams.get("date") ?? Date.now().toString(),
   );
   const { isOpen: IsSuccess, toggle: successToggle } = useModal();
   const router = useRouter();
@@ -209,7 +210,7 @@ export function ExpenseForm() {
   const amountFieldsNames = Array(fields.length)
     .fill(null)
     .map(
-      (_, index) => `expenses.${index}.amount`
+      (_, index) => `expenses.${index}.amount`,
     ) as Array<`expenses.${number}.amount`>;
 
   const amounts = form.watch(amountFieldsNames);
@@ -217,12 +218,12 @@ export function ExpenseForm() {
   const receiptFieldsNames = Array(fields.length)
     .fill(null)
     .map(
-      (_, index) => `expenses.${index}.receipt`
+      (_, index) => `expenses.${index}.receipt`,
     ) as Array<`expenses.${number}.receipt`>;
   const receipts = form.watch(receiptFieldsNames);
 
   const hasAllReceipts = fields.every((_, idx) =>
-    Boolean(files[idx] || receipts?.[idx])
+    Boolean(files[idx] || receipts?.[idx]),
   );
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -236,7 +237,7 @@ export function ExpenseForm() {
 
   const onReceiptSelect = async (
     expenseIndex: number,
-    e: ChangeEvent<HTMLInputElement>
+    e: ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -289,7 +290,7 @@ export function ExpenseForm() {
 
   const persistToPersonalExpenses = (
     data: ExpenseFormValues,
-    status: PersonalExpenseStatus
+    status: PersonalExpenseStatus,
   ) => {
     const existing = readPersonalExpenses();
     let nextId = getNextPersonalExpenseId(existing);
@@ -344,7 +345,7 @@ export function ExpenseForm() {
       if (expense.splits && expense.splits.length > 0) {
         const totalSplitAmount = expense.splits.reduce(
           (sum, split) => sum + split.amount,
-          0
+          0,
         );
         return Math.abs(totalSplitAmount - expense.amount) > 0.01; // Allow small floating point differences
       }
@@ -361,7 +362,7 @@ export function ExpenseForm() {
 
     persistToPersonalExpenses(data, "pending");
     toast.success(
-      `Your ${data.expenses.length} expense(s) have been submitted for review.`
+      `Your ${data.expenses.length} expense(s) have been submitted for review.`,
     );
 
     form.reset({
@@ -401,7 +402,7 @@ export function ExpenseForm() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(
-                onSubmit as SubmitHandler<FieldValues>
+                onSubmit as SubmitHandler<FieldValues>,
               )}
               className="space-y-6 px-4 pb-6"
             >
@@ -426,158 +427,262 @@ export function ExpenseForm() {
 
               {/* Dynamic Expense Forms */}
               <div className="space-y-6">
-                {fields.map((field, index) => {
-                  // Use the debounced amount instead of directly watching
-                  const amount = amounts[index] || 0;
-                  console.log({ amount }, { amounts });
+                {/* If multiple expenses, render each section inside an accordion; otherwise render plain */}
+                {fields.length > 1 ? (
+                  <Accordion type="multiple" className="w-full">
+                    {fields.map((field, index) => {
+                      const amount = amounts[index] || 0;
+                      return (
+                        <AccordionItem key={field.id} value={`expense-${index}`}>
+                          <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
+                            <div className="flex w-full justify-between items-center">
+                              <span className="font-medium">Expense {index + 1}</span>
+                              <span className="text-sm text-muted-foreground flex items-center gap-3">
+                                <span>{form.getValues(`expenses.${index}.vendor`) || "No vendor"}</span>
+                                <span>•</span>
+                                <span>
+                                  ${Number(form.getValues(`expenses.${index}.amount`) || 0).toLocaleString()}
+                                </span>
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="p-0 gap-10 relative flex items-center px-12">
+                              <div className="space-y-5 basis-2/3 flex flex-col pr-24">
+                                {fields.length > 1 && index != 0 && (
+                                  <div className="ml-auto w-fit flex">
+                                    <Button
+                                      type="button"
+                                      variant="ghostNavy"
+                                      size="sm"
+                                      className="hover:bg-destructive/10 ml-auto"
+                                      onClick={() => removeExpense(index)}
+                                    >
+                                      <Trash className="h-4 w-4 text-destructive" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                )}
 
-                  return (
-                    <div
-                      key={field.id}
-                      className="p-0 gap-10 relative grid lg:grid-cols-[1fr_320px]"
-                    >
-                      <div className="space-y-5 flex flex-col">
-                        {/* Remove button for additional forms */}
-                        {fields.length > 1 && index != 0 && (
-                          <div className="ml-auto w-fit flex">
-                            <Button
-                              type="button"
-                              variant="ghostNavy"
-                              size="sm"
-                              className="hover:bg-destructive/10 ml-auto"
-                              onClick={() => removeExpense(index)}
-                            >
-                              <Trash className="h-4 w-4 text-destructive" />
-                              Delete
-                            </Button>
-                          </div>
-                        )}
+                                <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
 
-                        <SplitExpense
-                          control={form.control}
-                          expenseIndex={index}
-                          totalAmount={amount}
-                        />
+                                <div className="grid grid-cols-2 gap-4">
+                                  <FormFieldInput
+                                    control={form.control}
+                                    name={`expenses.${index}.amount`}
+                                    label="Amount"
+                                    placeholder="Enter Amount"
+                                    type="number"
+                                    inputMode="numeric"
+                                  />
+                                  <FormFieldSelect
+                                    control={form.control}
+                                    name={`expenses.${index}.category`}
+                                    values={categories.map((category) => ({ label: category, value: category }))}
+                                    placeholder="Select Category"
+                                    label="Expense Category"
+                                  />
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormFieldInput
-                            control={form.control}
-                            name={`expenses.${index}.amount`}
-                            label="Amount"
-                            placeholder="Enter Amount"
-                            type="number"
-                            inputMode="numeric"
-                          />
-                          <FormFieldSelect
-                            control={form.control}
-                            name={`expenses.${index}.category`}
-                            values={categories.map((category) => ({
-                              label: category,
-                              value: category,
-                            }))}
-                            placeholder="Select Category"
-                            label="Expense Category"
-                          />
-                        </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <FormFieldSelect
+                                    control={form.control}
+                                    name={`expenses.${index}.vendor`}
+                                    values={merchants.map((m) => ({ label: m, value: m }))}
+                                    placeholder="Select Merchant"
+                                    label="Merchant"
+                                  />
+                                  <FormFieldCalendar
+                                    control={form.control}
+                                    name={`expenses.${index}.transactionDate`}
+                                    label="Transaction Date"
+                                  />
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormFieldSelect
-                            control={form.control}
-                            name={`expenses.${index}.vendor`}
-                            values={merchants.map((m) => ({
-                              label: m,
-                              value: m,
-                            }))}
-                            placeholder="Select Merchant"
-                            label="Merchant"
-                          />
-                          <FormFieldCalendar
-                            control={form.control}
-                            name={`expenses.${index}.transactionDate`}
-                            label="Transaction Date"
-                          />
-                        </div>
+                                <FormFieldTextArea
+                                  control={form.control}
+                                  label="Description"
+                                  name={`expenses.${index}.description`}
+                                  placeholder=""
+                                />
 
-                        <FormFieldTextArea
-                          control={form.control}
-                          label="Description"
-                          name={`expenses.${index}.description`}
-                          placeholder=""
-                        />
-
-                        {/* Add Another Button - Only show on last expense */}
-                        {index === fields.length - 1 && (
-                          <Button
-                            type="button"
-                            variant={"link"}
-                            className="text-primary underline text-base font-bold leading-[150%] w-fit ml-auto place-self-end"
-                            onClick={addExpense}
-                          >
-                            Add Another
-                          </Button>
-                        )}
-                      </div>
-                      {/* Receipt Preview (no scrolling container) */}
-                      <div className="w-full">
-                        <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
-                          Receipt
-                        </Label>
-                        <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
-                          {files[index] ? (
-                            <img
-                              src={files[index]}
-                              alt="Uploaded receipt"
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
-                              <div className="text-destructive font-medium">
-                                No receipt found for this item.
+                                {index === fields.length - 1 && (
+                                  <Button
+                                    type="button"
+                                    variant={"link"}
+                                    className="text-primary underline text-base font-bold leading-[150%] w-fit ml-auto place-self-end"
+                                    onClick={addExpense}
+                                  >
+                                    Add Another
+                                  </Button>
+                                )}
                               </div>
-                              <div className="text-muted-foreground">
-                                You can’t submit without a receipt. Upload one
-                                to continue.
+                              <div className="basis-1/3">
+                                <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
+                                  Receipt
+                                </Label>
+                                <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
+                                  {files[index] ? (
+                                    <img src={files[index]} alt="Uploaded receipt" className="w-full h-full object-contain" />
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
+                                      <div className="text-destructive font-medium">No receipt found for this item.</div>
+                                      <div className="text-muted-foreground">You can’t submit without a receipt. Upload one to continue.</div>
+                                      <input
+                                        id={`receipt-input-${index}`}
+                                        type="file"
+                                        accept="image/*"
+                                        aria-label={`Upload receipt for item ${index + 1}`}
+                                        className="hidden"
+                                        onChange={(e) => onReceiptSelect(index, e)}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outlinePrimary"
+                                        onClick={() => {
+                                          document.getElementById(`receipt-input-${index}`)?.click();
+                                        }}
+                                      >
+                                        Continue to upload receipt
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                                <FormField
+                                  control={form.control}
+                                  name={`expenses.${index}.receipt`}
+                                  render={() => (
+                                    <FormItem className="pt-2">
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
                               </div>
-                              <input
-                                id={`receipt-input-${index}`}
-                                type="file"
-                                accept="image/*"
-                                aria-label={`Upload receipt for item ${
-                                  index + 1
-                                }`}
-                                className="hidden"
-                                onChange={(e) => onReceiptSelect(index, e)}
-                              />
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                ) : (
+                  fields.map((field, index) => {
+                    const amount = amounts[index] || 0;
+                    return (
+                      <div key={field.id} className="p-0 gap-10 relative flex items-center px-12">
+                        <div className="space-y-5 basis-2/3 flex flex-col pr-24">
+                          {fields.length > 1 && index != 0 && (
+                            <div className="ml-auto w-fit flex">
                               <Button
                                 type="button"
-                                variant="outlinePrimary"
-                                onClick={() => {
-                                  document
-                                    .getElementById(`receipt-input-${index}`)
-                                    ?.click();
-                                }}
+                                variant="ghostNavy"
+                                size="sm"
+                                className="hover:bg-destructive/10 ml-auto"
+                                onClick={() => removeExpense(index)}
                               >
-                                Continue to upload receipt
+                                <Trash className="h-4 w-4 text-destructive" />
+                                Delete
                               </Button>
                             </div>
                           )}
-                        </div>
-                        {/* Keep receipt in form state for validation / persistence */}
-                        <FormField
-                          control={form.control}
-                          name={`expenses.${index}.receipt`}
-                          render={() => (
-                            <FormItem className="pt-2">
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
 
+                          <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormFieldInput
+                              control={form.control}
+                              name={`expenses.${index}.amount`}
+                              label="Amount"
+                              placeholder="Enter Amount"
+                              type="number"
+                              inputMode="numeric"
+                            />
+                            <FormFieldSelect
+                              control={form.control}
+                              name={`expenses.${index}.category`}
+                              values={categories.map((category) => ({ label: category, value: category }))}
+                              placeholder="Select Category"
+                              label="Expense Category"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormFieldSelect
+                              control={form.control}
+                              name={`expenses.${index}.vendor`}
+                              values={merchants.map((m) => ({ label: m, value: m }))}
+                              placeholder="Select Merchant"
+                              label="Merchant"
+                            />
+                            <FormFieldCalendar
+                              control={form.control}
+                              name={`expenses.${index}.transactionDate`}
+                              label="Transaction Date"
+                            />
+                          </div>
+
+                          <FormFieldTextArea
+                            control={form.control}
+                            label="Description"
+                            name={`expenses.${index}.description`}
+                            placeholder=""
+                          />
+
+                          {index === fields.length - 1 && (
+                            <Button
+                              type="button"
+                              variant={"link"}
+                              className="text-primary underline text-base font-bold leading-[150%] w-fit ml-auto place-self-end"
+                              onClick={addExpense}
+                            >
+                              Add Another
+                            </Button>
+                          )}
+                        </div>
+                        <div className="basis-1/3">
+                          <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">Receipt</Label>
+                          <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
+                            {files[index] ? (
+                              <img src={files[index]} alt="Uploaded receipt" className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
+                                <div className="text-destructive font-medium">No receipt found for this item.</div>
+                                <div className="text-muted-foreground">You can’t submit without a receipt. Upload one to continue.</div>
+                                <input
+                                  id={`receipt-input-${index}`}
+                                  type="file"
+                                  accept="image/*"
+                                  aria-label={`Upload receipt for item ${index + 1}`}
+                                  className="hidden"
+                                  onChange={(e) => onReceiptSelect(index, e)}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outlinePrimary"
+                                  onClick={() => {
+                                    document.getElementById(`receipt-input-${index}`)?.click();
+                                  }}
+                                >
+                                  Continue to upload receipt
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <FormField
+                            control={form.control}
+                            name={`expenses.${index}.receipt`}
+                            render={() => (
+                              <FormItem className="pt-2">
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              
               {/* Form Actions */}
               <div className="flex space-x-4 pt-10">
                 <Button type="submit" size={"md"} disabled={!hasAllReceipts}>
@@ -593,7 +698,7 @@ export function ExpenseForm() {
                     form.handleSubmit((validData) => {
                       persistToPersonalExpenses(
                         validData as ExpenseFormValues,
-                        "draft"
+                        "draft",
                       );
                       toast.success("Saved as draft.");
                       sessionStorage.removeItem("uploadedReceipts");
