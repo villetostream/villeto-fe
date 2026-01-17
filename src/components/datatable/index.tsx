@@ -7,6 +7,7 @@ import React, {
   useEffect,
   type JSX,
 } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { FaSortDown, FaSortUp } from "react-icons/fa";
 import {
@@ -129,6 +130,18 @@ function DataTable<Data extends object, Value = unknown>(
     useState<ColumnFiltersState>(initialColumnFilters);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Navigation context for conditional row click behavior
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isExpensesIndex = pathname === "/expenses";
+  const currentTab = searchParams?.get("tab") ?? null;
+  const expensesClickMode = isExpensesIndex
+    ? currentTab === "personal-expenses"
+      ? "personal"
+      : "company"
+    : null;
 
   const memoizedColumns = useMemo(() => columns, [columns]);
   const memoizedData = useMemo(() => data, [data]);
@@ -362,7 +375,32 @@ function DataTable<Data extends object, Value = unknown>(
             {!isLoading ? (
               table.getRowModel().rows.length > 0 ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className={
+                      expensesClickMode ? "cursor-pointer hover:bg-gray-50" : undefined
+                    }
+                    onClick={(e) => {
+                      if (!expensesClickMode) return;
+                      const target = e.target as HTMLElement;
+                      // Ignore clicks on interactive elements
+                      if (
+                        target.closest(
+                          'button, a, input, select, textarea, [role="menu"], [role="checkbox"], [data-prevent-row-click]'
+                        )
+                      ) {
+                        return;
+                      }
+                      const original: any = row.original as any;
+                      if (original?.id) {
+                        const dest =
+                          expensesClickMode === "personal"
+                            ? `/expenses/personal/${original.id}`
+                            : `/expenses/${original.id}`;
+                        router.push(dest);
+                      }
+                    }}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
