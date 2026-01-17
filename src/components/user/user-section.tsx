@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
@@ -95,7 +95,8 @@ export function UserSection() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Use the date filter store
-  const { fromDate, toDate, setFromDate, setToDate } = useDateFilterStore();
+  const { fromDate, toDate, setFromDate, setToDate, resetDates } =
+    useDateFilterStore();
 
   // Initialize with 30-day default range if not already set
   const getInitialDates = () => {
@@ -109,6 +110,23 @@ export function UserSection() {
   };
 
   const { from: displayFromDate, to: displayToDate } = getInitialDates();
+
+  // Reset date UI when route changes away and back to sections
+  useEffect(() => {
+    // Close any open dropdowns/popovers and reset months
+    setIsDropdownOpen(false);
+    setIsFromOpen(false);
+    setIsToOpen(false);
+    setFromMonth(new Date());
+    setToMonth(new Date());
+
+    // Do not reset values while on the expenses list to allow user filtering across tabs
+    // For all non-expenses routes, reset stored dates so returning shows defaults
+    const isExpensesListPageNow = pathname === "/expenses";
+    if (!isExpensesListPageNow) {
+      resetDates();
+    }
+  }, [pathname, resetDates]);
 
   // Get current section info
   const currentSection = useMemo(() => getCurrentSection(pathname), [pathname]);
@@ -138,7 +156,7 @@ export function UserSection() {
         isBatchExpensePage ? (
           <Button
             variant="ghost"
-            className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary  h-auto! py-0.5! has-[>svg]:px-0!" // Adjust hover styles as needed
+            className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary  h-auto! py-1! has-[>svg]:px-0!" // Adjust hover styles as needed
             onClick={() => {
               if (isUploadReceiptPage) {
                 // Get report name and date from URL params
@@ -230,7 +248,8 @@ export function UserSection() {
             }}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back</span> {/* Use <span> instead of <p> for inline text */}
+            <span className="text-base">Back</span>{" "}
+            {/* Use <span> instead of <p> for inline text */}
           </Button>
         ) : (
           <>

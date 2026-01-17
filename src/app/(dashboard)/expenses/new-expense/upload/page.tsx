@@ -65,7 +65,7 @@ export default function UploadReceipt() {
           (meta: { name: string; size: number; type: string }) => {
             // Create a File object using Blob
             return new File([], meta.name, { type: meta.type });
-          }
+          },
         );
         setFiles(restoredFiles);
       } catch (error) {
@@ -98,7 +98,7 @@ export default function UploadReceipt() {
     setIsDragging(false);
 
     const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/")
+      file.type.startsWith("image/"),
     );
 
     if (droppedFiles.length > 0) {
@@ -109,14 +109,14 @@ export default function UploadReceipt() {
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = Array.from(e.target.files || []).filter((file) =>
-        file.type.startsWith("image/")
+        file.type.startsWith("image/"),
       );
 
       if (selectedFiles.length > 0) {
         setFiles((prev) => [...prev, ...selectedFiles]);
       }
     },
-    []
+    [],
   );
 
   const removeFile = (index: number) => {
@@ -135,7 +135,7 @@ export default function UploadReceipt() {
         }));
         sessionStorage.setItem(
           "uploadedFileMetadata",
-          JSON.stringify(fileMetadata)
+          JSON.stringify(fileMetadata),
         );
         // Also update receipts array
         const storedReceipts = sessionStorage.getItem("uploadedReceipts");
@@ -143,11 +143,11 @@ export default function UploadReceipt() {
           try {
             const receipts = JSON.parse(storedReceipts);
             const updatedReceipts = receipts.filter(
-              (_: string, i: number) => i !== index
+              (_: string, i: number) => i !== index,
             );
             sessionStorage.setItem(
               "uploadedReceipts",
-              JSON.stringify(updatedReceipts)
+              JSON.stringify(updatedReceipts),
             );
           } catch (error) {
             console.error("Error updating receipts:", error);
@@ -187,7 +187,7 @@ export default function UploadReceipt() {
           // Use existing receipts, only simulate OCR if we have valid file names
           if (files.length > 0 && files[0].name) {
             ocrData = await Promise.all(
-              files.map((file) => simulateOCR(file.name))
+              files.map((file) => simulateOCR(file.name)),
             );
           }
         } catch (error) {
@@ -200,12 +200,12 @@ export default function UploadReceipt() {
       if (receiptImages.length === 0 && files.length > 0) {
         // Simulate OCR for each file
         ocrData = await Promise.all(
-          files.map((file) => simulateOCR(file.name))
+          files.map((file) => simulateOCR(file.name)),
         );
 
         // Convert files to base64 for storage (only for real files)
         receiptImages = await Promise.all(
-          files.map((file) => fileToBase64(file))
+          files.map((file) => fileToBase64(file)),
         );
       }
 
@@ -213,7 +213,7 @@ export default function UploadReceipt() {
       if (receiptImages.length > 0) {
         sessionStorage.setItem(
           "uploadedReceipts",
-          JSON.stringify(receiptImages)
+          JSON.stringify(receiptImages),
         );
         // Store file metadata for restoration when navigating back
         const fileMetadata = files.map((file) => ({
@@ -223,7 +223,7 @@ export default function UploadReceipt() {
         }));
         sessionStorage.setItem(
           "uploadedFileMetadata",
-          JSON.stringify(fileMetadata)
+          JSON.stringify(fileMetadata),
         );
       }
 
@@ -254,18 +254,12 @@ export default function UploadReceipt() {
     <>
       <div className="flex gap-4 pb-4 border-b border-border mb-12">
         <div>
-          <Label className="text-base leading-[125%] font-medium text-foreground mb-1.5 block">
-            Name of Report
-          </Label>
-          <p className="text-foreground text-xs font-medium leading-[125%]">
+          <p className="text-base leading-[125%] font-medium text-foreground mb-1.5 block">
             {reportName}
           </p>
         </div>
         <div>
-          <Label className="text-base leading-[125%] font-medium text-foreground mb-1.5 block">
-            Report Date
-          </Label>
-          <p className="text-foreground text-xs font-medium leading-[125%]">
+          <p className="text-base leading-[125%] font-medium text-foreground mb-1.5 block">
             {reportDate}
           </p>
         </div>
@@ -281,7 +275,7 @@ export default function UploadReceipt() {
             isDragging
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/50",
-            files.length > 0 && "border-solid border-primary/30 bg-primary/5"
+            files.length > 0 && "border-solid border-primary/30 bg-primary/5",
           )}
           onClick={() => document.getElementById("file-input")?.click()}
         >
