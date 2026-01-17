@@ -29,6 +29,7 @@ export type PersonalExpenseRow = {
   amount: number;
   hasReceipt: boolean;
   status: PersonalExpenseStatus;
+  reportName?: string;
 };
 
 function ReceiptCell({ hasReceipt }: { hasReceipt: boolean }) {
@@ -65,6 +66,7 @@ function ActionsCell({ row }: { row: any }) {
 
 export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
   { accessorKey: "date", header: "DATE" },
+  { accessorKey: "reportName", header: "REPORT NAME" },
   { accessorKey: "vendor", header: "VENDOR" },
   { accessorKey: "category", header: "CATEGORY" },
   {
