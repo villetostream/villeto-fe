@@ -43,11 +43,11 @@ function getCurrentSection(pathname: string): {
 
   // Check for settings sub-items first (before general prefix matching)
   const settingsItem = navigationItems.find(
-    (item) => item.href === "/settings/data-integration"
+    (item) => item.href === "/settings/data-integration",
   );
   if (settingsItem?.subItems && pathname.startsWith("/settings/")) {
     const settingsSubItem = settingsItem.subItems.find((sub) =>
-      pathname.startsWith(sub.href)
+      pathname.startsWith(sub.href),
     );
     if (settingsSubItem) {
       return {
@@ -118,7 +118,7 @@ export function UserSection() {
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
   const isSplitExpensePage = pathname.match(/^\/expenses\/\d+\/split-expense$/);
   const isPersonalExpenseDetailPage = pathname.match(
-    /^\/expenses\/personal\/\d+$/
+    /^\/expenses\/personal\/\d+$/,
   );
   const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
@@ -138,7 +138,7 @@ export function UserSection() {
         isBatchExpensePage ? (
           <Button
             variant="ghost"
-            className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary" // Adjust hover styles as needed
+            className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary  h-auto! py-0.5! has-[>svg]:px-0!" // Adjust hover styles as needed
             onClick={() => {
               if (isUploadReceiptPage) {
                 // Get report name and date from URL params
@@ -154,7 +154,7 @@ export function UserSection() {
 
                 // Navigate back to expenses page with personal expenses tab active and trigger modal open
                 router.push(
-                  "/expenses?tab=personal-expenses&openAddReport=true"
+                  "/expenses?tab=personal-expenses&openAddReport=true",
                 );
                 return;
               }
@@ -169,7 +169,7 @@ export function UserSection() {
                 if (reportName) params.set("name", reportName);
                 if (reportDate) params.set("date", reportDate);
                 router.push(
-                  `/expenses/new-expense/upload?${params.toString()}`
+                  `/expenses/new-expense/upload?${params.toString()}`,
                 );
                 return;
               }
@@ -204,7 +204,7 @@ export function UserSection() {
               if (isAuditTrailPage || isSplitExpensePage) {
                 // Check if we came from batch page or regular detail page
                 const previousPage = sessionStorage.getItem(
-                  "expensePreviousPage"
+                  "expensePreviousPage",
                 );
 
                 if (previousPage === "batch" && expenseIdFromPath) {
@@ -229,7 +229,7 @@ export function UserSection() {
               router.push("/expenses");
             }}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             <span>Back</span> {/* Use <span> instead of <p> for inline text */}
           </Button>
         ) : (
@@ -251,7 +251,7 @@ export function UserSection() {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className={cn(
                 "w-60 justify-start text-left font-normal",
-                !displayFromDate && !displayToDate && "text-muted-foreground"
+                !displayFromDate && !displayToDate && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -286,7 +286,7 @@ export function UserSection() {
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal h-10 text-sm",
-                              !displayFromDate && "text-muted-foreground"
+                              !displayFromDate && "text-muted-foreground",
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -327,7 +327,7 @@ export function UserSection() {
                                     <option key={i} value={i}>
                                       {new Date(2000, i).toLocaleString(
                                         "default",
-                                        { month: "short" }
+                                        { month: "short" },
                                       )}
                                     </option>
                                   ))}
@@ -392,7 +392,7 @@ export function UserSection() {
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal h-10 text-sm",
-                              !displayToDate && "text-muted-foreground"
+                              !displayToDate && "text-muted-foreground",
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -433,7 +433,7 @@ export function UserSection() {
                                     <option key={i} value={i}>
                                       {new Date(2000, i).toLocaleString(
                                         "default",
-                                        { month: "short" }
+                                        { month: "short" },
                                       )}
                                     </option>
                                   ))}
