@@ -27,7 +27,7 @@ const FormFieldCalendar = ({ name, label, control }: { name: string, label: stri
                                     size={"sm"}
                                     variant="outline"
                                     className={cn(
-                                        "w-full pl-3 text-left font-normal rounded-[12px] !h-[36px]",
+                                        "w-full pl-3 text-left font-normal rounded-lg !h-10",
                                         !field.value && "text-dashboard-text-secondary"
                                     )}
                                 >

@@ -161,7 +161,7 @@ export function ExpenseForm() {
       setFiles(JSON.parse(storedImages));
     }
   }, []);
-  // Parse OCR data if available (not used for pre-filling, fields should be empty)
+  // Parse OCR data if available
   const ocrData: OCRData[] = ocrDataParam ? JSON.parse(ocrDataParam) : [];
 
   const defaultExpense = {
@@ -173,35 +173,40 @@ export function ExpenseForm() {
     receipt: "",
   };
 
-  // Always start with empty fields - user should input their information manually
-  const initialExpenses = [defaultExpense];
-
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      expenses: initialExpenses,
+      expenses: [defaultExpense], // Default to one expense
     },
   });
+
+  // Load receipt images and initialize form fields
+  useEffect(() => {
+    const storedImages = sessionStorage.getItem("uploadedReceipts");
+    if (storedImages) {
+      const parsedImages = JSON.parse(storedImages);
+      setFiles(parsedImages);
+
+      const initialExpenses = parsedImages.map((receipt: string, index: number) => {
+        return {
+          ...defaultExpense,
+          receipt,
+        };
+      });
+
+      if (initialExpenses.length > 0) {
+        form.reset({ expenses: initialExpenses });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ocrDataParam]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "expenses",
   });
 
-  // Hydrate each expense's receipt field from the upload step (index-based).
-  useEffect(() => {
-    if (!files || files.length === 0) return;
-    const current = form.getValues("expenses");
-    current.forEach((_, idx) => {
-      const receiptBase64 = files[idx];
-      if (receiptBase64) {
-        form.setValue(`expenses.${idx}.receipt`, receiptBase64, {
-          shouldValidate: true,
-        });
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files]);
+
 
   // // Watch all amounts and debounce them
   // const watchedAmounts = fields.map((_, index) =>
@@ -406,24 +411,33 @@ export function ExpenseForm() {
               onSubmit={form.handleSubmit(
                 onSubmit as SubmitHandler<FieldValues>,
               )}
-              className="space-y-6 px-4 pb-6"
+              className="space-y-6 px-6 pb-6"
             >
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border">
-                <div>
-                  <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
-                    Name of Report
-                  </Label>
-                  <p className="text-foreground text-sm font-medium leading-[125%]">
-                    {reportName}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
-                    Report Date
-                  </Label>
-                  <p className="text-foreground text-sm font-medium leading-[125%]">
-                    {reportDate}
-                  </p>
+              {/* Modern Report Header */}
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">Report Name</h3>
+                      <p className="text-lg font-semibold text-foreground">{reportName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 4v10m4-10v10m-8-6v6" />
+                      </svg>
+                    </div>
+                    <div className="text-right">
+                      <h3 className="text-sm font-medium text-muted-foreground">Report Date</h3>
+                      <p className="text-lg font-semibold text-foreground">{reportDate}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -438,34 +452,35 @@ export function ExpenseForm() {
                         <AccordionItem key={field.id} value={`expense-${index}`}>
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
                             <div className="flex w-full justify-between items-center">
-                              <span className="font-medium">Expense {index + 1}</span>
-                              <span className="text-sm text-muted-foreground flex items-center gap-3">
-                                <span>{form.getValues(`expenses.${index}.vendor`) || "No vendor"}</span>
-                                <span>•</span>
-                                <span>
-                                  ${Number(form.getValues(`expenses.${index}.amount`) || 0).toLocaleString()}
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium">Expense {index + 1}</span>
+                                <span className="text-sm text-muted-foreground flex items-center gap-3">
+                                  <span>{form.getValues(`expenses.${index}.vendor`) || "No vendor"}</span>
+                                  <span>•</span>
+                                  <span>
+                                    ${Number(form.getValues(`expenses.${index}.amount`) || 0).toLocaleString()}
+                                  </span>
                                 </span>
-                              </span>
+                              </div>
+                              {fields.length > 1 && index != 0 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeExpense(index);
+                                  }}
+                                >
+                                  <Trash className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="p-0 gap-10 relative flex items-center px-12">
-                              <div className="space-y-5 basis-2/3 flex flex-col pr-24">
-                                {fields.length > 1 && index != 0 && (
-                                  <div className="ml-auto w-fit flex">
-                                    <Button
-                                      type="button"
-                                      variant="ghostNavy"
-                                      size="sm"
-                                      className="hover:bg-destructive/10 ml-auto"
-                                      onClick={() => removeExpense(index)}
-                                    >
-                                      <Trash className="h-4 w-4 text-destructive" />
-                                      Delete
-                                    </Button>
-                                  </div>
-                                )}
-
+                            <div className="p-0 gap-8 relative flex items-start px-6 justify-center">
+                              <div className="space-y-5 max-w-lg flex flex-col pr-16">
                                 <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -518,7 +533,7 @@ export function ExpenseForm() {
                                   </Button>
                                 )}
                               </div>
-                              <div className="basis-1/3">
+                              <div className="max-w-sm">
                                 <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
                                   Receipt
                                 </Label>
@@ -569,19 +584,18 @@ export function ExpenseForm() {
                   fields.map((field, index) => {
                     const amount = amounts[index] || 0;
                     return (
-                      <div key={field.id} className="p-0 gap-10 relative flex items-center px-12">
-                        <div className="space-y-5 basis-2/3 flex flex-col pr-24">
+                      <div key={field.id} className="p-0 gap-8 relative flex items-start px-6 justify-center">
+                        <div className="space-y-5 max-w-lg flex flex-col pr-16">
                           {fields.length > 1 && index != 0 && (
                             <div className="ml-auto w-fit flex">
                               <Button
                                 type="button"
-                                variant="ghostNavy"
+                                variant="ghost"
                                 size="sm"
-                                className="hover:bg-destructive/10 ml-auto"
+                                className="hover:bg-destructive/10"
                                 onClick={() => removeExpense(index)}
                               >
                                 <Trash className="h-4 w-4 text-destructive" />
-                                Delete
                               </Button>
                             </div>
                           )}
@@ -638,7 +652,7 @@ export function ExpenseForm() {
                             </Button>
                           )}
                         </div>
-                        <div className="basis-1/3">
+                        <div className="max-w-sm">
                           <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">Receipt</Label>
                           <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
                             {files[index] ? (

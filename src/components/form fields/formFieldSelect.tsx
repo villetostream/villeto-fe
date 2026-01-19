@@ -64,7 +64,7 @@ const FormFieldSelect = <T extends Record<string, any>>({
                                 value={field.value?.toString()}
 
                             >
-                                <SelectTrigger className="input capitalize w-full pr-8">
+                                <SelectTrigger className="w-full pl-3 text-left font-normal rounded-lg !h-10 capitalize pr-8">
                                     <SelectValue placeholder={placeholder} />
                                 </SelectTrigger>
 

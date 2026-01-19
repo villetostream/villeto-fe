@@ -52,7 +52,7 @@ const FormFieldInput = ({
                                 </div>
                             )}
                             <Input
-                                className={`input ${prefixIcon ? 'pl-10' : ''} ${showPasswordToggle && type === 'password' ? 'pr-10' : ''}`}
+                                className={`w-full pl-3 text-left font-normal rounded-lg !h-10 ${prefixIcon ? 'pl-10' : ''} ${showPasswordToggle && type === 'password' ? 'pr-10' : ''}`}
                                 type={inputType}
                                 placeholder={placeholder}
                                 inputMode={inputMode}
