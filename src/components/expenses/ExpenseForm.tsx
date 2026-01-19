@@ -289,6 +289,11 @@ export function ExpenseForm() {
   const removeExpense = (index: number) => {
     if (fields.length > 1) {
       remove(index);
+      setFiles((prev) => {
+        const next = [...prev];
+        next.splice(index, 1);
+        return next;
+      });
     } else {
       toast.error("You must have at least one expense item");
     }
