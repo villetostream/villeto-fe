@@ -107,6 +107,10 @@ type PersonalExpenseRow = {
   status: PersonalExpenseStatus;
   receiptImage?: string;
   reportName?: string;
+  groupId?: string; // For grouping multiple expenses with same report name
+  isGrouped?: boolean; // True if this is a grouped entry
+  groupedExpenses?: PersonalExpenseRow[]; // Array of individual expenses in the group
+  totalAmount?: number; // Total amount for grouped expenses
 };
 
 function formatDateForTable(d: Date): string {
@@ -301,30 +305,89 @@ export function ExpenseForm() {
     const existing = readPersonalExpenses();
     let nextId = getNextPersonalExpenseId(existing);
 
-    const newRows: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
-      const receiptImage = files[idx] || expense.receipt || undefined;
-      const expenseId = nextId++;
+    // If multiple expenses submitted in a single session, group them
+    if (data.expenses.length > 1) {
+      const groupId = `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const totalAmount = data.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+      
+      // Create individual expense entries for detail view
+      const individualExpenses: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
+        const receiptImage = files[idx] || expense.receipt || undefined;
+        const expenseId = nextId++;
 
-      // Store report name and date for this expense
-      if (typeof window !== "undefined" && reportName && reportDate) {
-        sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
-        sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
+        // Store report name and date for this expense
+        if (typeof window !== "undefined" && reportName && reportDate) {
+          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
+          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
+        }
+
+        return {
+          id: expenseId,
+          date: formatDateForTable(expense.transactionDate),
+          vendor: expense.vendor,
+          category: expense.category,
+          amount: Number(expense.amount),
+          hasReceipt: Boolean(receiptImage),
+          status,
+          receiptImage,
+          reportName: reportName || undefined,
+          description: expense.description || undefined,
+          groupId,
+        };
+      });
+
+      // Create a single grouped entry for the table
+      const groupedEntry: PersonalExpenseRow = {
+        id: nextId++,
+        date: formatDateForTable(data.expenses[0].transactionDate), // Use first expense date
+        vendor: "", // Not displayed in table
+        category: data.expenses[0].category, // Use first expense category
+        amount: totalAmount,
+        hasReceipt: individualExpenses.some(e => e.hasReceipt),
+        status,
+        reportName: reportName || undefined,
+        groupId,
+        isGrouped: true,
+        groupedExpenses: individualExpenses,
+        totalAmount,
+      };
+
+      // Store all individual expenses in sessionStorage for detail view
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`expense-group-${groupId}`, JSON.stringify(individualExpenses));
+        sessionStorage.setItem(`expense-report-name-${groupedEntry.id}`, reportName);
+        sessionStorage.setItem(`expense-report-date-${groupedEntry.id}`, reportDate);
       }
 
-      return {
-        id: expenseId,
-        date: formatDateForTable(expense.transactionDate),
-        vendor: expense.vendor,
-        category: expense.category,
-        amount: Number(expense.amount),
-        hasReceipt: Boolean(receiptImage),
-        status,
-        receiptImage,
-        reportName: reportName || undefined,
-      };
-    });
+      writePersonalExpenses([groupedEntry, ...existing]);
+    } else {
+      // Single expense or no report name - create individual entries
+      const newRows: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
+        const receiptImage = files[idx] || expense.receipt || undefined;
+        const expenseId = nextId++;
 
-    writePersonalExpenses([...newRows, ...existing]);
+        // Store report name and date for this expense
+        if (typeof window !== "undefined" && reportName && reportDate) {
+          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
+          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
+        }
+
+        return {
+          id: expenseId,
+          date: formatDateForTable(expense.transactionDate),
+          vendor: expense.vendor,
+          category: expense.category,
+          amount: Number(expense.amount),
+          hasReceipt: Boolean(receiptImage),
+          status,
+          receiptImage,
+          reportName: reportName || undefined,
+          description: expense.description || undefined,
+        };
+      });
+
+      writePersonalExpenses([...newRows, ...existing]);
+    }
   };
 
   const onSubmit = (data: ExpenseFormValues) => {
@@ -414,38 +477,20 @@ export function ExpenseForm() {
               className="space-y-6 px-6 pb-6"
             >
               {/* Modern Report Header */}
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Report Name</h3>
-                      <p className="text-lg font-semibold text-foreground">{reportName}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 4v10m4-10v10m-8-6v6" />
-                      </svg>
-                    </div>
-                    <div className="text-right">
-                      <h3 className="text-sm font-medium text-muted-foreground">Report Date</h3>
-                      <p className="text-lg font-semibold text-foreground">{reportDate}</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl px-6 py-3 border border-primary/20 shadow-sm w-full flex items-center justify-between">
+                <p className="text-base font-semibold text-foreground">{reportName}</p>
+                <p className="text-base font-semibold text-foreground">{reportDate}</p>
               </div>
 
               {/* Dynamic Expense Forms */}
               <div className="space-y-6">
                 {/* If multiple expenses, render each section inside an accordion; otherwise render plain */}
                 {fields.length > 1 ? (
-                  <Accordion type="multiple" className="w-full">
+                  <Accordion
+                    type="multiple"
+                    defaultValue={["expense-0"]}
+                    className="w-full"
+                  >
                     {fields.map((field, index) => {
                       const amount = amounts[index] || 0;
                       return (
@@ -479,7 +524,7 @@ export function ExpenseForm() {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="p-0 gap-8 relative flex items-start px-6 justify-center">
+                            <div className="p-0 gap-8 relative flex items-start px-6 justify-between w-full">
                               <div className="space-y-5 max-w-lg flex flex-col pr-16">
                                 <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
 
@@ -537,9 +582,13 @@ export function ExpenseForm() {
                                 <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
                                   Receipt
                                 </Label>
-                                <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
+                                <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
                                   {files[index] ? (
-                                    <img src={files[index]} alt="Uploaded receipt" className="w-full h-full object-contain" />
+                                    <img
+                                      src={files[index]}
+                                      alt="Uploaded receipt"
+                                      className="w-full h-full object-contain"
+                                    />
                                   ) : (
                                     <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
                                       <div className="text-destructive font-medium">No receipt found for this item.</div>
@@ -584,7 +633,10 @@ export function ExpenseForm() {
                   fields.map((field, index) => {
                     const amount = amounts[index] || 0;
                     return (
-                      <div key={field.id} className="p-0 gap-8 relative flex items-start px-6 justify-center">
+                      <div
+                        key={field.id}
+                        className="p-0 gap-8 relative flex items-start px-6 justify-between w-full"
+                      >
                         <div className="space-y-5 max-w-lg flex flex-col pr-16">
                           {fields.length > 1 && index != 0 && (
                             <div className="ml-auto w-fit flex">
@@ -654,9 +706,13 @@ export function ExpenseForm() {
                         </div>
                         <div className="max-w-sm">
                           <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">Receipt</Label>
-                          <div className="rounded-lg border border-border bg-white p-3 h-[420px] overflow-hidden flex items-center justify-center">
+                          <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
                             {files[index] ? (
-                              <img src={files[index]} alt="Uploaded receipt" className="w-full h-full object-contain" />
+                              <img
+                                src={files[index]}
+                                alt="Uploaded receipt"
+                                className="w-full h-full object-contain"
+                              />
                             ) : (
                               <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
                                 <div className="text-destructive font-medium">No receipt found for this item.</div>

@@ -30,6 +30,11 @@ export type PersonalExpenseRow = {
   hasReceipt: boolean;
   status: PersonalExpenseStatus;
   reportName?: string;
+  description?: string;
+  groupId?: string; // For grouping multiple expenses with same report name
+  isGrouped?: boolean; // True if this is a grouped entry
+  groupedExpenses?: PersonalExpenseRow[]; // Array of individual expenses in the group
+  totalAmount?: number; // Total amount for grouped expenses
 };
 
 function ReceiptCell({ hasReceipt }: { hasReceipt: boolean }) {
@@ -67,7 +72,6 @@ function ActionsCell({ row }: { row: any }) {
 export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
   { accessorKey: "date", header: "DATE" },
   { accessorKey: "reportName", header: "REPORT NAME" },
-  { accessorKey: "vendor", header: "VENDOR" },
   { accessorKey: "category", header: "CATEGORY" },
   {
     accessorKey: "amount",
