@@ -43,7 +43,7 @@ const FormFieldInput = ({
             name={name}
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>{label}</FormLabel>
+                    <FormLabel className="normal-case!">{label}</FormLabel>
                     <FormControl>
                         <div className="relative">
                             {prefixIcon && (

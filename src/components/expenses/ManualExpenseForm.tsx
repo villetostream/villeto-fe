@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/sheet";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
 import Link from "next/link";
@@ -52,6 +57,7 @@ interface CategoryApiResponse {
 }
 
 const expenseItemSchema = z.object({
+  title: z.string().min(1, "Expense title is required"),
   vendor: z.string().min(1, "Vendor name is required"),
   amount: z.coerce.number<number>().min(1, "Amount is required"),
   transactionDate: z.date().refine((val) => !!val, {
@@ -82,6 +88,7 @@ type PersonalExpenseRow = {
   status: PersonalExpenseStatus;
   receiptImage?: string;
   reportName?: string;
+  title?: string;
   description?: string;
   groupId?: string; // For grouping multiple expenses with same report name
   isGrouped?: boolean; // True if this is a grouped entry
@@ -141,7 +148,7 @@ export function ManualExpenseForm() {
       try {
         setIsLoadingCategories(true);
         const response = await axios.get<CategoryApiResponse>(
-          API_KEYS.EXPENSE.CATEGORIES
+          API_KEYS.EXPENSE.CATEGORIES,
         );
         console.log(response.data);
         if (response.data?.data && Array.isArray(response.data.data)) {
@@ -153,7 +160,7 @@ export function ManualExpenseForm() {
         console.error("Error fetching categories:", error);
         toast.error(
           error?.response?.data?.message ||
-            "Failed to load expense categories. Please try again."
+            "Failed to load expense categories. Please try again.",
         );
       } finally {
         setIsLoadingCategories(false);
@@ -173,6 +180,7 @@ export function ManualExpenseForm() {
   }, []);
 
   const defaultExpense = {
+    title: "",
     vendor: "",
     amount: 0,
     transactionDate: new Date(),
@@ -195,12 +203,15 @@ export function ManualExpenseForm() {
       const parsedImages = JSON.parse(storedImages);
       setFiles(parsedImages);
 
-      const initialExpenses = parsedImages.map((receipt: string, index: number) => {
-        return {
-          ...defaultExpense,
-          receipt,
-        };
-      });
+      const initialExpenses = parsedImages.map(
+        (receipt: string, index: number) => {
+          return {
+            ...defaultExpense,
+            title: "",
+            receipt,
+          };
+        },
+      );
 
       if (initialExpenses.length > 0) {
         form.reset({ expenses: initialExpenses });
@@ -275,6 +286,7 @@ export function ManualExpenseForm() {
 
   const addExpense = () => {
     append({
+      title: "",
       vendor: "",
       amount: 0,
       category: "",
@@ -295,38 +307,43 @@ export function ManualExpenseForm() {
   // Helper function to extract pure base64 string from data URL
   const extractBase64 = (dataUrl: string): string => {
     if (!dataUrl || typeof dataUrl !== "string") return "";
-    
+
     // If it's already a pure base64 string (no data: prefix), return as-is
     if (!dataUrl.startsWith("data:")) {
       return dataUrl.trim();
     }
-    
+
     // Remove data:image/...;base64, prefix if present
     const base64Match = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
     if (base64Match && base64Match[1]) {
       return base64Match[1].trim();
     }
-    
+
     // If it's a data URL but doesn't match the pattern, try to extract after comma
     const commaIndex = dataUrl.indexOf(",");
     if (commaIndex !== -1) {
       return dataUrl.substring(commaIndex + 1).trim();
     }
-    
+
     // Fallback: return empty string if we can't parse it
     console.warn("Could not extract base64 from:", dataUrl.substring(0, 50));
     return "";
   };
 
   // Build payload for backend submission (reusable for both submit and draft)
-  const buildExpensePayload = (data: ExpenseFormValues, includeReceipts: boolean) => {
+  const buildExpensePayload = (
+    data: ExpenseFormValues,
+    includeReceipts: boolean,
+  ) => {
     // Validate all categories exist
     const invalidCategories = data.expenses.filter(
-      (expense) => !categories.find((cat) => cat.name === expense.category)
+      (expense) => !categories.find((cat) => cat.name === expense.category),
     );
-    
+
     if (invalidCategories.length > 0) {
-      throw new Error("Invalid category selected. Please ensure all expenses have valid categories.");
+      throw new Error(
+        "Invalid category selected. Please ensure all expenses have valid categories.",
+      );
     }
 
     // Build expenses array
@@ -335,15 +352,17 @@ export function ManualExpenseForm() {
       if (!category) {
         throw new Error(`Category not found: ${expense.category}`);
       }
-      
+
       // Build base expense object
       const expenseObj: {
+        title: string;
         merchantName: string;
         description: string;
         expenseCategoryId: string;
         amount: number;
         receiptImage?: string;
       } = {
+        title: expense.title,
         merchantName: expense.vendor,
         description: expense.description || "",
         expenseCategoryId: category.categoryId,
@@ -354,7 +373,7 @@ export function ManualExpenseForm() {
       if (includeReceipts) {
         const receiptBase64 = files[idx] || expense.receipt || "";
         const receiptImage = extractBase64(receiptBase64);
-        
+
         // Only add receiptImage property if it's not empty
         if (receiptImage && receiptImage.trim() !== "") {
           expenseObj.receiptImage = receiptImage;
@@ -381,33 +400,45 @@ export function ManualExpenseForm() {
     // If multiple expenses submitted in a single session, group them
     if (data.expenses.length > 1) {
       const groupId = `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const totalAmount = data.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
-      
+      const totalAmount = data.expenses.reduce(
+        (sum, exp) => sum + Number(exp.amount),
+        0,
+      );
+
       // Create individual expense entries for detail view
-      const individualExpenses: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
-        const receiptImage = files[idx] || expense.receipt || undefined;
-        const expenseId = nextId++;
+      const individualExpenses: PersonalExpenseRow[] = data.expenses.map(
+        (expense, idx) => {
+          const receiptImage = files[idx] || expense.receipt || undefined;
+          const expenseId = nextId++;
 
-        // Store report name and date for this expense
-        if (typeof window !== "undefined" && reportName && reportDate) {
-          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
-          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
-        }
+          // Store report name and date for this expense
+          if (typeof window !== "undefined" && reportName && reportDate) {
+            sessionStorage.setItem(
+              `expense-report-name-${expenseId}`,
+              reportName,
+            );
+            sessionStorage.setItem(
+              `expense-report-date-${expenseId}`,
+              reportDate,
+            );
+          }
 
-        return {
-          id: expenseId,
-          date: formatDateForTable(expense.transactionDate),
-          vendor: expense.vendor,
-          category: expense.category,
-          amount: Number(expense.amount),
-          hasReceipt: Boolean(receiptImage),
-          status,
-          receiptImage,
-          reportName: reportName || undefined,
-          description: expense.description || undefined,
-          groupId,
-        };
-      });
+          return {
+            id: expenseId,
+            date: formatDateForTable(expense.transactionDate),
+            vendor: expense.vendor,
+            category: expense.category,
+            amount: Number(expense.amount),
+            hasReceipt: Boolean(receiptImage),
+            status,
+            receiptImage,
+            reportName: reportName || undefined,
+            title: expense.title,
+            description: expense.description || undefined,
+            groupId,
+          };
+        },
+      );
 
       // Create a single grouped entry for the table
       const groupedEntry: PersonalExpenseRow = {
@@ -416,7 +447,7 @@ export function ManualExpenseForm() {
         vendor: "", // Not displayed in table
         category: data.expenses[0].category, // Use first expense category
         amount: totalAmount,
-        hasReceipt: individualExpenses.some(e => e.hasReceipt),
+        hasReceipt: individualExpenses.some((e) => e.hasReceipt),
         status,
         reportName: reportName || undefined,
         groupId,
@@ -427,37 +458,55 @@ export function ManualExpenseForm() {
 
       // Store all individual expenses in sessionStorage for detail view
       if (typeof window !== "undefined") {
-        sessionStorage.setItem(`expense-group-${groupId}`, JSON.stringify(individualExpenses));
-        sessionStorage.setItem(`expense-report-name-${groupedEntry.id}`, reportName);
-        sessionStorage.setItem(`expense-report-date-${groupedEntry.id}`, reportDate);
+        sessionStorage.setItem(
+          `expense-group-${groupId}`,
+          JSON.stringify(individualExpenses),
+        );
+        sessionStorage.setItem(
+          `expense-report-name-${groupedEntry.id}`,
+          reportName,
+        );
+        sessionStorage.setItem(
+          `expense-report-date-${groupedEntry.id}`,
+          reportDate,
+        );
       }
 
       writePersonalExpenses([groupedEntry, ...existing]);
     } else {
       // Single expense or no report name - create individual entries
-      const newRows: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
-        const receiptImage = files[idx] || expense.receipt || undefined;
-        const expenseId = nextId++;
+      const newRows: PersonalExpenseRow[] = data.expenses.map(
+        (expense, idx) => {
+          const receiptImage = files[idx] || expense.receipt || undefined;
+          const expenseId = nextId++;
 
-        // Store report name and date for this expense
-        if (typeof window !== "undefined" && reportName && reportDate) {
-          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
-          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
-        }
+          // Store report name and date for this expense
+          if (typeof window !== "undefined" && reportName && reportDate) {
+            sessionStorage.setItem(
+              `expense-report-name-${expenseId}`,
+              reportName,
+            );
+            sessionStorage.setItem(
+              `expense-report-date-${expenseId}`,
+              reportDate,
+            );
+          }
 
-        return {
-          id: expenseId,
-          date: formatDateForTable(expense.transactionDate),
-          vendor: expense.vendor,
-          category: expense.category,
-          amount: Number(expense.amount),
-          hasReceipt: Boolean(receiptImage),
-          status,
-          receiptImage,
-          reportName: reportName || undefined,
-          description: expense.description || undefined,
-        };
-      });
+          return {
+            id: expenseId,
+            date: formatDateForTable(expense.transactionDate),
+            vendor: expense.vendor,
+            category: expense.category,
+            amount: Number(expense.amount),
+            hasReceipt: Boolean(receiptImage),
+            status,
+            receiptImage,
+            reportName: reportName || undefined,
+            title: expense.title,
+            description: expense.description || undefined,
+          };
+        },
+      );
 
       writePersonalExpenses([...newRows, ...existing]);
     }
@@ -514,8 +563,8 @@ export function ManualExpenseForm() {
 
     try {
       setIsSubmitting(true);
-      await axios.post(API_KEYS.EXPENSE.EXPENSES, payload);
-      
+      await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+
       // Persist to local storage so it appears in the personal table
       persistToPersonalExpenses(data, "pending");
 
@@ -526,6 +575,7 @@ export function ManualExpenseForm() {
       form.reset({
         expenses: [
           {
+            title: "",
             vendor: "",
             amount: 0,
             category: "",
@@ -545,13 +595,13 @@ export function ManualExpenseForm() {
       console.error("Error response:", error?.response?.data);
       console.error("Error status:", error?.response?.status);
       console.error("Payload that was sent:", payload);
-      
-      const errorMessage = 
+
+      const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.message ||
         "Failed to submit expenses. Please try again.";
-      
+
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -587,15 +637,21 @@ export function ManualExpenseForm() {
             >
               {/* Modern Report Header */}
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl px-6 py-3 border border-primary/20 shadow-sm w-full flex items-center justify-between">
-                <p className="text-base font-semibold text-foreground">{reportName || "Expense Report"}</p>
-                <p className="text-base font-semibold text-foreground">{reportDate}</p>
+                <p className="text-base font-semibold text-foreground">
+                  {reportName || "Expense Report"}
+                </p>
+                <p className="text-base font-semibold text-foreground">
+                  {reportDate}
+                </p>
               </div>
 
               {/* Loading state for categories */}
               {isLoadingCategories && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-muted-foreground">Loading expense categories...</span>
+                  <span className="ml-2 text-muted-foreground">
+                    Loading expense categories...
+                  </span>
                 </div>
               )}
 
@@ -612,16 +668,32 @@ export function ManualExpenseForm() {
                       {fields.map((field, index) => {
                         const amount = amounts[index] || 0;
                         return (
-                          <AccordionItem key={field.id} value={`expense-${index}`}>
+                          <AccordionItem
+                            key={field.id}
+                            value={`expense-${index}`}
+                          >
                             <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
                               <div className="flex w-full justify-between items-center">
                                 <div className="flex items-center gap-3">
-                                  <span className="font-medium">Expense {index + 1}</span>
+                                  <span className="font-medium">
+                                    {form.getValues(
+                                      `expenses.${index}.title`,
+                                    ) || `Expense ${index + 1}`}
+                                  </span>
                                   <span className="text-sm text-muted-foreground flex items-center gap-3">
-                                    <span>{form.getValues(`expenses.${index}.vendor`) || "No vendor"}</span>
+                                    <span>
+                                      {form.getValues(
+                                        `expenses.${index}.vendor`,
+                                      ) || "No vendor"}
+                                    </span>
                                     <span>•</span>
                                     <span>
-                                      ${Number(form.getValues(`expenses.${index}.amount`) || 0).toLocaleString()}
+                                      $
+                                      {Number(
+                                        form.getValues(
+                                          `expenses.${index}.amount`,
+                                        ) || 0,
+                                      ).toLocaleString()}
                                     </span>
                                   </span>
                                 </div>
@@ -644,7 +716,17 @@ export function ManualExpenseForm() {
                             <AccordionContent>
                               <div className="p-0 gap-8 relative flex items-start px-6 justify-between w-full">
                                 <div className="space-y-5 max-w-lg flex flex-col pr-16">
-                                  <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
+                                  <FormFieldInput
+                                    control={form.control}
+                                    name={`expenses.${index}.title`}
+                                    label="Expense Title"
+                                    placeholder="Enter a title for this expense"
+                                  />
+                                  <SplitExpense
+                                    control={form.control}
+                                    expenseIndex={index}
+                                    totalAmount={amount}
+                                  />
 
                                   <div className="grid grid-cols-2 gap-4">
                                     <FormFieldInput
@@ -709,21 +791,33 @@ export function ManualExpenseForm() {
                                       />
                                     ) : (
                                       <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
-                                        <div className="text-muted-foreground font-medium">No receipt uploaded for this item.</div>
-                                        <div className="text-muted-foreground">Receipt is required for final submission. You can save as draft without a receipt.</div>
+                                        <div className="text-muted-foreground font-medium">
+                                          No receipt uploaded for this item.
+                                        </div>
+                                        <div className="text-muted-foreground">
+                                          Receipt is required for final
+                                          submission. You can save as draft
+                                          without a receipt.
+                                        </div>
                                         <input
                                           id={`receipt-input-${index}`}
                                           type="file"
                                           accept="image/*"
                                           aria-label={`Upload receipt for item ${index + 1}`}
                                           className="hidden"
-                                          onChange={(e) => onReceiptSelect(index, e)}
+                                          onChange={(e) =>
+                                            onReceiptSelect(index, e)
+                                          }
                                         />
                                         <Button
                                           type="button"
                                           variant="outlinePrimary"
                                           onClick={() => {
-                                            document.getElementById(`receipt-input-${index}`)?.click();
+                                            document
+                                              .getElementById(
+                                                `receipt-input-${index}`,
+                                              )
+                                              ?.click();
                                           }}
                                         >
                                           Continue to upload receipt
@@ -770,7 +864,18 @@ export function ManualExpenseForm() {
                               </div>
                             )}
 
-                            <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
+                            <FormFieldInput
+                              control={form.control}
+                              name={`expenses.${index}.title`}
+                              label="Expense Title"
+                              placeholder="Enter a title for this expense"
+                            />
+
+                            <SplitExpense
+                              control={form.control}
+                              expenseIndex={index}
+                              totalAmount={amount}
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
                               <FormFieldInput
@@ -823,7 +928,9 @@ export function ManualExpenseForm() {
                             )}
                           </div>
                           <div className="max-w-sm">
-                            <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">Receipt</Label>
+                            <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
+                              Receipt
+                            </Label>
                             <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
                               {files[index] ? (
                                 <img
@@ -833,8 +940,13 @@ export function ManualExpenseForm() {
                                 />
                               ) : (
                                 <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
-                                  <div className="text-muted-foreground font-medium">No receipt uploaded for this item.</div>
-                                  <div className="text-muted-foreground">Receipt is required for final submission. You can save as draft without a receipt.</div>
+                                  <div className="text-muted-foreground font-medium">
+                                    No receipt uploaded for this item.
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    Receipt is required for final submission.
+                                    You can save as draft without a receipt.
+                                  </div>
                                   <input
                                     id={`receipt-input-${index}`}
                                     type="file"
@@ -847,7 +959,11 @@ export function ManualExpenseForm() {
                                     type="button"
                                     variant="outlinePrimary"
                                     onClick={() => {
-                                      document.getElementById(`receipt-input-${index}`)?.click();
+                                      document
+                                        .getElementById(
+                                          `receipt-input-${index}`,
+                                        )
+                                        ?.click();
                                     }}
                                   >
                                     Continue to upload receipt
@@ -871,13 +987,15 @@ export function ManualExpenseForm() {
                   )}
                 </div>
               )}
-              
+
               {/* Form Actions */}
               <div className="flex space-x-4 pt-10">
-                <Button 
-                  type="submit" 
-                  size={"md"} 
-                  disabled={!hasAllReceipts || isSubmitting || isLoadingCategories}
+                <Button
+                  type="submit"
+                  size={"md"}
+                  disabled={
+                    !hasAllReceipts || isSubmitting || isLoadingCategories
+                  }
                 >
                   {isSubmitting ? (
                     <>
@@ -887,7 +1005,9 @@ export function ManualExpenseForm() {
                   ) : (
                     <>
                       Submit{" "}
-                      {fields.length > 1 ? `${fields.length} Expenses` : "Expense"}
+                      {fields.length > 1
+                        ? `${fields.length} Expenses`
+                        : "Expense"}
                     </>
                   )}
                 </Button>
@@ -900,27 +1020,30 @@ export function ManualExpenseForm() {
                     form.handleSubmit(async (validData) => {
                       try {
                         setIsSubmitting(true);
-                        
+
                         // Build payload WITHOUT receipts (for draft)
-                        const payload = buildExpensePayload(validData as ExpenseFormValues, false);
-                        
+                        const payload = buildExpensePayload(
+                          validData as ExpenseFormValues,
+                          false,
+                        );
+
                         console.log("Saving draft payload:", payload);
-                        
+
                         // Send to backend
                         await axios.post(API_KEYS.EXPENSE.EXPENSES, payload);
-                        
+
                         // Also save to localStorage for local display
                         persistToPersonalExpenses(
                           validData as ExpenseFormValues,
                           "draft",
                         );
-                        
+
                         toast.success("Saved as draft.");
                         sessionStorage.removeItem("uploadedReceipts");
                         router.push("/expenses?tab=personal-expenses");
                       } catch (error: any) {
                         console.error("Error saving draft:", error);
-                        const errorMessage = 
+                        const errorMessage =
                           error?.response?.data?.message ||
                           error?.response?.data?.error ||
                           error?.message ||

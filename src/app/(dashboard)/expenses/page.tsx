@@ -502,16 +502,16 @@ export default function Reimbursements() {
     const counts = {
       draft: 0,
       approved: 0,
-      submitted: 0,
       paid: 0,
+      rejected: 0,
     };
 
     for (const e of personalExpenses ?? []) {
       const status = (e as any)?.status;
       if (status === "draft") counts.draft += 1;
       if (status === "approved") counts.approved += 1;
-      if (status === "pending") counts.submitted += 1; // "Submitted" tab uses pending
       if (status === "paid") counts.paid += 1;
+      if (status === "declined") counts.rejected += 1;
     }
 
     return counts;
@@ -544,7 +544,7 @@ export default function Reimbursements() {
                     </span>
                   }
                 />
-                <StatsCard
+                 <StatsCard
                   title="Approved"
                   value={personalStats.approved.toString()}
                   icon={
@@ -561,24 +561,23 @@ export default function Reimbursements() {
                   }
                 />
                 <StatsCard
-                  title="Submitted"
-                  value={personalStats.submitted.toString()}
+                  title="Rejected"
+                  value={personalStats.rejected.toString()}
                   icon={
                     <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
                         <img
-                          src={"/images/svgs/submitted.svg"}
-                          alt="submitted icon"
+                          src={"/images/receipt-pending.png"}
+                          alt="pending icon"
                         />
                       </div>
                     </>
                   }
                   subtitle={
                     <span className="text-xs leading-[125%]">
-                      Track entries that have been sent for review
+                      View all items that have been Rejected.
                     </span>
                   }
-                  trend="up"
                 />
                 <StatsCard
                   title="Paid"
@@ -610,7 +609,6 @@ export default function Reimbursements() {
                     <TabsList>
                       <TabsTrigger value="all">All</TabsTrigger>
                       <TabsTrigger value="draft">Draft</TabsTrigger>
-                      <TabsTrigger value="submitted">Submitted</TabsTrigger>
                       <TabsTrigger value="approved">Approved</TabsTrigger>
                       <TabsTrigger value="rejected">Rejected</TabsTrigger>
                       <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -628,14 +626,6 @@ export default function Reimbursements() {
                       <ExpenseTable
                         actionButton={<NewExpenseButtonTrigger />}
                         statusFilter={"draft"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    <TabsContent value="submitted">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"pending"}
                         data={personalExpenses as any}
                         columnsOverride={personalExpenseColumns as any}
                       />
@@ -768,7 +758,6 @@ export default function Reimbursements() {
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="draft">Draft</TabsTrigger>
-                  <TabsTrigger value="submitted">Submitted</TabsTrigger>
                   <TabsTrigger value="approved">Approved</TabsTrigger>
                   <TabsTrigger value="rejected">Rejected</TabsTrigger>
                   <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -786,14 +775,6 @@ export default function Reimbursements() {
                   <ExpenseTable
                     actionButton={<></>}
                     statusFilter={statusMap["draft"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="submitted">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["submitted"]}
                     data={expenseData}
                     onFilteredDataChange={handleFilteredDataChange}
                   />
