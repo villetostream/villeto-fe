@@ -16,6 +16,7 @@ import FormFieldInput from "../form fields/formFieldInput";
 import { Form } from "../ui/form";
 import FormFieldCalendar from "../form fields/FormFieldCalendar";
 import { useRouter } from "next/navigation";
+import { getDefaultClassNames } from "react-day-picker";
 
 // Zod schema for form validation
 const reportSchema = z.object({
@@ -75,6 +76,7 @@ const AddNewReport = ({
   // Restore values when modal opens
   React.useEffect(() => {
     if (isOpen) {
+      formHook.reset();
       const { reportName, reportDate } = getPreservedValues();
       if (reportName) {
         formHook.setValue("reportName", reportName);
@@ -103,8 +105,8 @@ const AddNewReport = ({
     }
     router.push(
       `/expenses/new-expense/upload?name=${encodeURIComponent(
-        data.reportName
-      )}&date=${encodeURIComponent(data.reportDate.toDateString())}`
+        data.reportName,
+      )}&date=${encodeURIComponent(data.reportDate.toDateString())}`,
     );
     close();
     reset();

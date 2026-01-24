@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/sheet";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
 import Link from "next/link";
@@ -59,6 +64,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 }
 
 const expenseItemSchema = z.object({
+  title: z.string().min(1, "Expense title is required"),
   vendor: z.string().min(1, "Vendor name is required"),
   amount: z.coerce.number<number>().min(1, "Amount is required"),
   transactionDate: z.date().refine((val) => !!val, {
@@ -107,6 +113,8 @@ type PersonalExpenseRow = {
   status: PersonalExpenseStatus;
   receiptImage?: string;
   reportName?: string;
+  title?: string;
+  description?: string;
   groupId?: string; // For grouping multiple expenses with same report name
   isGrouped?: boolean; // True if this is a grouped entry
   groupedExpenses?: PersonalExpenseRow[]; // Array of individual expenses in the group
@@ -169,6 +177,7 @@ export function ExpenseForm() {
   const ocrData: OCRData[] = ocrDataParam ? JSON.parse(ocrDataParam) : [];
 
   const defaultExpense = {
+    title: "",
     vendor: "",
     amount: 0,
     transactionDate: new Date(),
@@ -191,12 +200,15 @@ export function ExpenseForm() {
       const parsedImages = JSON.parse(storedImages);
       setFiles(parsedImages);
 
-      const initialExpenses = parsedImages.map((receipt: string, index: number) => {
-        return {
-          ...defaultExpense,
-          receipt,
-        };
-      });
+      const initialExpenses = parsedImages.map(
+        (receipt: string, index: number) => {
+          return {
+            ...defaultExpense,
+            title: "",
+            receipt,
+          };
+        },
+      );
 
       if (initialExpenses.length > 0) {
         form.reset({ expenses: initialExpenses });
@@ -209,8 +221,6 @@ export function ExpenseForm() {
     control: form.control,
     name: "expenses",
   });
-
-
 
   // // Watch all amounts and debounce them
   // const watchedAmounts = fields.map((_, index) =>
@@ -281,6 +291,7 @@ export function ExpenseForm() {
 
   const addExpense = () => {
     append({
+      title: "",
       vendor: "",
       amount: 0,
       category: "",
@@ -308,33 +319,45 @@ export function ExpenseForm() {
     // If multiple expenses submitted in a single session, group them
     if (data.expenses.length > 1) {
       const groupId = `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const totalAmount = data.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
-      
+      const totalAmount = data.expenses.reduce(
+        (sum, exp) => sum + Number(exp.amount),
+        0,
+      );
+
       // Create individual expense entries for detail view
-      const individualExpenses: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
-        const receiptImage = files[idx] || expense.receipt || undefined;
-        const expenseId = nextId++;
+      const individualExpenses: PersonalExpenseRow[] = data.expenses.map(
+        (expense, idx) => {
+          const receiptImage = files[idx] || expense.receipt || undefined;
+          const expenseId = nextId++;
 
-        // Store report name and date for this expense
-        if (typeof window !== "undefined" && reportName && reportDate) {
-          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
-          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
-        }
+          // Store report name and date for this expense
+          if (typeof window !== "undefined" && reportName && reportDate) {
+            sessionStorage.setItem(
+              `expense-report-name-${expenseId}`,
+              reportName,
+            );
+            sessionStorage.setItem(
+              `expense-report-date-${expenseId}`,
+              reportDate,
+            );
+          }
 
-        return {
-          id: expenseId,
-          date: formatDateForTable(expense.transactionDate),
-          vendor: expense.vendor,
-          category: expense.category,
-          amount: Number(expense.amount),
-          hasReceipt: Boolean(receiptImage),
-          status,
-          receiptImage,
-          reportName: reportName || undefined,
-          description: expense.description || undefined,
-          groupId,
-        };
-      });
+          return {
+            id: expenseId,
+            date: formatDateForTable(expense.transactionDate),
+            vendor: expense.vendor,
+            category: expense.category,
+            amount: Number(expense.amount),
+            hasReceipt: Boolean(receiptImage),
+            status,
+            receiptImage,
+            reportName: reportName || undefined,
+            description: expense.description || undefined,
+            title: expense.title,
+            groupId,
+          };
+        },
+      );
 
       // Create a single grouped entry for the table
       const groupedEntry: PersonalExpenseRow = {
@@ -343,7 +366,7 @@ export function ExpenseForm() {
         vendor: "", // Not displayed in table
         category: data.expenses[0].category, // Use first expense category
         amount: totalAmount,
-        hasReceipt: individualExpenses.some(e => e.hasReceipt),
+        hasReceipt: individualExpenses.some((e) => e.hasReceipt),
         status,
         reportName: reportName || undefined,
         groupId,
@@ -354,37 +377,55 @@ export function ExpenseForm() {
 
       // Store all individual expenses in sessionStorage for detail view
       if (typeof window !== "undefined") {
-        sessionStorage.setItem(`expense-group-${groupId}`, JSON.stringify(individualExpenses));
-        sessionStorage.setItem(`expense-report-name-${groupedEntry.id}`, reportName);
-        sessionStorage.setItem(`expense-report-date-${groupedEntry.id}`, reportDate);
+        sessionStorage.setItem(
+          `expense-group-${groupId}`,
+          JSON.stringify(individualExpenses),
+        );
+        sessionStorage.setItem(
+          `expense-report-name-${groupedEntry.id}`,
+          reportName,
+        );
+        sessionStorage.setItem(
+          `expense-report-date-${groupedEntry.id}`,
+          reportDate,
+        );
       }
 
       writePersonalExpenses([groupedEntry, ...existing]);
     } else {
       // Single expense or no report name - create individual entries
-      const newRows: PersonalExpenseRow[] = data.expenses.map((expense, idx) => {
-        const receiptImage = files[idx] || expense.receipt || undefined;
-        const expenseId = nextId++;
+      const newRows: PersonalExpenseRow[] = data.expenses.map(
+        (expense, idx) => {
+          const receiptImage = files[idx] || expense.receipt || undefined;
+          const expenseId = nextId++;
 
-        // Store report name and date for this expense
-        if (typeof window !== "undefined" && reportName && reportDate) {
-          sessionStorage.setItem(`expense-report-name-${expenseId}`, reportName);
-          sessionStorage.setItem(`expense-report-date-${expenseId}`, reportDate);
-        }
+          // Store report name and date for this expense
+          if (typeof window !== "undefined" && reportName && reportDate) {
+            sessionStorage.setItem(
+              `expense-report-name-${expenseId}`,
+              reportName,
+            );
+            sessionStorage.setItem(
+              `expense-report-date-${expenseId}`,
+              reportDate,
+            );
+          }
 
-        return {
-          id: expenseId,
-          date: formatDateForTable(expense.transactionDate),
-          vendor: expense.vendor,
-          category: expense.category,
-          amount: Number(expense.amount),
-          hasReceipt: Boolean(receiptImage),
-          status,
-          receiptImage,
-          reportName: reportName || undefined,
-          description: expense.description || undefined,
-        };
-      });
+          return {
+            id: expenseId,
+            date: formatDateForTable(expense.transactionDate),
+            vendor: expense.vendor,
+            category: expense.category,
+            amount: Number(expense.amount),
+            hasReceipt: Boolean(receiptImage),
+            status,
+            receiptImage,
+            reportName: reportName || undefined,
+            description: expense.description || undefined,
+            title: expense.title,
+          };
+        },
+      );
 
       writePersonalExpenses([...newRows, ...existing]);
     }
@@ -438,6 +479,7 @@ export function ExpenseForm() {
     form.reset({
       expenses: [
         {
+          title: "",
           vendor: "",
           amount: 0,
           category: "",
@@ -478,8 +520,12 @@ export function ExpenseForm() {
             >
               {/* Modern Report Header */}
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl px-6 py-3 border border-primary/20 shadow-sm w-full flex items-center justify-between">
-                <p className="text-base font-semibold text-foreground">{reportName}</p>
-                <p className="text-base font-semibold text-foreground">{reportDate}</p>
+                <p className="text-base font-semibold text-foreground">
+                  {reportName}
+                </p>
+                <p className="text-base font-semibold text-foreground">
+                  {reportDate}
+                </p>
               </div>
 
               {/* Dynamic Expense Forms */}
@@ -494,16 +540,31 @@ export function ExpenseForm() {
                     {fields.map((field, index) => {
                       const amount = amounts[index] || 0;
                       return (
-                        <AccordionItem key={field.id} value={`expense-${index}`}>
+                        <AccordionItem
+                          key={field.id}
+                          value={`expense-${index}`}
+                        >
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
                             <div className="flex w-full justify-between items-center">
                               <div className="flex items-center gap-3">
-                                <span className="font-medium">Expense {index + 1}</span>
+                                <span className="font-medium">
+                                  {form.getValues(`expenses.${index}.title`) ||
+                                    `Expense ${index + 1}`}
+                                </span>
                                 <span className="text-sm text-muted-foreground flex items-center gap-3">
-                                  <span>{form.getValues(`expenses.${index}.vendor`) || "No vendor"}</span>
+                                  <span>
+                                    {form.getValues(
+                                      `expenses.${index}.vendor`,
+                                    ) || "No vendor"}
+                                  </span>
                                   <span>•</span>
                                   <span>
-                                    ${Number(form.getValues(`expenses.${index}.amount`) || 0).toLocaleString()}
+                                    $
+                                    {Number(
+                                      form.getValues(
+                                        `expenses.${index}.amount`,
+                                      ) || 0,
+                                    ).toLocaleString()}
                                   </span>
                                 </span>
                               </div>
@@ -526,7 +587,17 @@ export function ExpenseForm() {
                           <AccordionContent>
                             <div className="p-0 gap-8 relative flex items-start px-6 justify-between w-full">
                               <div className="space-y-5 max-w-lg flex flex-col pr-16">
-                                <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
+                                <FormFieldInput
+                                  control={form.control}
+                                  name={`expenses.${index}.title`}
+                                  label="Expense Title"
+                                  placeholder="Enter a title for this expense"
+                                />
+                                <SplitExpense
+                                  control={form.control}
+                                  expenseIndex={index}
+                                  totalAmount={amount}
+                                />
 
                                 <div className="grid grid-cols-2 gap-4">
                                   <FormFieldInput
@@ -540,7 +611,10 @@ export function ExpenseForm() {
                                   <FormFieldSelect
                                     control={form.control}
                                     name={`expenses.${index}.category`}
-                                    values={categories.map((category) => ({ label: category, value: category }))}
+                                    values={categories.map((category) => ({
+                                      label: category,
+                                      value: category,
+                                    }))}
                                     placeholder="Select Category"
                                     label="Expense Category"
                                   />
@@ -591,21 +665,32 @@ export function ExpenseForm() {
                                     />
                                   ) : (
                                     <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
-                                      <div className="text-destructive font-medium">No receipt found for this item.</div>
-                                      <div className="text-muted-foreground">You can’t submit without a receipt. Upload one to continue.</div>
+                                      <div className="text-destructive font-medium">
+                                        No receipt found for this item.
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        You can’t submit without a receipt.
+                                        Upload one to continue.
+                                      </div>
                                       <input
                                         id={`receipt-input-${index}`}
                                         type="file"
                                         accept="image/*"
                                         aria-label={`Upload receipt for item ${index + 1}`}
                                         className="hidden"
-                                        onChange={(e) => onReceiptSelect(index, e)}
+                                        onChange={(e) =>
+                                          onReceiptSelect(index, e)
+                                        }
                                       />
                                       <Button
                                         type="button"
                                         variant="outlinePrimary"
                                         onClick={() => {
-                                          document.getElementById(`receipt-input-${index}`)?.click();
+                                          document
+                                            .getElementById(
+                                              `receipt-input-${index}`,
+                                            )
+                                            ?.click();
                                         }}
                                       >
                                         Continue to upload receipt
@@ -652,7 +737,18 @@ export function ExpenseForm() {
                             </div>
                           )}
 
-                          <SplitExpense control={form.control} expenseIndex={index} totalAmount={amount} />
+                          <FormFieldInput
+                            control={form.control}
+                            name={`expenses.${index}.title`}
+                            label="Expense Title"
+                            placeholder="Enter a title for this expense"
+                          />
+
+                          <SplitExpense
+                            control={form.control}
+                            expenseIndex={index}
+                            totalAmount={amount}
+                          />
 
                           <div className="grid grid-cols-2 gap-4">
                             <FormFieldInput
@@ -666,7 +762,10 @@ export function ExpenseForm() {
                             <FormFieldSelect
                               control={form.control}
                               name={`expenses.${index}.category`}
-                              values={categories.map((category) => ({ label: category, value: category }))}
+                              values={categories.map((category) => ({
+                                label: category,
+                                value: category,
+                              }))}
                               placeholder="Select Category"
                               label="Expense Category"
                             />
@@ -705,7 +804,9 @@ export function ExpenseForm() {
                           )}
                         </div>
                         <div className="max-w-sm">
-                          <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">Receipt</Label>
+                          <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
+                            Receipt
+                          </Label>
                           <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
                             {files[index] ? (
                               <img
@@ -715,8 +816,13 @@ export function ExpenseForm() {
                               />
                             ) : (
                               <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
-                                <div className="text-destructive font-medium">No receipt found for this item.</div>
-                                <div className="text-muted-foreground">You can’t submit without a receipt. Upload one to continue.</div>
+                                <div className="text-destructive font-medium">
+                                  No receipt found for this item.
+                                </div>
+                                <div className="text-muted-foreground">
+                                  You can’t submit without a receipt. Upload one
+                                  to continue.
+                                </div>
                                 <input
                                   id={`receipt-input-${index}`}
                                   type="file"
@@ -729,7 +835,9 @@ export function ExpenseForm() {
                                   type="button"
                                   variant="outlinePrimary"
                                   onClick={() => {
-                                    document.getElementById(`receipt-input-${index}`)?.click();
+                                    document
+                                      .getElementById(`receipt-input-${index}`)
+                                      ?.click();
                                   }}
                                 >
                                   Continue to upload receipt
@@ -752,7 +860,7 @@ export function ExpenseForm() {
                   })
                 )}
               </div>
-              
+
               {/* Form Actions */}
               <div className="flex space-x-4 pt-10">
                 <Button type="submit" size={"md"} disabled={!hasAllReceipts}>

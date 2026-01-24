@@ -8,9 +8,7 @@ interface ExpenseData {
   vendor: string;
   category: string;
   amount: string;
-  paymentMethod: string;
   policyCompliance: "within" | "exceeded";
-  currency: string;
   status: "approved" | "rejected" | "pending" | "draft" | "submitted";
   description: string;
 }
@@ -55,10 +53,6 @@ export function ExpenseDetailCard({
           <p className="detail-value">{expense.amount}</p>
         </div>
         <div className="detail-card">
-          <p className="detail-label">Payment Method</p>
-          <p className="detail-value">{expense.paymentMethod}</p>
-        </div>
-        <div className="detail-card">
           <p className="detail-label">Policy Compliance</p>
           <div className="flex items-center gap-1.5">
             {expense.policyCompliance === "within" ? (
@@ -75,10 +69,6 @@ export function ExpenseDetailCard({
               </>
             )}
           </div>
-        </div>
-        <div className="detail-card">
-          <p className="detail-label">Currency</p>
-          <p className="detail-value">{expense.currency}</p>
         </div>
         <div className="detail-card">
           <p className="detail-label">Status</p>

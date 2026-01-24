@@ -31,6 +31,7 @@ export const API_KEYS = {
   },
   EXPENSE: {
     CATEGORIES: "companies/expense/categories",
-    EXPENSES: "expenses/manual",
+    REPORTS: "reports/manual",
+    PERSONAL_EXPENSES: "reports",
   },
 } as const;

@@ -54,7 +54,9 @@ function ActionsCell({ row }: { row: any }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => router.push(`/expenses/personal/${expense.id}`)}>
+        <DropdownMenuItem
+          onClick={() => router.push(`/expenses/personal/${expense.id}`)}
+        >
           <Eye className="size-5" />
           View Details
         </DropdownMenuItem>
@@ -72,7 +74,7 @@ function ActionsCell({ row }: { row: any }) {
 export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
   { accessorKey: "date", header: "DATE" },
   { accessorKey: "reportName", header: "REPORT NAME" },
-  { accessorKey: "category", header: "CATEGORY" },
+  { accessorKey: "category", header: "COST CENTER" },
   {
     accessorKey: "amount",
     header: "AMOUNT",
@@ -85,7 +87,9 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
   {
     accessorKey: "hasReceipt",
     header: "RECEIPT",
-    cell: ({ row }) => <ReceiptCell hasReceipt={Boolean(row.getValue("hasReceipt"))} />,
+    cell: ({ row }) => (
+      <ReceiptCell hasReceipt={Boolean(row.getValue("hasReceipt"))} />
+    ),
   },
   {
     accessorKey: "status",
@@ -116,4 +120,3 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
     cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];
-
