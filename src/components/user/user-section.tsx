@@ -135,11 +135,14 @@ export function UserSection() {
   const isExpenseDetailPage = pathname.match(/^\/expenses\/\d+$/);
   const isAuditTrailPage = pathname.match(/^\/expenses\/\d+\/audit-trail$/);
   const isSplitExpensePage = pathname.match(/^\/expenses\/\d+\/split-expense$/);
+  // Personal expense detail page uses UUID format (reportId), not numeric ID
   const isPersonalExpenseDetailPage = pathname.match(
-    /^\/expenses\/personal\/\d+$/,
+    /^\/expenses\/personal\/[a-f0-9\-]+$/i,
   );
   const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
+  // Extract reportId from personal expense detail page (UUID format)
+  const reportIdFromPath = pathname.match(/\/expenses\/personal\/([a-f0-9\-]+)$/i)?.[1];
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
   const isNewExpensePage = pathname === "/expenses/new-expense";

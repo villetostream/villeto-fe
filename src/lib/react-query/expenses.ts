@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_KEYS } from "@/lib/constants/apis";
 import { useAxios } from "@/hooks/useAxios";
 import { toast } from "sonner";
@@ -19,6 +19,104 @@ interface ExpenseSubmissionPayload {
   expenses: ExpenseItemPayload[];
   status: "pending" | "draft"; // Add status to the payload
 }
+
+// API Response types
+export interface PersonalExpenseReport {
+  restResult: {
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    reportId: string;
+    reportTitle: string;
+  };
+  costCenter: string;
+  totalAmount: string;
+}
+
+export interface ExpenseItem {
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  expenseId: string;
+  amount: string;
+  title: string | null;
+  description: string;
+  merchantName: string;
+  categoryName: string | null;
+  receiptUrl: string;
+  receiptMimeType: string;
+  status: "draft" | "pending" | "approved" | "declined" | "rejected" | "paid";
+}
+
+export interface PersonalExpenseDetailResponse {
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  reportId: string;
+  reportTitle: string;
+  expenses: ExpenseItem[];
+}
+
+export interface PersonalExpenseDetailApiResponse {
+  message: string;
+  status: number;
+  data: PersonalExpenseDetailResponse;
+}
+
+export interface PersonalExpensesResponse {
+  reports: PersonalExpenseReport[];
+  meta: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
+// Query for fetching personal expenses
+export const usePersonalExpenses = (
+  page: number = 1,
+  limit: number = 10,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
+) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES, page, limit, sortBy, sortOrder],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      if (sortBy) params.append("sortBy", sortBy);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+
+      const response = await axios.get<PersonalExpensesResponse>(
+        `${API_KEYS.EXPENSE.PERSONAL_EXPENSES}?${params.toString()}`
+      );
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Query for fetching a single personal expense detail
+export const usePersonalExpenseDetail = (reportId: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES, reportId],
+    queryFn: async () => {
+      const response = await axios.get<PersonalExpenseDetailApiResponse>(
+        `${API_KEYS.EXPENSE.PERSONAL_EXPENSES}/${reportId}`
+      );
+      // Extract the data property from the API response
+      return response.data.data;
+    },
+    enabled: !!reportId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
 
 // Mutation for submitting an expense
 export const useSubmitExpense = () => {

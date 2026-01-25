@@ -392,11 +392,13 @@ function DataTable<Data extends object, Value = unknown>(
                         return;
                       }
                       const original: any = row.original as any;
-                      if (original?.id) {
+                      // For personal expenses, use reportId (UUID); for company expenses, use id (numeric)
+                      const id = expensesClickMode === "personal" ? original?.reportId : original?.id;
+                      if (id) {
                         const dest =
                           expensesClickMode === "personal"
-                            ? `/expenses/personal/${original.id}`
-                            : `/expenses/${original.id}`;
+                            ? `/expenses/personal/${id}`
+                            : `/expenses/${id}`;
                         router.push(dest);
                       }
                     }}

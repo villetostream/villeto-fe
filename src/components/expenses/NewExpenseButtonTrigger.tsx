@@ -8,7 +8,7 @@ import {
 import AddNewReport from "./AddNewReport";
 import useModal from "@/hooks/useModal";
 import FlightBooking from "./reservations/FlightReservations";
-import { PenLine, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -46,7 +46,7 @@ const NewExpenseButtonTrigger = () => {
         open={openReservation}
       />
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button size="lg">New Report</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
@@ -58,7 +58,7 @@ const NewExpenseButtonTrigger = () => {
             Start New Report
           </DropdownMenuItem>
           <DropdownMenuItem onClick={toggleReservation}>
-            <PlusCircle />
+            <PlusCircle className="w-4 h-4 mr-2" />
             Start New Reservation
           </DropdownMenuItem>
         </DropdownMenuContent>
