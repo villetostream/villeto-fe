@@ -25,7 +25,7 @@ export type PersonalExpenseRow = {
   id: number;
   date: string;
   vendor: string;
-  category: string;
+  category: string; // This is the costCenter from API
   amount: number;
   hasReceipt: boolean;
   status: PersonalExpenseStatus;
@@ -35,6 +35,15 @@ export type PersonalExpenseRow = {
   isGrouped?: boolean; // True if this is a grouped entry
   groupedExpenses?: PersonalExpenseRow[]; // Array of individual expenses in the group
   totalAmount?: number; // Total amount for grouped expenses
+  reportId?: string; // Report ID from API for fetching details
+  costCenter?: string; // Cost center from API response
+  restResult?: {
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    reportId: string;
+    reportTitle: string;
+  }; // Full API response structure for reference
 };
 
 function ReceiptCell({ hasReceipt }: { hasReceipt: boolean }) {
@@ -55,13 +64,15 @@ function ActionsCell({ row }: { row: any }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => router.push(`/expenses/personal/${expense.id}`)}
+          onClick={() => router.push(`/expenses/personal/${expense.reportId}`)}
         >
           <Eye className="size-5" />
           View Details
         </DropdownMenuItem>
         {status === "draft" && (
-          <DropdownMenuItem onClick={() => console.log("Delete", expense.id)}>
+          <DropdownMenuItem
+            onClick={() => console.log("Delete", expense.reportId)}
+          >
             <Trash className="size-5" />
             Delete
           </DropdownMenuItem>

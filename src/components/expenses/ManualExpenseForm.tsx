@@ -41,6 +41,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExpenseCategory {
   categoryId: string;
@@ -141,6 +142,7 @@ export function ManualExpenseForm() {
   const { isOpen: IsSuccess, toggle: successToggle } = useModal();
   const router = useRouter();
   const axios = useAxios();
+  const queryClient = useQueryClient();
 
   // Fetch expense categories from API
   useEffect(() => {
@@ -565,8 +567,8 @@ export function ManualExpenseForm() {
       setIsSubmitting(true);
       await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
 
-      // Persist to local storage so it appears in the personal table
-      persistToPersonalExpenses(data, "pending");
+      // Invalidate React Query cache to refetch personal expenses
+      queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
 
       toast.success(
         `Your ${data.expenses.length} expense(s) have been submitted successfully.`,
@@ -1030,7 +1032,10 @@ export function ManualExpenseForm() {
                         console.log("Saving draft payload:", payload);
 
                         // Send to backend
-                        await axios.post(API_KEYS.EXPENSE.EXPENSES, payload);
+                        await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+
+                        // Invalidate React Query cache to refetch personal expenses
+                        queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
 
                         // Also save to localStorage for local display
                         persistToPersonalExpenses(

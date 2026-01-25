@@ -12,6 +12,9 @@ import {
 } from "@/components/expenses/table/personalColumns";
 import { useSearchParams, useRouter } from "next/navigation";
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
+import { usePersonalExpenses } from "@/lib/react-query/expenses";
+import { Loader2 } from "lucide-react";
+import { PersonalExpensesSkeleton } from "@/components/expenses/PersonalExpensesSkeleton";
 
 const statusMap: Record<string, string | null> = {
   all: null,
@@ -424,16 +427,59 @@ export default function Reimbursements() {
   const [personalExpenses, setPersonalExpenses] = useState<
     PersonalExpenseRow[]
   >([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const loadPersonalExpenses = () => {
+  // Fetch personal expenses using React Query
+  const { data: personalExpensesData, isLoading: isLoadingPersonalExpenses } =
+    usePersonalExpenses(page, limit);
+
+  // Helper function to format date to user-friendly format
+  const formatDate = (dateString: string): string => {
     try {
-      const raw = localStorage.getItem("personal-expenses");
-      const parsed = raw ? (JSON.parse(raw) as PersonalExpenseRow[]) : [];
-      setPersonalExpenses(Array.isArray(parsed) ? parsed : []);
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
     } catch {
-      setPersonalExpenses([]);
+      return dateString;
     }
   };
+
+  // Transform API data to PersonalExpenseRow format
+  useEffect(() => {
+    if (personalExpensesData?.reports) {
+      // Sort reports by createdAt date in descending order (most recent first)
+      const sortedReports = [...personalExpensesData.reports].sort((a, b) => {
+        const dateA = new Date(a.restResult.createdAt).getTime();
+        const dateB = new Date(b.restResult.createdAt).getTime();
+        return dateB - dateA; // Most recent first
+      });
+
+      const transformedExpenses: PersonalExpenseRow[] = sortedReports.map(
+        (report, index) => ({
+          id: index, // Keep index for table row identification
+          date: formatDate(report.restResult.createdAt),
+          vendor: "", // Not provided in API
+          category:
+            report.costCenter && report.costCenter.trim()
+              ? report.costCenter
+              : "Uncategorized", // Use costCenter if available, otherwise Uncategorized
+          amount: parseFloat(report.totalAmount),
+          hasReceipt: false, // Assume no receipt for now
+          status: "pending" as const, // Default status from API (reports don't have individual status, they're all pending until reviewed)
+          reportName: report.restResult.reportTitle,
+          description: undefined,
+          reportId: report.restResult.reportId, // Use reportId for navigation to detail page
+          costCenter: report.costCenter, // Include costCenter from API
+          restResult: report.restResult, // Include full restResult structure
+        }),
+      );
+      setPersonalExpenses(transformedExpenses);
+    }
+  }, [personalExpensesData]);
 
   // Load updated statuses from localStorage on component mount
   useEffect(() => {
@@ -448,37 +494,14 @@ export default function Reimbursements() {
     setFilteredExpenseData(updatedReimbursements);
   }, []);
 
-  // Load personal expenses from localStorage
-  useEffect(() => {
-    loadPersonalExpenses();
-
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "personal-expenses") loadPersonalExpenses();
-    };
-    const onPersonalUpdated = () => loadPersonalExpenses();
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener(
-      "personal-expenses-updated",
-      onPersonalUpdated as EventListener
-    );
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener(
-        "personal-expenses-updated",
-        onPersonalUpdated as EventListener
-      );
-    };
-  }, []);
-
   // Calculate stats based on current data
   const calculateStats = (data: typeof reimbursements) => {
     const totalExpenses = data.length;
     const pendingApprovals = data.filter(
-      (item) => item.status === "pending"
+      (item) => item.status === "pending",
     ).length;
     const approvedExpenses = data.filter(
-      (item) => item.status === "approved"
+      (item) => item.status === "approved",
     ).length;
     const paidExpenses = data.filter((item) => item.status === "paid").length;
 
@@ -526,149 +549,159 @@ export default function Reimbursements() {
         </TabsList>
         <TabsContent value="personal-expenses">
           <PermissionGuard requiredPermissions={[]}>
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-                <StatsCard
-                  title="Draft"
-                  value={personalStats.draft.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src={"/images/svgs/draft.svg"} alt="draft icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">
-                      Manage your saved items
-                    </span>
-                  }
-                />
-                 <StatsCard
-                  title="Approved"
-                  value={personalStats.approved.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
-                        <img src={"/images/svgs/check.svg"} alt="check icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">
-                      View all items that have been reviewed.
-                    </span>
-                  }
-                />
-                <StatsCard
-                  title="Rejected"
-                  value={personalStats.rejected.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                        <img
-                          src={"/images/receipt-pending.png"}
-                          alt="pending icon"
+            {isLoadingPersonalExpenses ? (
+              <PersonalExpensesSkeleton />
+            ) : (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                  <StatsCard
+                    title="Draft"
+                    value={personalStats.draft.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
+                          <img
+                            src={"/images/svgs/draft.svg"}
+                            alt="draft icon"
+                          />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">
+                        Manage your saved items
+                      </span>
+                    }
+                  />
+                  <StatsCard
+                    title="Approved"
+                    value={personalStats.approved.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
+                          <img
+                            src={"/images/svgs/check.svg"}
+                            alt="check icon"
+                          />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">
+                        View all items that have been reviewed.
+                      </span>
+                    }
+                  />
+                  <StatsCard
+                    title="Rejected"
+                    value={personalStats.rejected.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
+                          <img
+                            src={"/images/receipt-pending.png"}
+                            alt="pending icon"
+                          />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">
+                        View all items that have been Rejected.
+                      </span>
+                    }
+                  />
+                  <StatsCard
+                    title="Paid"
+                    value={personalStats.paid.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
+                          <img
+                            src={"/images/svgs/money.svg"}
+                            alt="money icon"
+                            className="text-white"
+                          />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">
+                        Access records of completed payments.
+                      </span>
+                    }
+                  />
+                </div>
+                {personalExpenses.length === 0 ? (
+                  <ExpenseEmptyState />
+                ) : (
+                  <>
+                    <Tabs defaultValue="all">
+                      <TabsList>
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="draft">Draft</TabsTrigger>
+                        <TabsTrigger value="approved">Approved</TabsTrigger>
+                        <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                        <TabsTrigger value="pending">Pending</TabsTrigger>
+                        <TabsTrigger value="paid">Paid</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="all">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={null}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
                         />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">
-                      View all items that have been Rejected.
-                    </span>
-                  }
-                />
-                <StatsCard
-                  title="Paid"
-                  value={personalStats.paid.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
-                        <img
-                          src={"/images/svgs/money.svg"}
-                          alt="money icon"
-                          className="text-white"
+                      </TabsContent>
+                      <TabsContent value="draft">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={"draft"}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
                         />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">
-                      Access records of completed payments.
-                    </span>
-                  }
-                />
+                      </TabsContent>
+                      <TabsContent value="pending">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={"pending"}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
+                        />
+                      </TabsContent>
+                      {/* Keep other tabs for visual parity; personal data is draft/pending in this demo */}
+                      <TabsContent value="approved">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={"approved"}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
+                        />
+                      </TabsContent>
+                      <TabsContent value="rejected">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={"declined"}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
+                        />
+                      </TabsContent>
+                      <TabsContent value="paid">
+                        <ExpenseTable
+                          actionButton={<NewExpenseButtonTrigger />}
+                          statusFilter={"paid"}
+                          data={personalExpenses as any}
+                          columnsOverride={personalExpenseColumns as any}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  </>
+                )}
               </div>
-              {personalExpenses.length === 0 ? (
-                <ExpenseEmptyState />
-              ) : (
-                <>
-                  {/* Personal Expenses table (matches screenshot layout) */}
-                  <Tabs defaultValue="all">
-                    <TabsList>
-                      <TabsTrigger value="all">All</TabsTrigger>
-                      <TabsTrigger value="draft">Draft</TabsTrigger>
-                      <TabsTrigger value="approved">Approved</TabsTrigger>
-                      <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                      <TabsTrigger value="pending">Pending</TabsTrigger>
-                      <TabsTrigger value="paid">Paid</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="all">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={null}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    <TabsContent value="draft">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"draft"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    <TabsContent value="pending">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"pending"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    {/* Keep other tabs for visual parity; personal data is draft/pending in this demo */}
-                    <TabsContent value="approved">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"approved"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    <TabsContent value="rejected">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"declined"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                    <TabsContent value="paid">
-                      <ExpenseTable
-                        actionButton={<NewExpenseButtonTrigger />}
-                        statusFilter={"paid"}
-                        data={personalExpenses as any}
-                        columnsOverride={personalExpenseColumns as any}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </>
-              )}
-            </div>
+            )}
           </PermissionGuard>
         </TabsContent>
+
         <TabsContent value="company-expenses">
           <PermissionGuard requiredPermissions={[]}>
             <div className="space-y-8">
