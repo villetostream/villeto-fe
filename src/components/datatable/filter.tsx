@@ -1,7 +1,13 @@
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import FormFieldSelect from "../form fields/formFieldSelect";
 import { Button } from "../ui/button";
 import { format } from "date-fns";
@@ -28,7 +34,7 @@ interface FilterProps {
 export function Filter({ filterProps }: { filterProps: FilterProps }) {
   const { title, filterData, onFilter } = filterProps;
   const form = useForm();
-  const { control, handleSubmit, reset } = form
+  const { control, handleSubmit, reset } = form;
   const { toggle, isOpen, close } = useModal();
 
   const onSubmit = (data: Record<string, unknown>) => {
@@ -38,7 +44,7 @@ export function Filter({ filterProps }: { filterProps: FilterProps }) {
     const dateRangeFields = new Set(
       filterData
         .filter((filter) => filter.type === "dateRange")
-        .map((filter) => filter.name)
+        .map((filter) => filter.name),
     );
 
     // Single loop through data entries
@@ -66,17 +72,17 @@ export function Filter({ filterProps }: { filterProps: FilterProps }) {
     });
 
     onFilter(processedData);
-    close()
-
+    close();
   };
-  console.log({ filterData })
   return (
     <ModalComponent
       onOpen={() => {
         toggle();
       }}
       isOpen={isOpen}
-      title={`Filter ${title}`} buttonText={""} icon={FilterIcon}
+      title={`Filter ${title}`}
+      buttonText={""}
+      icon={FilterIcon}
     >
       <Form {...form}>
         <form
@@ -91,7 +97,9 @@ export function Filter({ filterProps }: { filterProps: FilterProps }) {
                   name={filter.name}
                   render={({ field }) => (
                     <Input
-                      placeholder={filter.placeholder || `Enter ${filter.label}`}
+                      placeholder={
+                        filter.placeholder || `Enter ${filter.label}`
+                      }
                       {...field}
                     />
                   )}
@@ -161,9 +169,15 @@ export function Filter({ filterProps }: { filterProps: FilterProps }) {
           <div className="col-span-2 flex justify-end space-x-4 pb-4">
             <Button
               variant={"ghost"}
-              onClick={() => { reset({}); close() }}
+              onClick={() => {
+                reset({});
+                close();
+              }}
               className="bg-gray-200 text-gray-800"
-            > Reset</Button>
+            >
+              {" "}
+              Reset
+            </Button>
             <Button
               variant={"default"}
               type="submit"
@@ -173,7 +187,6 @@ export function Filter({ filterProps }: { filterProps: FilterProps }) {
             </Button>
           </div>
         </form>
-
       </Form>
     </ModalComponent>
   );

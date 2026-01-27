@@ -126,19 +126,38 @@ function writePersonalExpenses(rows: PersonalExpenseRow[]) {
   window.dispatchEvent(new Event("personal-expenses-updated"));
 }
 
-export function ManualExpenseForm() {
+// Helper to format date to YYYY-MM-DD
+const toISODateString = (date: Date | string) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+interface ManualExpenseFormProps {
+  isEditMode?: boolean;
+  reportDetail?: any;
+  reportId?: string;
+}
+
+export function ManualExpenseForm({
+  isEditMode = false,
+  reportDetail,
+  reportId,
+}: ManualExpenseFormProps = {}) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<string[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
-  const reportName = decodeURIComponent(
-    (searchParams.get("name") ?? "") as string,
-  );
-  const reportDate = decodeURIComponent(
-    searchParams.get("date") ?? Date.now().toString(),
-  );
+  const reportName = isEditMode
+    ? reportDetail?.reportTitle || ""
+    : decodeURIComponent((searchParams.get("name") ?? "") as string);
+  const reportDate = isEditMode
+    ? new Date().toDateString()
+    : decodeURIComponent(searchParams.get("date") ?? Date.now().toString());
   const { isOpen: IsSuccess, toggle: successToggle } = useModal();
   const router = useRouter();
   const axios = useAxios();
@@ -200,27 +219,48 @@ export function ManualExpenseForm() {
 
   // Load receipt images and initialize form fields
   useEffect(() => {
-    const storedImages = sessionStorage.getItem("uploadedReceipts");
-    if (storedImages) {
-      const parsedImages = JSON.parse(storedImages);
-      setFiles(parsedImages);
+    if (isEditMode && reportDetail && reportDetail.expenses) {
+      // Load existing expenses for edit mode
+      const existingExpenses = reportDetail.expenses.map((expense: any) => ({
+        title: expense.title || "",
+        vendor: expense.merchantName || "",
+        amount: parseFloat(expense.amount) || 0,
+        transactionDate: new Date(expense.transactionDate),
+        category: expense.categoryName || "",
+        description: expense.description || "",
+        receipt: expense.receiptUrl || "",
+      }));
 
-      const initialExpenses = parsedImages.map(
-        (receipt: string, index: number) => {
-          return {
-            ...defaultExpense,
-            title: "",
-            receipt,
-          };
-        },
-      );
+      // Load receipt images
+      const receiptImages = reportDetail.expenses
+        .map((expense: any) => expense.receiptUrl)
+        .filter((url: string) => url);
+      setFiles(receiptImages);
 
-      if (initialExpenses.length > 0) {
-        form.reset({ expenses: initialExpenses });
+      form.reset({ expenses: existingExpenses });
+    } else {
+      const storedImages = sessionStorage.getItem("uploadedReceipts");
+      if (storedImages) {
+        const parsedImages = JSON.parse(storedImages);
+        setFiles(parsedImages);
+
+        const initialExpenses = parsedImages.map(
+          (receipt: string, index: number) => {
+            return {
+              ...defaultExpense,
+              title: "",
+              receipt,
+            };
+          },
+        );
+
+        if (initialExpenses.length > 0) {
+          form.reset({ expenses: initialExpenses });
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditMode, reportDetail]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -336,6 +376,7 @@ export function ManualExpenseForm() {
   const buildExpensePayload = (
     data: ExpenseFormValues,
     includeReceipts: boolean,
+    status: "draft" | "pending",
   ) => {
     // Validate all categories exist
     const invalidCategories = data.expenses.filter(
@@ -362,6 +403,7 @@ export function ManualExpenseForm() {
         description: string;
         expenseCategoryId: string;
         amount: number;
+        transactionDate: string;
         receiptImage?: string;
       } = {
         title: expense.title,
@@ -369,6 +411,7 @@ export function ManualExpenseForm() {
         description: expense.description || "",
         expenseCategoryId: category.categoryId,
         amount: Number(expense.amount),
+        transactionDate: toISODateString(expense.transactionDate || new Date()),
       };
 
       // Only include receiptImage if we have a receipt AND includeReceipts is true
@@ -388,8 +431,65 @@ export function ManualExpenseForm() {
 
     return {
       reportTitle: reportName || "Expense Report",
+      status,
       expenses: expensesPayload,
     };
+  };
+
+  // Build payload for PATCH request (edit mode) - only send expense data
+  const buildPatchExpensePayload = (
+    data: ExpenseFormValues,
+    includeReceipts: boolean,
+    status: "draft" | "pending",
+  ) => {
+    // Validate all categories exist
+    const invalidCategories = data.expenses.filter(
+      (expense) => !categories.find((cat) => cat.name === expense.category),
+    );
+
+    if (invalidCategories.length > 0) {
+      throw new Error(
+        "Invalid category selected. Please ensure all expenses have valid categories.",
+      );
+    }
+
+    // For PATCH, we only send the first expense data (single expense edit)
+    const expense = data.expenses[0];
+    const category = categories.find((cat) => cat.name === expense.category);
+    if (!category) {
+      throw new Error(`Category not found: ${expense.category}`);
+    }
+
+    // Build base expense object
+    const expenseObj: {
+      title: string;
+      merchantName: string;
+      description: string;
+      expenseCategoryId: string;
+      amount: number;
+      transactionDate: string;
+      receiptImage?: string;
+    } = {
+      title: expense.title,
+      merchantName: expense.vendor,
+      description: expense.description || "",
+      expenseCategoryId: category.categoryId,
+      amount: Number(expense.amount),
+      transactionDate: toISODateString(expense.transactionDate || new Date()),
+    };
+
+    // Only include receiptImage if we have a receipt AND includeReceipts is true
+    if (includeReceipts) {
+      const receiptBase64 = files[0] || expense.receipt || "";
+      const receiptImage = extractBase64(receiptBase64);
+
+      // Only add receiptImage property if it's not empty
+      if (receiptImage && receiptImage.trim() !== "") {
+        expenseObj.receiptImage = receiptImage;
+      }
+    }
+
+    return expenseObj;
   };
 
   const persistToPersonalExpenses = (
@@ -554,7 +654,13 @@ export function ManualExpenseForm() {
     // Build payload with receipts (required for final submission)
     let payload;
     try {
-      payload = buildExpensePayload(data, true);
+      if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+        // Use PATCH payload for editing existing expenses
+        payload = buildPatchExpensePayload(data, true, "pending");
+      } else {
+        // Use POST payload for creating new expenses
+        payload = buildExpensePayload(data, true, "pending");
+      }
     } catch (error: any) {
       toast.error(error.message || "Invalid expense data");
       return;
@@ -565,14 +671,27 @@ export function ManualExpenseForm() {
 
     try {
       setIsSubmitting(true);
-      await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+      
+      if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+        // Use PATCH for editing existing expenses
+        const expenseId = reportDetail.expenses[0].expenseId;
+        const patchUrl = `reports/${reportId}/expenses/${expenseId}`;
+        await axios.patch(patchUrl, payload);
+        toast.success(
+          `Your ${data.expenses.length} expense(s) have been updated successfully.`,
+        );
+      } else {
+        // Use POST for creating new expenses
+        await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+        toast.success(
+          `Your ${data.expenses.length} expense(s) have been submitted successfully.`,
+        );
+      }
 
       // Invalidate React Query cache to refetch personal expenses
-      queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
-
-      toast.success(
-        `Your ${data.expenses.length} expense(s) have been submitted successfully.`,
-      );
+      queryClient.invalidateQueries({
+        queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+      });
 
       form.reset({
         expenses: [
@@ -698,6 +817,11 @@ export function ManualExpenseForm() {
                                       ).toLocaleString()}
                                     </span>
                                   </span>
+                                  {fields.length > 1 && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                      Multiple
+                                    </span>
+                                  )}
                                 </div>
                                 {fields.length > 1 && index != 0 && (
                                   <Button
@@ -718,16 +842,17 @@ export function ManualExpenseForm() {
                             <AccordionContent>
                               <div className="p-0 gap-8 relative flex items-start px-6 justify-between w-full">
                                 <div className="space-y-5 max-w-lg flex flex-col pr-16">
+                                  <SplitExpense
+                                    control={form.control}
+                                    expenseIndex={index}
+                                    totalAmount={amount}
+                                  />
+
                                   <FormFieldInput
                                     control={form.control}
                                     name={`expenses.${index}.title`}
                                     label="Expense Title"
                                     placeholder="Enter a title for this expense"
-                                  />
-                                  <SplitExpense
-                                    control={form.control}
-                                    expenseIndex={index}
-                                    totalAmount={amount}
                                   />
 
                                   <div className="grid grid-cols-2 gap-4">
@@ -866,17 +991,17 @@ export function ManualExpenseForm() {
                               </div>
                             )}
 
+                            <SplitExpense
+                              control={form.control}
+                              expenseIndex={index}
+                              totalAmount={amount}
+                            />
+
                             <FormFieldInput
                               control={form.control}
                               name={`expenses.${index}.title`}
                               label="Expense Title"
                               placeholder="Enter a title for this expense"
-                            />
-
-                            <SplitExpense
-                              control={form.control}
-                              expenseIndex={index}
-                              totalAmount={amount}
                             />
 
                             <div className="grid grid-cols-2 gap-4">
@@ -1024,18 +1149,40 @@ export function ManualExpenseForm() {
                         setIsSubmitting(true);
 
                         // Build payload WITHOUT receipts (for draft)
-                        const payload = buildExpensePayload(
-                          validData as ExpenseFormValues,
-                          false,
-                        );
+                        let payload;
+                        if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+                          // Use PATCH payload for editing existing expenses
+                          payload = buildPatchExpensePayload(
+                            validData as ExpenseFormValues,
+                            false,
+                            "draft",
+                          );
+                        } else {
+                          // Use POST payload for creating new expenses
+                          payload = buildExpensePayload(
+                            validData as ExpenseFormValues,
+                            false,
+                            "draft",
+                          );
+                        }
 
                         console.log("Saving draft payload:", payload);
 
                         // Send to backend
-                        await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+                        if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+                          // Use PATCH for editing existing expenses
+                          const expenseId = reportDetail.expenses[0].expenseId;
+                          const patchUrl = `reports/${reportId}/expenses/${expenseId}`;
+                          await axios.patch(patchUrl, payload);
+                        } else {
+                          // Use POST for creating new expenses
+                          await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+                        }
 
                         // Invalidate React Query cache to refetch personal expenses
-                        queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
+                        queryClient.invalidateQueries({
+                          queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+                        });
 
                         // Also save to localStorage for local display
                         persistToPersonalExpenses(

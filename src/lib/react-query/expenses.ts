@@ -1,3 +1,4 @@
+import { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_KEYS } from "@/lib/constants/apis";
 import { useAxios } from "@/hooks/useAxios";
@@ -28,6 +29,7 @@ export interface PersonalExpenseReport {
     deletedAt: string | null;
     reportId: string;
     reportTitle: string;
+    status?: PersonalExpenseStatus;
   };
   costCenter: string;
   totalAmount: string;
@@ -54,6 +56,7 @@ export interface PersonalExpenseDetailResponse {
   deletedAt: string | null;
   reportId: string;
   reportTitle: string;
+  status?: PersonalExpenseStatus;
   expenses: ExpenseItem[];
 }
 

@@ -139,6 +139,10 @@ export function UserSection() {
   const isPersonalExpenseDetailPage = pathname.match(
     /^\/expenses\/personal\/[a-f0-9\-]+$/i,
   );
+  // Personal expense edit page
+  const isPersonalExpenseEditPage = pathname.match(
+    /^\/expenses\/personal\/[a-f0-9\-]+\/edit$/i,
+  );
   const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   // Extract reportId from personal expense detail page (UUID format)
@@ -154,6 +158,7 @@ export function UserSection() {
         isAuditTrailPage ||
         isSplitExpensePage ||
         isPersonalExpenseDetailPage ||
+        isPersonalExpenseEditPage ||
         isUploadReceiptPage ||
         isNewExpensePage ||
         isBatchExpensePage ? (
@@ -194,7 +199,7 @@ export function UserSection() {
                 );
                 return;
               }
-              if (isPersonalExpenseDetailPage) {
+              if (isPersonalExpenseDetailPage || isPersonalExpenseEditPage) {
                 router.push("/expenses?tab=personal-expenses");
                 return;
               }

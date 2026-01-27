@@ -1,5 +1,8 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
 import type { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
 
 interface TimelineEntry {
@@ -12,103 +15,135 @@ interface TimelineEntry {
 
 interface ExpenseTimelineProps {
   status: PersonalExpenseStatus;
+  submissionDate: string;
 }
 
-const getTimelineEntries = (status: PersonalExpenseStatus): TimelineEntry[] => {
-  const baseEntries: TimelineEntry[] = [
-    {
-      stage: "Created",
-      user: "By Goodness Swift",
-      timestamp: "09-10-2025 07:07 PM",
-      color: "bg-gray-300",
-      isActive: true,
-    },
-  ];
+interface User {
+  firstName: string;
+  lastName: string;
+}
+
+const getTimelineEntries = (
+  status: PersonalExpenseStatus,
+  user: User | null,
+  submissionDate: string,
+): TimelineEntry[] => {
+  const userName = user ? `${user.firstName} ${user.lastName}` : "...";
 
   switch (status) {
     case "draft":
-      return baseEntries;
-
-    case "pending":
+      // Draft timeline - only shows creation
       return [
-        ...baseEntries,
         {
-          stage: "Submitted for Approval",
-          user: "By Goodness Swift",
-          timestamp: "09-10-2025 07:30 PM",
-          color: "bg-orange-500",
-          isActive: true,
-        },
-        {
-          stage: "Under Review",
-          user: "By Larry Ola (Manager)",
-          timestamp: "10-10-2025 07:00 AM",
-          color: "bg-yellow-500",
+          stage: "Created",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-gray-300",
           isActive: true,
         },
       ];
 
-    case "approved":
+    case "pending":
+      // Pending timeline - created and submitted
       return [
-        ...baseEntries,
+        {
+          stage: "Created",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-gray-300",
+          isActive: true,
+        },
         {
           stage: "Submitted for Approval",
-          user: "By Goodness Swift",
-          timestamp: "09-10-2025 07:30 PM",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
           color: "bg-orange-500",
           isActive: true,
         },
         {
           stage: "Under Review",
-          user: "By Larry Ola (Manager)",
-          timestamp: "10-10-2025 07:00 AM",
+          user: "Awaiting Manager Review",
+          timestamp: "Pending",
+          color: "bg-yellow-500",
+          isActive: false,
+        },
+      ];
+
+    case "approved":
+      // Approved timeline - full approval chain
+      return [
+        {
+          stage: "Created",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-gray-300",
+          isActive: true,
+        },
+        {
+          stage: "Submitted for Approval",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-orange-500",
+          isActive: true,
+        },
+        {
+          stage: "Under Review",
+          user: "Manager Review Completed",
+          timestamp: "Pending",
           color: "bg-yellow-500",
           isActive: true,
         },
         {
           stage: "Expense Approved",
-          user: "By Pelumi Yemi (CO)",
-          timestamp: "12-10-2025 05:00 PM",
+          user: "By Controlling Officer",
+          timestamp: "Pending",
           color: "bg-green-600",
           isActive: true,
         },
       ];
 
     case "paid":
+      // Paid timeline - complete workflow
       return [
-        ...baseEntries,
+        {
+          stage: "Created",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-gray-300",
+          isActive: true,
+        },
         {
           stage: "Submitted for Approval",
-          user: "By Goodness Swift",
-          timestamp: "09-10-2025 07:30 PM",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
           color: "bg-orange-500",
           isActive: true,
         },
         {
           stage: "Under Review",
-          user: "By Larry Ola (Manager)",
-          timestamp: "10-10-2025 07:00 AM",
+          user: "Manager Review Completed",
+          timestamp: "Pending",
           color: "bg-yellow-500",
           isActive: true,
         },
         {
           stage: "Expense Approved",
-          user: "By Pelumi Yemi (CO)",
-          timestamp: "12-10-2025 05:00 PM",
+          user: "By Controlling Officer",
+          timestamp: "Pending",
           color: "bg-green-600",
           isActive: true,
         },
         {
           stage: "Reimbursement Processing",
-          user: "By Elizabeth Ola (Finance Head)",
-          timestamp: "12-10-2025 07:00 PM",
+          user: "By Finance Department",
+          timestamp: "Pending",
           color: "bg-indigo-500",
           isActive: true,
         },
         {
           stage: "Paid",
-          user: "By Finance",
-          timestamp: "13-10-2025 07:20 AM",
+          user: "Payment Completed",
+          timestamp: "Pending",
           color: "bg-[#38B2AC]",
           isActive: true,
         },
@@ -116,42 +151,74 @@ const getTimelineEntries = (status: PersonalExpenseStatus): TimelineEntry[] => {
 
     case "rejected":
     case "declined":
+      // Rejected/Declined timeline - stops at rejection
       return [
-        ...baseEntries,
+        {
+          stage: "Created",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
+          color: "bg-gray-300",
+          isActive: true,
+        },
         {
           stage: "Submitted for Approval",
-          user: "By Goodness Swift",
-          timestamp: "09-10-2025 07:30 PM",
+          user: `By ${userName}`,
+          timestamp: submissionDate,
           color: "bg-orange-500",
           isActive: true,
         },
         {
           stage: "Under Review",
-          user: "By Larry Ola (Manager)",
-          timestamp: "10-10-2025 07:00 AM",
+          user: "Manager Review Completed",
+          timestamp: "Pending",
           color: "bg-yellow-500",
           isActive: true,
         },
         {
           stage: "Expense Rejected",
-          user: "By Pelumi Yemi (CO)",
-          timestamp: "12-10-2025 05:00 PM",
+          user: "By Controlling Officer",
+          timestamp: "Pending",
           color: "bg-red-500",
           isActive: true,
         },
       ];
-
-    default:
-      return baseEntries;
   }
 };
 
-export function ExpenseTimeline({ status }: ExpenseTimelineProps) {
-  const entries = getTimelineEntries(status);
+export function ExpenseTimeline({
+  status,
+  submissionDate,
+}: ExpenseTimelineProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const axios = useAxios();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<{
+          data: User;
+        }>(API_KEYS.USER.ME);
+        setUser(response.data.data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [axios]);
+
+  const entries = getTimelineEntries(status, user, submissionDate);
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Expense Timeline</h2>
+      <h2 className="text-lg font-semibold text-foreground">
+        Expense Timeline
+      </h2>
       <div className="relative">
         {/* Vertical Line */}
         <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />

@@ -14,9 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import FormFieldInput from "../form fields/formFieldInput";
 import { Form } from "../ui/form";
-import FormFieldCalendar from "../form fields/FormFieldCalendar";
 import { useRouter } from "next/navigation";
-import { getDefaultClassNames } from "react-day-picker";
 
 // Zod schema for form validation
 const reportSchema = z.object({
@@ -24,9 +22,6 @@ const reportSchema = z.object({
     .string()
     .min(1, "Report name is required")
     .max(100, "Report name is too long"),
-  reportDate: z.date().refine((val) => !!val, {
-    message: "Report date is required",
-  }),
 });
 
 type ReportFormData = z.infer<typeof reportSchema>;
@@ -45,21 +40,9 @@ const AddNewReport = ({
   // Get preserved values from sessionStorage
   const getPreservedValues = () => {
     if (typeof window === "undefined")
-      return { reportName: "", reportDate: undefined };
+      return { reportName: "" };
     const reportName = sessionStorage.getItem("pendingReportName") || "";
-    const reportDateStr = sessionStorage.getItem("pendingReportDate");
-    let reportDate: Date | undefined = undefined;
-    if (reportDateStr) {
-      try {
-        reportDate = new Date(reportDateStr);
-        if (isNaN(reportDate.getTime())) {
-          reportDate = undefined;
-        }
-      } catch {
-        reportDate = undefined;
-      }
-    }
-    return { reportName, reportDate };
+    return { reportName };
   };
 
   // Initialize react-hook-form with zod resolver
@@ -68,8 +51,6 @@ const AddNewReport = ({
     mode: "onChange",
     defaultValues: {
       reportName: "",
-      // Start empty to match the UI/validation expectation.
-      reportDate: undefined as unknown as Date,
     },
   });
 
@@ -77,12 +58,9 @@ const AddNewReport = ({
   React.useEffect(() => {
     if (isOpen) {
       formHook.reset();
-      const { reportName, reportDate } = getPreservedValues();
+      const { reportName } = getPreservedValues();
       if (reportName) {
         formHook.setValue("reportName", reportName);
-      }
-      if (reportDate) {
-        formHook.setValue("reportDate", reportDate);
       }
       // Clear sessionStorage after restoring
       if (typeof window !== "undefined") {
@@ -106,7 +84,7 @@ const AddNewReport = ({
     router.push(
       `/expenses/new-expense/upload?name=${encodeURIComponent(
         data.reportName,
-      )}&date=${encodeURIComponent(data.reportDate.toDateString())}`,
+      )}&date=${encodeURIComponent(new Date().toDateString())}`,
     );
     close();
     reset();
@@ -135,11 +113,6 @@ const AddNewReport = ({
                   name="reportName"
                   placeholder="Enter name of report"
                   control={control}
-                />
-                <FormFieldCalendar
-                  control={control}
-                  label="Report Date"
-                  name="reportDate"
                 />
               </div>
 

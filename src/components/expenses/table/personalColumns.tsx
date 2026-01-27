@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Trash } from "lucide-react";
+import { Eye, MoreHorizontal, Trash, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export type PersonalExpenseStatus =
@@ -46,14 +46,22 @@ export type PersonalExpenseRow = {
   }; // Full API response structure for reference
 };
 
-function ReceiptCell({ hasReceipt }: { hasReceipt: boolean }) {
-  return <span className="text-sm">{hasReceipt ? "Yes" : "No"}</span>;
-}
-
 function ActionsCell({ row }: { row: any }) {
   const status = row.getValue("status") as PersonalExpenseStatus;
   const expense = row.original as PersonalExpenseRow;
   const router = useRouter();
+
+  const handleEdit = () => {
+    // Navigate to edit page with reportId
+    // The edit page will fetch the report details and populate the form
+    router.push(`/expenses/personal/${expense.reportId}/edit`);
+  };
+
+  const handleDelete = () => {
+    // Delete functionality - endpoint not yet created
+    console.log("Delete", expense.reportId);
+    // TODO: Implement delete when endpoint is available
+  };
 
   return (
     <DropdownMenu>
@@ -70,12 +78,16 @@ function ActionsCell({ row }: { row: any }) {
           View Details
         </DropdownMenuItem>
         {status === "draft" && (
-          <DropdownMenuItem
-            onClick={() => console.log("Delete", expense.reportId)}
-          >
-            <Trash className="size-5" />
-            Delete
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem onClick={handleEdit}>
+              <Edit className="size-5" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDelete}>
+              <Trash className="size-5" />
+              Delete
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -93,13 +105,6 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
       <span className="font-semibold">
         ${Number(row.getValue("amount") ?? 0).toLocaleString()}
       </span>
-    ),
-  },
-  {
-    accessorKey: "hasReceipt",
-    header: "RECEIPT",
-    cell: ({ row }) => (
-      <ReceiptCell hasReceipt={Boolean(row.getValue("hasReceipt"))} />
     ),
   },
   {

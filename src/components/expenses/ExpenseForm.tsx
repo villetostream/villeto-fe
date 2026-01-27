@@ -567,6 +567,11 @@ export function ExpenseForm() {
                                     ).toLocaleString()}
                                   </span>
                                 </span>
+                                {fields.length > 1 && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                    Multiple
+                                  </span>
+                                )}
                               </div>
                               {fields.length > 1 && index != 0 && (
                                 <Button
@@ -587,16 +592,17 @@ export function ExpenseForm() {
                           <AccordionContent>
                             <div className="p-0 gap-8 relative flex items-start px-6 justify-between w-full">
                               <div className="space-y-5 max-w-lg flex flex-col pr-16">
+                                <SplitExpense
+                                  control={form.control}
+                                  expenseIndex={index}
+                                  totalAmount={amount}
+                                />
+
                                 <FormFieldInput
                                   control={form.control}
                                   name={`expenses.${index}.title`}
                                   label="Expense Title"
                                   placeholder="Enter a title for this expense"
-                                />
-                                <SplitExpense
-                                  control={form.control}
-                                  expenseIndex={index}
-                                  totalAmount={amount}
                                 />
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -669,7 +675,7 @@ export function ExpenseForm() {
                                         No receipt found for this item.
                                       </div>
                                       <div className="text-muted-foreground">
-                                        You can’t submit without a receipt.
+                                        You can't submit without a receipt.
                                         Upload one to continue.
                                       </div>
                                       <input
@@ -737,17 +743,17 @@ export function ExpenseForm() {
                             </div>
                           )}
 
+                          <SplitExpense
+                            control={form.control}
+                            expenseIndex={index}
+                            totalAmount={amount}
+                          />
+
                           <FormFieldInput
                             control={form.control}
                             name={`expenses.${index}.title`}
                             label="Expense Title"
                             placeholder="Enter a title for this expense"
-                          />
-
-                          <SplitExpense
-                            control={form.control}
-                            expenseIndex={index}
-                            totalAmount={amount}
                           />
 
                           <div className="grid grid-cols-2 gap-4">
@@ -820,7 +826,7 @@ export function ExpenseForm() {
                                   No receipt found for this item.
                                 </div>
                                 <div className="text-muted-foreground">
-                                  You can’t submit without a receipt. Upload one
+                                  You can't submit without a receipt. Upload one
                                   to continue.
                                 </div>
                                 <input
