@@ -24,6 +24,7 @@ export const API_KEYS = {
   USER: {
     USERS: "users/",
     INVITEUSER: "users/invite",
+    ME: "users/me",
   },
   COMPANY: {
     BULK_IMPORT: "companies/bulk/import",

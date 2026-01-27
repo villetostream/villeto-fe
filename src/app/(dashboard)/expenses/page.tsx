@@ -469,7 +469,7 @@ export default function Reimbursements() {
               : "Uncategorized", // Use costCenter if available, otherwise Uncategorized
           amount: parseFloat(report.totalAmount),
           hasReceipt: false, // Assume no receipt for now
-          status: "pending" as const, // Default status from API (reports don't have individual status, they're all pending until reviewed)
+          status: report.restResult.status || ("pending" as const), // Default status from API (reports don't have individual status, they're all pending until reviewed)
           reportName: report.restResult.reportTitle,
           description: undefined,
           reportId: report.restResult.reportId, // Use reportId for navigation to detail page

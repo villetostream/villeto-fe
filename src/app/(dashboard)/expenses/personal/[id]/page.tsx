@@ -8,8 +8,16 @@ import { ExpenseTimeline } from "@/components/expenses/personal/ExpenseTimeline"
 import { CONote } from "@/components/expenses/personal/CONote";
 import type { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
 import Link from "next/link";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { usePersonalExpenseDetail, type ExpenseItem } from "@/lib/react-query/expenses";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  usePersonalExpenseDetail,
+  type ExpenseItem,
+} from "@/lib/react-query/expenses";
 import { ExpenseDetailSkeleton } from "@/components/expenses/ExpenseDetailSkeleton";
 
 const getStatusBadgeVariant = (status: PersonalExpenseStatus) => {
@@ -67,7 +75,11 @@ export default function PersonalExpenseDetailPage() {
   const reportId = params.id as string;
 
   // Fetch expense detail from API using React Query
-  const { data: expenseDetail, isLoading, error } = usePersonalExpenseDetail(reportId);
+  const {
+    data: expenseDetail,
+    isLoading,
+    error,
+  } = usePersonalExpenseDetail(reportId);
 
   if (isLoading) {
     return <ExpenseDetailSkeleton />;
@@ -81,7 +93,8 @@ export default function PersonalExpenseDetailPage() {
             Expense not found
           </h1>
           <p className="text-muted-foreground mb-4">
-            The expense you&apos;re looking for doesn&apos;t exist or failed to load.
+            The expense you&apos;re looking for doesn&apos;t exist or failed to
+            load.
           </p>
         </div>
       </div>
@@ -108,11 +121,16 @@ export default function PersonalExpenseDetailPage() {
     );
   }
 
-  const totalAmount = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+  const totalAmount = expenses.reduce(
+    (sum, exp) => sum + parseFloat(exp.amount),
+    0,
+  );
   const isMultipleExpenses = expenses.length > 1;
 
-  // Get the first expense status for the badge (use status from the first expense in the array)
-  const firstExpenseStatus = (expenses[0]?.status || "pending") as PersonalExpenseStatus;
+  // Get the overall report status from the detail response, with fallbacks
+  const reportStatus = (expenseDetail.status ||
+    expenses[0]?.status ||
+    "draft") as PersonalExpenseStatus;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-6">
@@ -120,29 +138,35 @@ export default function PersonalExpenseDetailPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground mb-4">
-            {isMultipleExpenses ? "Multiple Expenses Details" : "Expense Details"}
+            {isMultipleExpenses
+              ? "Multiple Expenses Details"
+              : "Expense Details"}
           </h1>
 
           {/* Report Info */}
           <div className="flex items-center gap-6 mb-4">
             <div>
-              <span className="text-sm text-muted-foreground">{reportName}</span>
+              <span className="text-sm text-muted-foreground">
+                {reportName}
+              </span>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">{reportDate}</span>
+              <span className="text-sm text-muted-foreground">
+                {reportDate}
+              </span>
             </div>
             <div>
               <Badge
-                variant={getStatusBadgeVariant(firstExpenseStatus)}
-                className={getStatusColor(firstExpenseStatus)}
+                variant={getStatusBadgeVariant(reportStatus)}
+                className={getStatusColor(reportStatus)}
               >
-                {getStatusIcon(firstExpenseStatus)}
+                {getStatusIcon(reportStatus)}
                 <span className="ml-1 capitalize">
-                  {firstExpenseStatus === "declined"
+                  {reportStatus === "declined"
                     ? "Rejected"
-                    : firstExpenseStatus === "paid"
+                    : reportStatus === "paid"
                       ? "Paid Out"
-                      : firstExpenseStatus}
+                      : reportStatus}
                 </span>
               </Badge>
             </div>
@@ -164,7 +188,11 @@ export default function PersonalExpenseDetailPage() {
           <div className="text-right">
             <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
             <p className="text-2xl font-semibold text-foreground">
-              ${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              $
+              {totalAmount.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
         )}
@@ -174,23 +202,38 @@ export default function PersonalExpenseDetailPage() {
       {isMultipleExpenses ? (
         /* Accordion for Multiple Expenses */
         <div className="space-y-6">
-          <Accordion type="multiple" defaultValue={["expense-0"]} className="w-full">
+          <Accordion
+            type="multiple"
+            defaultValue={["expense-0"]}
+            className="w-full"
+          >
             {expenses.map((expense, index) => (
               <AccordionItem key={expense.expenseId} value={`expense-${index}`}>
                 <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
                   <div className="flex w-full justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <span className="font-medium">Expense {index + 1}</span>
+                      <span className="font-medium">
+                        {expense.title || `Expense ${index + 1}`}
+                      </span>
                       <span className="text-sm text-muted-foreground flex items-center gap-3">
                         <span>{expense.merchantName}</span>
                         <span>•</span>
-                        <span>${parseFloat(expense.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span>
+                          $
+                          {parseFloat(expense.amount).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </span>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ExpenseDetailContent expense={expense} />
+                  <ExpenseDetailContent
+                    expense={expense}
+                    reportStatus={reportStatus}
+                  />
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -198,16 +241,23 @@ export default function PersonalExpenseDetailPage() {
         </div>
       ) : (
         /* Single Expense View */
-        <ExpenseDetailContent expense={expenses[0]} />
+        <ExpenseDetailContent
+          expense={expenses[0]}
+          reportStatus={reportStatus}
+        />
       )}
     </div>
   );
 }
 
 // Component to render individual expense details
-function ExpenseDetailContent({ expense }: { expense: ExpenseItem }) {
-  const expenseStatus = (expense.status || "pending") as PersonalExpenseStatus;
-
+function ExpenseDetailContent({
+  expense,
+  reportStatus,
+}: {
+  expense: ExpenseItem;
+  reportStatus: PersonalExpenseStatus;
+}) {
   return (
     <div className="flex gap-8 items-start">
       {/* Left Side - Expense Details */}
@@ -217,36 +267,55 @@ function ExpenseDetailContent({ expense }: { expense: ExpenseItem }) {
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-1">Amount</p>
             <p className="text-base font-semibold text-foreground">
-              ${parseFloat(expense.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              $
+              {parseFloat(expense.amount).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-1">Merchant</p>
-            <p className="text-base text-foreground">{expense.merchantName || "N/A"}</p>
+            <p className="text-base text-foreground">
+              {expense.merchantName || "N/A"}
+            </p>
           </div>
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-1">Category</p>
-            <p className="text-base text-foreground">{expense.categoryName || "Uncategorized"}</p>
+            <p className="text-base text-foreground">
+              {expense.categoryName || "Uncategorized"}
+            </p>
           </div>
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Transaction Date</p>
-            <p className="text-base text-foreground">{formatDate(expense.createdAt)}</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              Transaction Date
+            </p>
+            <p className="text-base text-foreground">
+              {formatDate(expense.createdAt)}
+            </p>
           </div>
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4 col-span-2">
             <p className="text-sm text-muted-foreground mb-1">Title</p>
-            <p className="text-base text-foreground">{expense.title || "No title provided"}</p>
+            <p className="text-base text-foreground">
+              {expense.title || "No title provided"}
+            </p>
           </div>
           <div className="bg-[#7FE3DB]/10 rounded-lg p-4 col-span-2">
             <p className="text-sm text-muted-foreground mb-1">Description</p>
-            <p className="text-base text-foreground">{expense.description || "No description provided"}</p>
+            <p className="text-base text-foreground">
+              {expense.description || "No description provided"}
+            </p>
           </div>
         </div>
 
         {/* Expense Timeline */}
-        <ExpenseTimeline status={expenseStatus} />
+        <ExpenseTimeline
+          status={reportStatus}
+          submissionDate={formatDate(expense.createdAt)}
+        />
 
-        {/* CO's Note */}
-        <CONote status={expenseStatus} />
+        {/* CO's Note - Only show if not draft */}
+        {reportStatus !== "draft" && <CONote status={reportStatus} />}
       </div>
 
       {/* Right Side - Receipt */}

@@ -17,13 +17,18 @@ const getNoteContent = (status: PersonalExpenseStatus): string => {
     case "pending":
       return "Expense is currently under review by the management team.";
     case "draft":
-      return "This expense has been saved as a draft and has not been submitted for review yet.";
+      return "No note available.";
     default:
       return "No note available.";
   }
 };
 
 export function CONote({ status }: CONoteProps) {
+  // Don't render CO's Note for draft status
+  if (status === "draft") {
+    return null;
+  }
+
   const noteContent = getNoteContent(status);
 
   return (
