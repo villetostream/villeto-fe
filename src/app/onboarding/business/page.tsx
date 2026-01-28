@@ -168,9 +168,8 @@ export default function Business() {
             control={form.control}
             name="websiteUrl"
             label="Website"
-            placeholder="Enter website link "
+            placeholder="e.g., yourbusiness.com"
             type="text"
-            description="start with 'https://'"
           />
 
           {/* <FormField control={form.control} name="password"
