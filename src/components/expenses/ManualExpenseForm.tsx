@@ -139,12 +139,14 @@ interface ManualExpenseFormProps {
   isEditMode?: boolean;
   reportDetail?: any;
   reportId?: string;
+  onDeleteExpense?: (expenseId: string, title: string) => void;
 }
 
 export function ManualExpenseForm({
   isEditMode = false,
   reportDetail,
   reportId,
+  onDeleteExpense,
 }: ManualExpenseFormProps = {}) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -343,6 +345,15 @@ export function ManualExpenseForm({
       remove(index);
     } else {
       toast.error("You must have at least one expense item");
+    }
+  };
+
+  const handleRemoveOrDelete = (index: number) => {
+    if (isEditMode && onDeleteExpense && reportDetail?.expenses?.[index]) {
+      const expense = reportDetail.expenses[index];
+      onDeleteExpense(expense.expenseId, expense.title);
+    } else {
+      removeExpense(index);
     }
   };
 
@@ -671,7 +682,7 @@ export function ManualExpenseForm({
 
     try {
       setIsSubmitting(true);
-      
+
       if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
         // Use PATCH for editing existing expenses
         const expenseId = reportDetail.expenses[0].expenseId;
@@ -817,11 +828,6 @@ export function ManualExpenseForm({
                                       ).toLocaleString()}
                                     </span>
                                   </span>
-                                  {fields.length > 1 && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                      Multiple
-                                    </span>
-                                  )}
                                 </div>
                                 {fields.length > 1 && index != 0 && (
                                   <Button
@@ -831,7 +837,7 @@ export function ManualExpenseForm({
                                     className="hover:bg-destructive/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      removeExpense(index);
+                                      handleRemoveOrDelete(index);
                                     }}
                                   >
                                     <Trash className="h-4 w-4 text-destructive" />
@@ -984,7 +990,7 @@ export function ManualExpenseForm({
                                   variant="ghost"
                                   size="sm"
                                   className="hover:bg-destructive/10"
-                                  onClick={() => removeExpense(index)}
+                                  onClick={() => handleRemoveOrDelete(index)}
                                 >
                                   <Trash className="h-4 w-4 text-destructive" />
                                 </Button>
@@ -1150,7 +1156,11 @@ export function ManualExpenseForm({
 
                         // Build payload WITHOUT receipts (for draft)
                         let payload;
-                        if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+                        if (
+                          isEditMode &&
+                          reportId &&
+                          reportDetail?.expenses?.[0]?.expenseId
+                        ) {
                           // Use PATCH payload for editing existing expenses
                           payload = buildPatchExpensePayload(
                             validData as ExpenseFormValues,
@@ -1169,7 +1179,11 @@ export function ManualExpenseForm({
                         console.log("Saving draft payload:", payload);
 
                         // Send to backend
-                        if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
+                        if (
+                          isEditMode &&
+                          reportId &&
+                          reportDetail?.expenses?.[0]?.expenseId
+                        ) {
                           // Use PATCH for editing existing expenses
                           const expenseId = reportDetail.expenses[0].expenseId;
                           const patchUrl = `reports/${reportId}/expenses/${expenseId}`;

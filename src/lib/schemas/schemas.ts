@@ -18,6 +18,10 @@ export const registrationSchema = z.object({
 });
 
 // Custom HTTP URL validator with optional protocol but required valid domain
+const stripProtocol = (url: string) => {
+  return url.replace(/^(https?:\/\/)?(www\.)?/, "");
+};
+
 export const customHttpUrlSchema = z
   .string()
   .optional()
@@ -31,14 +35,9 @@ export const customHttpUrlSchema = z
     if (url === "https://" || url === "http://") return false;
 
     try {
-      // Try to parse as-is first (might have protocol)
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(url);
-      } catch {
-        // If that fails, try with https:// prefix
-        parsedUrl = new URL(`https://${url}`);
-      }
+      // Add a protocol if missing to validate the URL
+      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+      const parsedUrl = new URL(fullUrl);
 
       const hostname = parsedUrl.hostname;
 
@@ -66,15 +65,7 @@ export const customHttpUrlSchema = z
   }, "Please enter a valid URL (e.g., example.com, www.example.com)")
   .transform((url) => {
     if (!url) return url;
-
-    try {
-      // Try to parse as-is first
-      new URL(url);
-      return url; // Already has protocol
-    } catch {
-      // Add https:// protocol if missing
-      return `https://${url}`;
-    }
+    return stripProtocol(url);
   });
 
 // Updated onboarding business schema using the custom validator
