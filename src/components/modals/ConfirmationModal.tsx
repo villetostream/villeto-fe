@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,8 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  // allow JSX so parts can be styled
+  description: React.ReactNode;
 }
 
 export default function ConfirmationModal({

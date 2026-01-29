@@ -35,5 +35,8 @@ export const API_KEYS = {
     REPORTS: "reports/manual",
     PERSONAL_EXPENSES: "reports",
     PERSONAL_EXPENSES_DETAIL: (id: number) => `reports/${id}`,
+    DELETE_REPORT: (id: string) => `reports/${id}` as const,
+    DELETE_EXPENSE: (reportId: string, expenseId: string) =>
+      `reports/${reportId}/expenses/${expenseId}` as const,
   },
 } as const;

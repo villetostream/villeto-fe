@@ -412,11 +412,23 @@ export default function Reimbursements() {
     setOuterTab(tabFromUrl);
   }, [searchParams]);
 
+  // Read initial page from URL for personal expenses (so back from edit/view/delete restores page)
+  const pageParam = searchParams.get("page");
+  const initialPage =
+    pageParam && /^\d+$/.test(pageParam)
+      ? Math.max(1, parseInt(pageParam, 10))
+      : 1;
+
   // Update URL when tab changes (but not on initial mount to avoid conflicts)
   const handleTabChange = (value: string) => {
     setOuterTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
+    if (value === "personal-expenses" && page > 1) {
+      params.set("page", String(page));
+    } else if (value !== "personal-expenses") {
+      params.delete("page");
+    }
     router.replace(`/expenses?${params.toString()}`, { scroll: false });
   };
 
@@ -427,8 +439,24 @@ export default function Reimbursements() {
   const [personalExpenses, setPersonalExpenses] = useState<
     PersonalExpenseRow[]
   >([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [limit, setLimit] = useState(10);
+
+  // Persist current tab and page so back from edit/view/delete can restore
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem("expensesReturnTab", outerTab);
+    sessionStorage.setItem("expensesReturnPage", String(page));
+  }, [outerTab, page]);
+
+  // Sync page with URL when searchParams.page changes (e.g. user navigated back with ?page=2)
+  useEffect(() => {
+    const p = searchParams.get("page");
+    if (p && /^\d+$/.test(p)) {
+      const num = parseInt(p, 10);
+      if (num >= 1 && num !== page) setPage(num);
+    }
+  }, [searchParams]);
 
   // Fetch personal expenses using React Query
   const { data: personalExpensesData, isLoading: isLoadingPersonalExpenses } =
