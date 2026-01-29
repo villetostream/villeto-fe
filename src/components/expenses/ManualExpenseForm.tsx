@@ -721,7 +721,10 @@ export function ManualExpenseForm({
       successToggle();
       setUploadedFiles([]);
       sessionStorage.removeItem("uploadedReceipts");
-      router.push("/expenses?tab=personal-expenses");
+      const returnTab =
+        sessionStorage.getItem("expensesReturnTab") || "personal-expenses";
+      const returnPage = sessionStorage.getItem("expensesReturnPage") || "1";
+      router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
     } catch (error: any) {
       console.error("Error submitting expenses:", error);
       console.error("Error response:", error?.response?.data);
@@ -1191,6 +1194,10 @@ export function ManualExpenseForm({
                         } else {
                           // Use POST for creating new expenses
                           await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
+                          persistToPersonalExpenses(
+                            values as ExpenseFormValues,
+                            "draft",
+                          );
                         }
 
                         // Invalidate React Query cache to refetch personal expenses
@@ -1198,15 +1205,16 @@ export function ManualExpenseForm({
                           queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
                         });
 
-                        // Also save to localStorage for local display
-                        persistToPersonalExpenses(
-                          validData as ExpenseFormValues,
-                          "draft",
-                        );
-
                         toast.success("Saved as draft.");
                         sessionStorage.removeItem("uploadedReceipts");
-                        router.push("/expenses?tab=personal-expenses");
+                        const returnTab =
+                          sessionStorage.getItem("expensesReturnTab") ||
+                          "personal-expenses";
+                        const returnPage =
+                          sessionStorage.getItem("expensesReturnPage") || "1";
+                        router.push(
+                          `/expenses?tab=${returnTab}&page=${returnPage}`,
+                        );
                       } catch (error: any) {
                         console.error("Error saving draft:", error);
                         const errorMessage =

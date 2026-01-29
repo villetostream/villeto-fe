@@ -58,9 +58,7 @@ function ActionsCell({ row }: { row: any }) {
   };
 
   const handleDelete = () => {
-    // Delete functionality - endpoint not yet created
-    console.log("Delete", expense.reportId);
-    // TODO: Implement delete when endpoint is available
+    router.push(`/expenses/personal/${expense.reportId}/delete`);
   };
 
   return (

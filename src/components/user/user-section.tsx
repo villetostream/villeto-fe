@@ -143,10 +143,16 @@ export function UserSection() {
   const isPersonalExpenseEditPage = pathname.match(
     /^\/expenses\/personal\/[a-f0-9\-]+\/edit$/i,
   );
+  // Personal expense delete page
+  const isPersonalExpenseDeletePage = pathname.match(
+    /^\/expenses\/personal\/[a-f0-9\-]+\/delete$/i,
+  );
   const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   // Extract reportId from personal expense detail page (UUID format)
-  const reportIdFromPath = pathname.match(/\/expenses\/personal\/([a-f0-9\-]+)$/i)?.[1];
+  const reportIdFromPath = pathname.match(
+    /\/expenses\/personal\/([a-f0-9\-]+)$/i,
+  )?.[1];
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
   const isNewExpensePage = pathname === "/expenses/new-expense";
@@ -157,6 +163,7 @@ export function UserSection() {
         {isExpenseDetailPage ||
         isAuditTrailPage ||
         isSplitExpensePage ||
+        isPersonalExpenseDeletePage ||
         isPersonalExpenseDetailPage ||
         isPersonalExpenseEditPage ||
         isUploadReceiptPage ||
@@ -199,8 +206,17 @@ export function UserSection() {
                 );
                 return;
               }
-              if (isPersonalExpenseDetailPage || isPersonalExpenseEditPage) {
-                router.push("/expenses?tab=personal-expenses");
+              if (
+                isPersonalExpenseDetailPage ||
+                isPersonalExpenseEditPage ||
+                isPersonalExpenseDeletePage
+              ) {
+                const returnTab =
+                  sessionStorage.getItem("expensesReturnTab") ||
+                  "personal-expenses";
+                const returnPage =
+                  sessionStorage.getItem("expensesReturnPage") || "1";
+                router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
                 return;
               }
               if (isBatchExpensePage) {
