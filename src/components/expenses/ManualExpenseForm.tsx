@@ -126,13 +126,12 @@ function writePersonalExpenses(rows: PersonalExpenseRow[]) {
   window.dispatchEvent(new Event("personal-expenses-updated"));
 }
 
-// Helper to format date to YYYY-MM-DD
+// Helper to format date to ISO string format (YYYY-MM-DDTHH:mm:ss.sssZ)
 const toISODateString = (date: Date | string) => {
   const d = new Date(date);
-  const year = d.getFullYear();
-  const month = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  // Set time to midnight UTC for the date
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
 };
 
 interface ManualExpenseFormProps {
@@ -140,6 +139,7 @@ interface ManualExpenseFormProps {
   reportDetail?: any;
   reportId?: string;
   onDeleteExpense?: (expenseId: string, title: string) => void;
+  onUpdateSuccess?: () => void; // Callback to refetch report details after successful update
 }
 
 export function ManualExpenseForm({
@@ -147,9 +147,11 @@ export function ManualExpenseForm({
   reportDetail,
   reportId,
   onDeleteExpense,
+  onUpdateSuccess,
 }: ManualExpenseFormProps = {}) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<string[]>([]);
+  const [originalFiles, setOriginalFiles] = useState<string[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,6 +240,7 @@ export function ManualExpenseForm({
         .map((expense: any) => expense.receiptUrl)
         .filter((url: string) => url);
       setFiles(receiptImages);
+      setOriginalFiles([...receiptImages]); // Store original for change detection
 
       form.reset({ expenses: existingExpenses });
     } else {
@@ -245,6 +248,7 @@ export function ManualExpenseForm({
       if (storedImages) {
         const parsedImages = JSON.parse(storedImages);
         setFiles(parsedImages);
+        setOriginalFiles([...parsedImages]);
 
         const initialExpenses = parsedImages.map(
           (receipt: string, index: number) => {
@@ -328,6 +332,26 @@ export function ManualExpenseForm({
     }
   };
 
+  // Watch form values to trigger re-renders when form changes
+  const watchedValues = form.watch();
+  const formDirty = form.formState.isDirty;
+
+  // Check if form has been modified from original state (for edit mode)
+  const hasFormChanges = (() => {
+    if (!isEditMode || !reportDetail) return true; // Always enabled for create mode
+
+    // Check if files have changed
+    const filesChanged =
+      files.length !== originalFiles.length ||
+      files.some((file, idx) => file !== originalFiles[idx]);
+
+    // Check if expense count changed
+    const expenseCountChanged =
+      watchedValues.expenses?.length !== reportDetail.expenses.length;
+
+    return formDirty || filesChanged || expenseCountChanged;
+  })();
+
   const addExpense = () => {
     append({
       title: "",
@@ -357,7 +381,7 @@ export function ManualExpenseForm({
     }
   };
 
-  // Helper function to extract pure base64 string from data URL
+  // Helper to extract pure base64 string from data URL
   const extractBase64 = (dataUrl: string): string => {
     if (!dataUrl || typeof dataUrl !== "string") return "";
 
@@ -425,16 +449,15 @@ export function ManualExpenseForm({
         transactionDate: toISODateString(expense.transactionDate || new Date()),
       };
 
-      // Only include receiptImage if we have a receipt AND includeReceipts is true
+      // Only include receiptImage if it's a new base64 upload (starts with data:)
       if (includeReceipts) {
-        const receiptBase64 = files[idx] || expense.receipt || "";
-        const receiptImage = extractBase64(receiptBase64);
-
-        // Only add receiptImage property if it's not empty
-        if (receiptImage && receiptImage.trim() !== "") {
-          expenseObj.receiptImage = receiptImage;
+        const receiptSource = files[idx] || expense.receipt || "";
+        if (receiptSource.startsWith("data:")) {
+          const receiptImage = extractBase64(receiptSource);
+          if (receiptImage && receiptImage.trim() !== "") {
+            expenseObj.receiptImage = receiptImage;
+          }
         }
-        // If receiptImage is empty but includeReceipts is true, don't add the property at all
       }
 
       return expenseObj;
@@ -447,11 +470,10 @@ export function ManualExpenseForm({
     };
   };
 
-  // Build payload for PATCH request (edit mode) - only send expense data
-  const buildPatchExpensePayload = (
+  // Build payload for PATCH /reports/{reportId} - updates entire report with all expenses
+  const buildPatchReportPayload = (
     data: ExpenseFormValues,
     includeReceipts: boolean,
-    status: "draft" | "pending",
   ) => {
     // Validate all categories exist
     const invalidCategories = data.expenses.filter(
@@ -464,43 +486,55 @@ export function ManualExpenseForm({
       );
     }
 
-    // For PATCH, we only send the first expense data (single expense edit)
-    const expense = data.expenses[0];
-    const category = categories.find((cat) => cat.name === expense.category);
-    if (!category) {
-      throw new Error(`Category not found: ${expense.category}`);
-    }
-
-    // Build base expense object
-    const expenseObj: {
-      title: string;
-      merchantName: string;
-      description: string;
-      expenseCategoryId: string;
-      amount: number;
-      transactionDate: string;
-      receiptImage?: string;
-    } = {
-      title: expense.title,
-      merchantName: expense.vendor,
-      description: expense.description || "",
-      expenseCategoryId: category.categoryId,
-      amount: Number(expense.amount),
-      transactionDate: toISODateString(expense.transactionDate || new Date()),
-    };
-
-    // Only include receiptImage if we have a receipt AND includeReceipts is true
-    if (includeReceipts) {
-      const receiptBase64 = files[0] || expense.receipt || "";
-      const receiptImage = extractBase64(receiptBase64);
-
-      // Only add receiptImage property if it's not empty
-      if (receiptImage && receiptImage.trim() !== "") {
-        expenseObj.receiptImage = receiptImage;
+    // Build expenses array with all expenses (existing + new)
+    const expensesPayload = data.expenses.map((expense, idx) => {
+      const category = categories.find((cat) => cat.name === expense.category);
+      if (!category) {
+        throw new Error(`Category not found: ${expense.category}`);
       }
-    }
 
-    return expenseObj;
+      // Build base expense object
+      const expenseObj: {
+        title: string;
+        merchantName: string;
+        description: string;
+        expenseCategoryId: string;
+        amount: number;
+        transactionDate: string;
+        receiptImage?: string;
+        expenseId?: string;
+      } = {
+        title: expense.title,
+        merchantName: expense.vendor,
+        description: expense.description || "",
+        expenseCategoryId: category.categoryId,
+        amount: Number(expense.amount),
+        transactionDate: toISODateString(expense.transactionDate || new Date()),
+      };
+
+      // Include expenseId for existing expenses (from reportDetail)
+      if (isEditMode && reportDetail?.expenses?.[idx]) {
+        expenseObj.expenseId = reportDetail.expenses[idx].expenseId;
+      }
+
+      // Only include receiptImage if it's a new base64 upload (starts with data:)
+      if (includeReceipts) {
+        const receiptSource = files[idx] || expense.receipt || "";
+        if (receiptSource.startsWith("data:")) {
+          const receiptImage = extractBase64(receiptSource);
+          if (receiptImage && receiptImage.trim() !== "") {
+            expenseObj.receiptImage = receiptImage;
+          }
+        }
+      }
+
+      return expenseObj;
+    });
+
+    return {
+      reportTitle: reportName || reportDetail?.reportTitle || "Expense Report",
+      expenses: expensesPayload,
+    };
   };
 
   const persistToPersonalExpenses = (
@@ -662,37 +696,28 @@ export function ManualExpenseForm({
       return;
     }
 
-    // Build payload with receipts (required for final submission)
-    let payload;
-    try {
-      if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
-        // Use PATCH payload for editing existing expenses
-        payload = buildPatchExpensePayload(data, true, "pending");
-      } else {
-        // Use POST payload for creating new expenses
-        payload = buildExpensePayload(data, true, "pending");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Invalid expense data");
-      return;
-    }
-
-    // Log payload for debugging
-    console.log("Submitting expense payload:", payload);
-
     try {
       setIsSubmitting(true);
 
-      if (isEditMode && reportId && reportDetail?.expenses?.[0]?.expenseId) {
-        // Use PATCH for editing existing expenses
-        const expenseId = reportDetail.expenses[0].expenseId;
-        const patchUrl = `reports/${reportId}/expenses/${expenseId}`;
-        await axios.patch(patchUrl, payload);
+      if (isEditMode && reportId && reportDetail?.expenses) {
+        // Use single PATCH /reports/{reportId} endpoint to update entire report
+        const basePayload = buildPatchReportPayload(data, true);
+        const reportPayload = {
+          ...basePayload,
+          status: "pending", // Explicitly set to pending on final submit
+        };
+        await axios.patch(`reports/${reportId}`, reportPayload);
+
         toast.success(
-          `Your ${data.expenses.length} expense(s) have been updated successfully.`,
+          `Your ${data.expenses.length} expense(s) have been updated and submitted successfully.`,
         );
+        // Refetch report details if callback is provided
+        if (onUpdateSuccess) {
+          onUpdateSuccess();
+        }
       } else {
         // Use POST for creating new expenses
+        const payload = buildExpensePayload(data, true, "pending");
         await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
         toast.success(
           `Your ${data.expenses.length} expense(s) have been submitted successfully.`,
@@ -729,7 +754,6 @@ export function ManualExpenseForm({
       console.error("Error submitting expenses:", error);
       console.error("Error response:", error?.response?.data);
       console.error("Error status:", error?.response?.status);
-      console.error("Payload that was sent:", payload);
 
       const errorMessage =
         error?.response?.data?.message ||
@@ -918,13 +942,38 @@ export function ManualExpenseForm({
                                   <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
                                     Receipt
                                   </Label>
-                                  <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
+                                  <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center relative">
+                                    <input
+                                      id={`receipt-input-${index}`}
+                                      type="file"
+                                      accept="image/*"
+                                      aria-label={`Upload receipt for item ${index + 1}`}
+                                      className="hidden"
+                                      onChange={(e) => onReceiptSelect(index, e)}
+                                    />
                                     {files[index] ? (
-                                      <img
-                                        src={files[index]}
-                                        alt="Uploaded receipt"
-                                        className="w-full h-full object-contain"
-                                      />
+                                      <div className="w-full h-full flex flex-col items-center justify-center relative">
+                                        <img
+                                          src={files[index]}
+                                          alt="Uploaded receipt"
+                                          className="w-full h-full object-contain"
+                                        />
+                                        <Button
+                                          type="button"
+                                          variant="outlinePrimary"
+                                          size="sm"
+                                          className="mt-3"
+                                          onClick={() => {
+                                            document
+                                              .getElementById(
+                                                `receipt-input-${index}`,
+                                              )
+                                              ?.click();
+                                          }}
+                                        >
+                                          Change Receipt
+                                        </Button>
+                                      </div>
                                     ) : (
                                       <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
                                         <div className="text-muted-foreground font-medium">
@@ -935,16 +984,6 @@ export function ManualExpenseForm({
                                           submission. You can save as draft
                                           without a receipt.
                                         </div>
-                                        <input
-                                          id={`receipt-input-${index}`}
-                                          type="file"
-                                          accept="image/*"
-                                          aria-label={`Upload receipt for item ${index + 1}`}
-                                          className="hidden"
-                                          onChange={(e) =>
-                                            onReceiptSelect(index, e)
-                                          }
-                                        />
                                         <Button
                                           type="button"
                                           variant="outlinePrimary"
@@ -1067,13 +1106,38 @@ export function ManualExpenseForm({
                             <Label className="text-xs leading-[125%] font-normal text-foreground mb-1.5 block">
                               Receipt
                             </Label>
-                            <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center">
+                            <div className="rounded-lg border border-border bg-white p-3 h-[420px] flex items-center justify-center relative">
+                              <input
+                                id={`receipt-input-${index}`}
+                                type="file"
+                                accept="image/*"
+                                aria-label={`Upload receipt for item ${index + 1}`}
+                                className="hidden"
+                                onChange={(e) => onReceiptSelect(index, e)}
+                              />
                               {files[index] ? (
-                                <img
-                                  src={files[index]}
-                                  alt="Uploaded receipt"
-                                  className="w-full h-full object-contain"
-                                />
+                                <div className="w-full h-full flex flex-col items-center justify-center relative">
+                                  <img
+                                    src={files[index]}
+                                    alt="Uploaded receipt"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outlinePrimary"
+                                    size="sm"
+                                    className="mt-3"
+                                    onClick={() => {
+                                      document
+                                        .getElementById(
+                                          `receipt-input-${index}`,
+                                        )
+                                        ?.click();
+                                    }}
+                                  >
+                                    Change Receipt
+                                  </Button>
+                                </div>
                               ) : (
                                 <div className="text-sm text-muted-foreground text-center px-6 space-y-3">
                                   <div className="text-muted-foreground font-medium">
@@ -1083,14 +1147,6 @@ export function ManualExpenseForm({
                                     Receipt is required for final submission.
                                     You can save as draft without a receipt.
                                   </div>
-                                  <input
-                                    id={`receipt-input-${index}`}
-                                    type="file"
-                                    accept="image/*"
-                                    aria-label={`Upload receipt for item ${index + 1}`}
-                                    className="hidden"
-                                    onChange={(e) => onReceiptSelect(index, e)}
-                                  />
                                   <Button
                                     type="button"
                                     variant="outlinePrimary"
@@ -1130,7 +1186,10 @@ export function ManualExpenseForm({
                   type="submit"
                   size={"md"}
                   disabled={
-                    !hasAllReceipts || isSubmitting || isLoadingCategories
+                    !hasAllReceipts ||
+                    isSubmitting ||
+                    isLoadingCategories ||
+                    (isEditMode && !hasFormChanges)
                   }
                 >
                   {isSubmitting ? (
@@ -1157,42 +1216,29 @@ export function ManualExpenseForm({
                       try {
                         setIsSubmitting(true);
 
-                        // Build payload WITHOUT receipts (for draft)
-                        let payload;
                         if (
                           isEditMode &&
                           reportId &&
-                          reportDetail?.expenses?.[0]?.expenseId
+                          reportDetail?.expenses
                         ) {
-                          // Use PATCH payload for editing existing expenses
-                          payload = buildPatchExpensePayload(
+                          const basePayload = buildPatchReportPayload(
                             validData as ExpenseFormValues,
-                            false,
+                            true,
+                          );
+                          const reportPayload = {
+                            ...basePayload,
+                            status: "draft", // Explicitly keep as draft
+                          };
+                          await axios.patch(`reports/${reportId}`, reportPayload);
+                          if (onUpdateSuccess) {
+                            onUpdateSuccess();
+                          }
+                        } else {
+                          const payload = buildExpensePayload(
+                            validData as ExpenseFormValues,
+                            true,
                             "draft",
                           );
-                        } else {
-                          // Use POST payload for creating new expenses
-                          payload = buildExpensePayload(
-                            validData as ExpenseFormValues,
-                            false,
-                            "draft",
-                          );
-                        }
-
-                        console.log("Saving draft payload:", payload);
-
-                        // Send to backend
-                        if (
-                          isEditMode &&
-                          reportId &&
-                          reportDetail?.expenses?.[0]?.expenseId
-                        ) {
-                          // Use PATCH for editing existing expenses
-                          const expenseId = reportDetail.expenses[0].expenseId;
-                          const patchUrl = `reports/${reportId}/expenses/${expenseId}`;
-                          await axios.patch(patchUrl, payload);
-                        } else {
-                          // Use POST for creating new expenses
                           await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
                           persistToPersonalExpenses(
                             values as ExpenseFormValues,
@@ -1200,7 +1246,6 @@ export function ManualExpenseForm({
                           );
                         }
 
-                        // Invalidate React Query cache to refetch personal expenses
                         queryClient.invalidateQueries({
                           queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
                         });
@@ -1229,7 +1274,11 @@ export function ManualExpenseForm({
                     })();
                   }}
                   size={"md"}
-                  disabled={isSubmitting || isLoadingCategories}
+                  disabled={
+                    isSubmitting ||
+                    isLoadingCategories ||
+                    (isEditMode && !hasFormChanges)
+                  }
                 >
                   {isSubmitting ? (
                     <>

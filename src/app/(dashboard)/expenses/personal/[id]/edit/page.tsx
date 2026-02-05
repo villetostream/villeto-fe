@@ -122,8 +122,14 @@ export default function EditExpenseReportPage() {
         onClose={closeDeleteModal}
         onConfirm={handleConfirmDelete}
         title="Confirm Deletion"
-        description={`Are you sure you want to delete the expense: "${expenseToDelete?.title}"?`}
+        description={
+          <>
+            Are you sure you want to delete the expense:{" "}
+            <span className="font-semibold">"{expenseToDelete?.title}"</span>?
+          </>
+        }
       />
+
       <div className="max-w-6xl mx-auto space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
@@ -134,12 +140,12 @@ export default function EditExpenseReportPage() {
           </p>
         </div>
 
-        {/* Use ManualExpenseForm for editing */}
         <ManualExpenseForm
           isEditMode={true}
           reportDetail={reportDetail}
           reportId={reportId}
           onDeleteExpense={handleDeleteInitiation}
+          onUpdateSuccess={fetchReportDetail}
         />
       </div>
     </>
