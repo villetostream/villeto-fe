@@ -23,28 +23,13 @@ export type PersonalExpenseStatus =
   | "flagged";
 
 export type PersonalExpenseRow = {
-  id: number;
-  date: string;
-  vendor: string;
-  category: string; // This is the costCenter from API
-  amount: number;
-  hasReceipt: boolean;
-  status: PersonalExpenseStatus;
-  reportName?: string;
-  description?: string;
-  groupId?: string; // For grouping multiple expenses with same report name
-  isGrouped?: boolean; // True if this is a grouped entry
-  groupedExpenses?: PersonalExpenseRow[]; // Array of individual expenses in the group
-  totalAmount?: number; // Total amount for grouped expenses
-  reportId?: string; // Report ID from API for fetching details
-  costCenter?: string; // Cost center from API response
-  restResult?: {
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    reportId: string;
-    reportTitle: string;
-  }; // Full API response structure for reference
+  date: string; // Maps to createdAt from API
+  reportName: string; // Maps to reportTitle from API
+  category: string; // Maps to costCenter from API
+  amount: number; // Maps to totalAmount from API (now a number)
+  status: PersonalExpenseStatus; // Status is now required
+  reportId: string; // Maps to reportId from API (string, not number)
+  // Removed unused fields: id (unused), vendor (unused, replaced by reportName), hasReceipt (unused in columns, not in list API), description (unused), groupId (unused), isGrouped (unused), groupedExpenses (unused), totalAmount (use amount instead), costCenter (use category instead), restResult (removed from API)
 };
 
 function ActionsCell({ row }: { row: any }) {
