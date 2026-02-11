@@ -1,4 +1,4 @@
-import { useReducer, useMemo } from "react";
+import { useReducer, useMemo, useEffect } from "react";
 
 export interface SortState {
   id: string;
@@ -109,6 +109,11 @@ export function useDataTable(options?: UseDataTableOptions) {
     filterBy: initialFilterBy,
     selectedDataIds: new Set<string>(),
   });
+
+  // Sync internal page state when initialPage prop changes (e.g. from URL/router)
+  useEffect(() => {
+    dispatch({ type: "SET_PAGE", page: initialPage });
+  }, [initialPage]);
 
   // Memoize paginationProps for use in DataTable
   const paginationProps = useMemo(

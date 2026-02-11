@@ -10,7 +10,6 @@ const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export function useAxios(): AxiosInstance {
   const accessToken = useAuthStore.getState().accessToken;
-  const setUser = useAuthStore((state) => state.login);
   const router = useRouter();
 
   return useMemo(() => {
@@ -32,6 +31,8 @@ export function useAxios(): AxiosInstance {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
+        
+        // Handle 401 unauthorized errors with token refresh
         if (
           error.response?.status === 401 &&
           !originalRequest._retry &&
@@ -39,8 +40,9 @@ export function useAxios(): AxiosInstance {
         ) {
           originalRequest._retry = true;
           try {
-            const refreshRes = await axios.post(`${BASEURL}auth/refresh`);
-            const newToken = refreshRes.data.data.access_token;
+            await axios.post(`${BASEURL}auth/refresh`);
+            // const refreshRes = await axios.post(`${BASEURL}auth/refresh`);
+            // const newToken = refreshRes.data.data.access_token;
             // update store
             // setUser({ ...(user || {}), access_token: newToken } as AuthUser);
             // update header and retry
@@ -52,21 +54,33 @@ export function useAxios(): AxiosInstance {
             router.replace("/login");
             return Promise.reject(refreshError);
           }
-        } else {
         }
-        if (!originalRequest.url.includes("account-confirmation")) {
-          toast.error(
-            error.response.data.message ||
-              error.message ||
-              "Invalid login credentials."
-          );
-        } else {
+        
+        // Only show toast for errors that aren't already handled by the calling code
+        // Skip showing toast if the error is already being handled (e.g., in try-catch blocks)
+        // Only show for unhandled errors or specific error types
+        if (
+          error.response?.status !== 401 && // Don't show for 401s (handled above)
+          !originalRequest._skipErrorToast && // Allow callers to skip toast
+          !originalRequest.url.includes("account-confirmation")
+        ) {
+          // Only show error toast if there's a meaningful error message
+          const errorMessage =
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message;
+          
+          if (errorMessage && errorMessage !== "Network Error") {
+            toast.error(errorMessage);
+          }
+        } else if (originalRequest.url.includes("account-confirmation")) {
           toast.info("onboarding required!, redirecting to Onboarding ");
         }
+        
         return Promise.reject(error);
       }
     );
 
     return instance;
-  }, [accessToken]);
+  }, [accessToken, router]);
 }

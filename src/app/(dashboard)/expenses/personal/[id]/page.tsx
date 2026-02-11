@@ -1,24 +1,22 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getStatusIcon } from "@/lib/helper";
-import { NoReceiptUploaded } from "@/components/expenses/NoReceiptUploaded";
 import { ExpenseTimeline } from "@/components/expenses/personal/ExpenseTimeline";
 import { CONote } from "@/components/expenses/personal/CONote";
+import { ExpenseItemModal } from "@/components/expenses/personal/ExpenseItemModal";
+import { ReceiptViewModal } from "@/components/expenses/personal/ReceiptViewModal";
 import type { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
-import Link from "next/link";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   usePersonalExpenseDetail,
   type ExpenseItem,
 } from "@/lib/react-query/expenses";
 import { ExpenseDetailSkeleton } from "@/components/expenses/ExpenseDetailSkeleton";
+import { useState, useEffect } from "react";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
 
 const getStatusBadgeVariant = (status: PersonalExpenseStatus) => {
   switch (status) {
@@ -33,6 +31,8 @@ const getStatusBadgeVariant = (status: PersonalExpenseStatus) => {
     case "rejected":
     case "declined":
       return "rejected";
+    case "flagged":
+      return "pending";
     default:
       return "pending";
   }
@@ -51,8 +51,23 @@ const getStatusColor = (status: PersonalExpenseStatus) => {
     case "rejected":
     case "declined":
       return "bg-red-100 text-red-700 border-0";
+    case "flagged":
+      return "bg-orange-100 text-orange-700 border-0";
     default:
       return "bg-gray-200 text-gray-700 border-0";
+  }
+};
+
+const getStatusLabel = (status: PersonalExpenseStatus): string => {
+  switch (status) {
+    case "declined":
+      return "Rejected";
+    case "paid":
+      return "Paid Out";
+    case "flagged":
+      return "Flagged";
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
   }
 };
 
@@ -60,19 +75,37 @@ const getStatusColor = (status: PersonalExpenseStatus) => {
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    
+    return `${month}-${day}-${year} ${String(displayHours).padStart(2, "0")}:${minutes} ${ampm}`;
   } catch {
     return dateString;
   }
 };
 
+interface User {
+  firstName: string;
+  lastName: string;
+}
+
 export default function PersonalExpenseDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const reportId = params.id as string;
+  const axios = useAxios();
+
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState("");
 
   // Fetch expense detail from API using React Query
   const {
@@ -81,13 +114,33 @@ export default function PersonalExpenseDetailPage() {
     error,
   } = usePersonalExpenseDetail(reportId);
 
+  // Fetch user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoadingUser(true);
+        const response = await axios.get<{
+          data: User;
+        }>(API_KEYS.USER.ME);
+        setUser(response.data.data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        setUser(null);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+
+    fetchUser();
+  }, [axios]);
+
   if (isLoading) {
     return <ExpenseDetailSkeleton />;
   }
 
   if (error || !expenseDetail) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 p-6">
+      <div className="max-w-7xl mx-auto space-y-6 p-6">
         <div className="text-center py-12">
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Expense not found
@@ -108,7 +161,7 @@ export default function PersonalExpenseDetailPage() {
   // Check if we have any expenses
   if (expenses.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 p-6">
+      <div className="max-w-7xl mx-auto space-y-6 p-6">
         <div className="text-center py-12">
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             No expenses found
@@ -125,213 +178,194 @@ export default function PersonalExpenseDetailPage() {
     (sum, exp) => sum + parseFloat(exp.amount),
     0,
   );
-  const isMultipleExpenses = expenses.length > 1;
 
   // Get the overall report status from the detail response, with fallbacks
   const reportStatus = (expenseDetail.status ||
     expenses[0]?.status ||
     "draft") as PersonalExpenseStatus;
 
+  const userName = user ? `${user.firstName} ${user.lastName}` : "...";
+
+  const handleExpenseClick = (expense: ExpenseItem) => {
+    setSelectedExpense(expense);
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleViewReceipt = (receiptUrl: string) => {
+    setSelectedReceiptUrl(receiptUrl);
+    setIsReceiptModalOpen(true);
+  };
+
+  const handleEditExpenses = () => {
+    router.push(`/expenses/personal/${reportId}/edit`);
+  };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-6">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground mb-4">
-            {isMultipleExpenses
-              ? "Multiple Expenses Details"
-              : "Expense Details"}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-2xl font-semibold text-foreground">
+            {reportName}
           </h1>
-
-          {/* Report Info */}
-          <div className="flex items-center gap-6 mb-4">
-            <div>
-              <span className="text-sm text-muted-foreground">
-                {reportName}
-              </span>
-            </div>
-            <div>
-              <span className="text-sm text-muted-foreground">
-                {reportDate}
-              </span>
-            </div>
-            <div>
-              <Badge
-                variant={getStatusBadgeVariant(reportStatus)}
-                className={getStatusColor(reportStatus)}
-              >
-                {getStatusIcon(reportStatus)}
-                <span className="ml-1 capitalize">
-                  {reportStatus === "declined"
-                    ? "Rejected"
-                    : reportStatus === "paid"
-                      ? "Paid Out"
-                      : reportStatus}
-                </span>
-              </Badge>
-            </div>
-          </div>
-
-          {/* View Split Expense Link */}
-          <div className="mb-6">
-            <Link
-              href={`/expenses/personal/${reportId}/split-expense`}
-              className="text-sm text-primary hover:underline font-medium"
-            >
-              View Split Expense Details
-            </Link>
-          </div>
+          <Badge
+            variant={getStatusBadgeVariant(reportStatus)}
+            className={getStatusColor(reportStatus)}
+          >
+            {getStatusIcon(reportStatus)}
+            <span className="ml-1">{getStatusLabel(reportStatus)}</span>
+          </Badge>
         </div>
-
-        {/* Total Amount - Top Right */}
-        {isMultipleExpenses && (
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-            <p className="text-2xl font-semibold text-foreground">
-              $
-              {totalAmount.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
-          </div>
-        )}
+        <p className="text-sm text-muted-foreground">{reportDate}</p>
       </div>
 
-      {/* Main Content */}
-      {isMultipleExpenses ? (
-        /* Accordion for Multiple Expenses */
-        <div className="space-y-6">
-          <Accordion
-            type="multiple"
-            defaultValue={["expense-0"]}
-            className="w-full"
-          >
-            {expenses.map((expense, index) => (
-              <AccordionItem key={expense.expenseId} value={`expense-${index}`}>
-                <AccordionTrigger className="px-4 py-3 bg-gray-50 rounded-md text-left">
-                  <div className="flex w-full justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium">
-                        {expense.title || `Expense ${index + 1}`}
-                      </span>
-                      <span className="text-sm text-muted-foreground flex items-center gap-3">
-                        <span>{expense.merchantName}</span>
-                        <span>•</span>
-                        <span>
-                          $
-                          {parseFloat(expense.amount).toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Expense Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Preview Items Section */}
+          <div className="bg-white border border-border rounded-lg">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">
+                Preview Items{" "}
+                <span className="text-muted-foreground">{expenses.length}</span>
+              </h3>
+              <div className="text-base font-semibold text-foreground">
+                Total: ${totalAmount.toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/30">
+                  <tr>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                      Expenses Details
+                    </th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                      Category
+                    </th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                      Merchant
+                    </th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                      Amount
+                    </th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                      Receipt
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((expense) => (
+                    <tr
+                      key={expense.expenseId}
+                      className="border-t border-border hover:bg-muted/20 cursor-pointer"
+                      onClick={() => handleExpenseClick(expense)}
+                    >
+                      <td className="p-3">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {expense.title}
+                          </p>
+                          {expense.description && (
+                            <p className="text-xs text-muted-foreground">
+                              {expense.description}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-sm text-muted-foreground">
+                          {expense.categoryName}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-sm text-muted-foreground">
+                          {expense.merchantName || "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-sm font-medium text-foreground">
+                          ${parseFloat(expense.amount).toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
                             maximumFractionDigits: 2,
                           })}
                         </span>
-                      </span>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ExpenseDetailContent
-                    expense={expense}
-                    reportStatus={reportStatus}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      ) : (
-        /* Single Expense View */
-        <ExpenseDetailContent
-          expense={expenses[0]}
-          reportStatus={reportStatus}
-        />
-      )}
-    </div>
-  );
-}
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewReceipt(expense.receiptUrl || "");
+                          }}
+                          className="text-sm text-primary hover:underline font-medium"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-// Component to render individual expense details
-function ExpenseDetailContent({
-  expense,
-  reportStatus,
-}: {
-  expense: ExpenseItem;
-  reportStatus: PersonalExpenseStatus;
-}) {
-  return (
-    <div className="flex gap-8 items-start">
-      {/* Left Side - Expense Details */}
-      <div className="flex-1 space-y-6">
-        {/* Expense Information Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Amount</p>
-            <p className="text-base font-semibold text-foreground">
-              $
-              {parseFloat(expense.amount).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
-          </div>
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Merchant</p>
-            <p className="text-base text-foreground">
-              {expense.merchantName || "N/A"}
-            </p>
-          </div>
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Category</p>
-            <p className="text-base text-foreground">
-              {expense.categoryName || "Uncategorized"}
-            </p>
-          </div>
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">
-              Transaction Date
-            </p>
-            <p className="text-base text-foreground">
-              {formatDate(expense.createdAt)}
-            </p>
-          </div>
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4 col-span-2">
-            <p className="text-sm text-muted-foreground mb-1">Title</p>
-            <p className="text-base text-foreground">
-              {expense.title || "No title provided"}
-            </p>
-          </div>
-          <div className="bg-[#7FE3DB]/10 rounded-lg p-4 col-span-2">
-            <p className="text-sm text-muted-foreground mb-1">Description</p>
-            <p className="text-base text-foreground">
-              {expense.description || "No description provided"}
-            </p>
-          </div>
+          {/* CO's Note - Only show if not draft */}
+          {reportStatus !== "draft" && <CONote status={reportStatus} />}
+
+          {/* Edit Expenses Button for Flagged Status */}
+          {reportStatus === "flagged" && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleEditExpenses}
+                className="bg-primary text-white hover:bg-primary/90 px-8"
+              >
+                Edit Expenses
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Expense Timeline */}
-        <ExpenseTimeline
-          status={reportStatus}
-          submissionDate={formatDate(expense.createdAt)}
-        />
-
-        {/* CO's Note - Only show if not draft */}
-        {reportStatus !== "draft" && <CONote status={reportStatus} />}
+        {/* Right Column - Timeline */}
+        <div className="lg:col-span-1">
+          <ExpenseTimeline
+            status={reportStatus}
+            submissionDate={formatDate(expenseDetail.createdAt)}
+          />
+        </div>
       </div>
 
-      {/* Right Side - Receipt */}
-      <div className="w-80 shrink-0">
-        {expense.receiptUrl ? (
-          <div className="bg-white rounded-lg border border-border p-3">
-            <img
-              src={expense.receiptUrl}
-              alt="Receipt"
-              className="w-full h-auto object-contain rounded"
-            />
-          </div>
-        ) : (
-          <NoReceiptUploaded />
-        )}
-      </div>
+      {/* Modals */}
+      <ExpenseItemModal
+        isOpen={isExpenseModalOpen}
+        onClose={() => {
+          setIsExpenseModalOpen(false);
+          setSelectedExpense(null);
+        }}
+        expense={selectedExpense ? {
+          title: selectedExpense.title || "Untitled Expense",
+          amount: selectedExpense.amount,
+          merchantName: selectedExpense.merchantName,
+          categoryName: selectedExpense.categoryName || "Uncategorized",
+          description: selectedExpense.description,
+          receiptUrl: selectedExpense.receiptUrl,
+        } : null}
+      />
+
+      <ReceiptViewModal
+        isOpen={isReceiptModalOpen}
+        onClose={() => {
+          setIsReceiptModalOpen(false);
+          setSelectedReceiptUrl("");
+        }}
+        receiptUrl={selectedReceiptUrl}
+      />
     </div>
   );
 }

@@ -571,10 +571,13 @@ export default function Reimbursements() {
   return (
     <>
       <Tabs value={outerTab} onValueChange={handleTabChange}>
-        <TabsList className="mb-10">
-          <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
-          <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-10">
+          <TabsList>
+            <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
+            <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>
+          </TabsList>
+          {outerTab === "personal-expenses" && <NewExpenseButtonTrigger />}
+        </div>
         <TabsContent value="personal-expenses">
           <PermissionGuard requiredPermissions={[]}>
             {isLoadingPersonalExpenses ? (
@@ -675,51 +678,51 @@ export default function Reimbursements() {
                       </TabsList>
                       <TabsContent value="all">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={null}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                       <TabsContent value="draft">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={"draft"}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                       <TabsContent value="pending">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={"pending"}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                       {/* Keep other tabs for visual parity; personal data is draft/pending in this demo */}
                       <TabsContent value="approved">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={"approved"}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                       <TabsContent value="rejected">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={"declined"}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                       <TabsContent value="paid">
                         <ExpenseTable
-                          actionButton={<NewExpenseButtonTrigger />}
                           statusFilter={"paid"}
                           data={personalExpenses as any}
                           columnsOverride={personalExpenseColumns as any}
+                          page={page}
                         />
                       </TabsContent>
                     </Tabs>

@@ -4,19 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useForm,
   useFieldArray,
-  UseFormReturn,
   SubmitHandler,
-  FieldValue,
   FieldValues,
 } from "react-hook-form";
 import { z } from "zod";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +18,6 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Label } from "../ui/label";
-import Link from "next/link";
 import FormFieldInput from "../form fields/formFieldInput";
 import FormFieldSelect from "../form fields/formFieldSelect";
 import FormFieldTextArea from "../form fields/formFieldTextArea";
@@ -134,9 +124,25 @@ const toISODateString = (date: Date | string) => {
   return d.toISOString();
 };
 
+interface ReportDetail {
+  reportId: string;
+  reportTitle: string;
+  status?: string;
+  expenses: Array<{
+    expenseId: string;
+    title: string;
+    merchantName: string;
+    amount: string;
+    transactionDate: string;
+    categoryName: string;
+    description?: string;
+    receiptUrl?: string;
+  }>;
+}
+
 interface ManualExpenseFormProps {
   isEditMode?: boolean;
-  reportDetail?: any;
+  reportDetail?: ReportDetail;
   reportId?: string;
   onDeleteExpense?: (expenseId: string, title: string) => void;
   onUpdateSuccess?: () => void; // Callback to refetch report details after successful update
@@ -149,7 +155,6 @@ export function ManualExpenseForm({
   onDeleteExpense,
   onUpdateSuccess,
 }: ManualExpenseFormProps = {}) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<string[]>([]);
   const [originalFiles, setOriginalFiles] = useState<string[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -181,12 +186,13 @@ export function ManualExpenseForm({
         } else {
           toast.error("Failed to load expense categories");
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error fetching categories:", error);
-        toast.error(
-          error?.response?.data?.message ||
-            "Failed to load expense categories. Please try again.",
-        );
+        const errorMessage =
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
+          "Failed to load expense categories. Please try again.";
+        toast.error(errorMessage);
       } finally {
         setIsLoadingCategories(false);
       }
@@ -225,7 +231,7 @@ export function ManualExpenseForm({
   useEffect(() => {
     if (isEditMode && reportDetail && reportDetail.expenses) {
       // Load existing expenses for edit mode
-      const existingExpenses = reportDetail.expenses.map((expense: any) => ({
+      const existingExpenses = reportDetail.expenses.map((expense) => ({
         title: expense.title || "",
         vendor: expense.merchantName || "",
         amount: parseFloat(expense.amount) || 0,
@@ -237,8 +243,8 @@ export function ManualExpenseForm({
 
       // Load receipt images
       const receiptImages = reportDetail.expenses
-        .map((expense: any) => expense.receiptUrl)
-        .filter((url: string) => url);
+        .map((expense) => expense.receiptUrl)
+        .filter((url): url is string => Boolean(url));
       setFiles(receiptImages);
       setOriginalFiles([...receiptImages]); // Store original for change detection
 
@@ -250,15 +256,13 @@ export function ManualExpenseForm({
         setFiles(parsedImages);
         setOriginalFiles([...parsedImages]);
 
-        const initialExpenses = parsedImages.map(
-          (receipt: string, index: number) => {
-            return {
-              ...defaultExpense,
-              title: "",
-              receipt,
-            };
-          },
-        );
+        const initialExpenses = parsedImages.map((receipt: string) => {
+          return {
+            ...defaultExpense,
+            title: "",
+            receipt,
+          };
+        });
 
         if (initialExpenses.length > 0) {
           form.reset({ expenses: initialExpenses });
@@ -541,6 +545,11 @@ export function ManualExpenseForm({
     data: ExpenseFormValues,
     status: PersonalExpenseStatus,
   ) => {
+    // NOTE: This function is deprecated and should not be used for new expenses
+    // All expenses are now stored on the server via API
+    // This function is kept for backward compatibility but should not store base64 images
+    // to avoid localStorage quota issues
+    
     const existing = readPersonalExpenses();
     let nextId = getNextPersonalExpenseId(existing);
 
@@ -553,12 +562,13 @@ export function ManualExpenseForm({
       );
 
       // Create individual expense entries for detail view
+      // DO NOT store base64 images - only metadata
       const individualExpenses: PersonalExpenseRow[] = data.expenses.map(
         (expense, idx) => {
-          const receiptImage = files[idx] || expense.receipt || undefined;
           const expenseId = nextId++;
+          const hasReceipt = Boolean(files[idx] || expense.receipt);
 
-          // Store report name and date for this expense
+          // Store report name and date for this expense (metadata only)
           if (typeof window !== "undefined" && reportName && reportDate) {
             sessionStorage.setItem(
               `expense-report-name-${expenseId}`,
@@ -576,9 +586,9 @@ export function ManualExpenseForm({
             vendor: expense.vendor,
             category: expense.category,
             amount: Number(expense.amount),
-            hasReceipt: Boolean(receiptImage),
+            hasReceipt,
             status,
-            receiptImage,
+            // DO NOT store receiptImage (base64) - it causes localStorage quota issues
             reportName: reportName || undefined,
             title: expense.title,
             description: expense.description || undefined,
@@ -603,11 +613,13 @@ export function ManualExpenseForm({
         totalAmount,
       };
 
-      // Store all individual expenses in sessionStorage for detail view
+      // Store metadata only (no base64 images)
       if (typeof window !== "undefined") {
+        // Store individual expenses (already without base64 images)
+        const expensesWithoutImages = individualExpenses;
         sessionStorage.setItem(
           `expense-group-${groupId}`,
-          JSON.stringify(individualExpenses),
+          JSON.stringify(expensesWithoutImages),
         );
         sessionStorage.setItem(
           `expense-report-name-${groupedEntry.id}`,
@@ -622,12 +634,13 @@ export function ManualExpenseForm({
       writePersonalExpenses([groupedEntry, ...existing]);
     } else {
       // Single expense or no report name - create individual entries
+      // DO NOT store base64 images - only metadata
       const newRows: PersonalExpenseRow[] = data.expenses.map(
         (expense, idx) => {
-          const receiptImage = files[idx] || expense.receipt || undefined;
           const expenseId = nextId++;
+          const hasReceipt = Boolean(files[idx] || expense.receipt);
 
-          // Store report name and date for this expense
+          // Store report name and date for this expense (metadata only)
           if (typeof window !== "undefined" && reportName && reportDate) {
             sessionStorage.setItem(
               `expense-report-name-${expenseId}`,
@@ -645,9 +658,9 @@ export function ManualExpenseForm({
             vendor: expense.vendor,
             category: expense.category,
             amount: Number(expense.amount),
-            hasReceipt: Boolean(receiptImage),
+            hasReceipt,
             status,
-            receiptImage,
+            // DO NOT store receiptImage (base64) - it causes localStorage quota issues
             reportName: reportName || undefined,
             title: expense.title,
             description: expense.description || undefined,
@@ -696,6 +709,17 @@ export function ManualExpenseForm({
       return;
     }
 
+    // In edit mode, check if report is in draft status before allowing submission
+    if (isEditMode && reportDetail) {
+      const currentStatus = reportDetail.status?.toLowerCase();
+      if (currentStatus && currentStatus !== "draft") {
+        toast.error(
+          `This report is in "${currentStatus}" status and cannot be edited. Only reports in draft status can be modified.`,
+        );
+        return;
+      }
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -711,10 +735,30 @@ export function ManualExpenseForm({
         toast.success(
           `Your ${data.expenses.length} expense(s) have been updated and submitted successfully.`,
         );
+        
+        // Invalidate React Query cache to refetch personal expenses and report details
+        queryClient.invalidateQueries({
+          queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES, reportId],
+        });
+        
         // Refetch report details if callback is provided
         if (onUpdateSuccess) {
           onUpdateSuccess();
         }
+        
+        // Show success modal and navigate after a short delay to allow modal to render
+        successToggle();
+        sessionStorage.removeItem("uploadedReceipts");
+        // Delay navigation slightly to allow success modal to show
+        setTimeout(() => {
+          const returnTab =
+            sessionStorage.getItem("expensesReturnTab") || "personal-expenses";
+          const returnPage = sessionStorage.getItem("expensesReturnPage") || "1";
+          router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
+        }, 500);
       } else {
         // Use POST for creating new expenses
         const payload = buildExpensePayload(data, true, "pending");
@@ -722,43 +766,49 @@ export function ManualExpenseForm({
         toast.success(
           `Your ${data.expenses.length} expense(s) have been submitted successfully.`,
         );
+
+        // Invalidate React Query cache to refetch personal expenses
+        queryClient.invalidateQueries({
+          queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+        });
+
+        form.reset({
+          expenses: [
+            {
+              title: "",
+              vendor: "",
+              amount: 0,
+              category: "",
+              description: "",
+              transactionDate: new Date(),
+              receipt: "",
+              splits: [],
+            },
+          ],
+        });
+        successToggle();
+        sessionStorage.removeItem("uploadedReceipts");
+        // Delay navigation slightly to allow success modal to show
+        setTimeout(() => {
+          const returnTab =
+            sessionStorage.getItem("expensesReturnTab") || "personal-expenses";
+          const returnPage = sessionStorage.getItem("expensesReturnPage") || "1";
+          router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
+        }, 500);
       }
-
-      // Invalidate React Query cache to refetch personal expenses
-      queryClient.invalidateQueries({
-        queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
-      });
-
-      form.reset({
-        expenses: [
-          {
-            title: "",
-            vendor: "",
-            amount: 0,
-            category: "",
-            description: "",
-            transactionDate: new Date(),
-            receipt: "",
-            splits: [],
-          },
-        ],
-      });
-      successToggle();
-      setUploadedFiles([]);
-      sessionStorage.removeItem("uploadedReceipts");
-      const returnTab =
-        sessionStorage.getItem("expensesReturnTab") || "personal-expenses";
-      const returnPage = sessionStorage.getItem("expensesReturnPage") || "1";
-      router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting expenses:", error);
-      console.error("Error response:", error?.response?.data);
-      console.error("Error status:", error?.response?.status);
+      const err = error as {
+        response?: { data?: { message?: string; error?: string }; status?: number };
+        message?: string;
+      };
+      console.error("Error response:", err?.response?.data);
+      console.error("Error status:", err?.response?.status);
 
       const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
         "Failed to submit expenses. Please try again.";
 
       toast.error(errorMessage);
@@ -1230,9 +1280,21 @@ export function ManualExpenseForm({
                             status: "draft", // Explicitly keep as draft
                           };
                           await axios.patch(`reports/${reportId}`, reportPayload);
+                          
+                          // Invalidate React Query cache to refetch report details
+                          queryClient.invalidateQueries({
+                            queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES, reportId],
+                          });
+                          
                           if (onUpdateSuccess) {
                             onUpdateSuccess();
                           }
+                          
+                          toast.success("Saved as draft.");
+                          // Don't navigate away in edit mode - stay on the page
                         } else {
                           const payload = buildExpensePayload(
                             validData as ExpenseFormValues,
@@ -1240,32 +1302,44 @@ export function ManualExpenseForm({
                             "draft",
                           );
                           await axios.post(API_KEYS.EXPENSE.REPORTS, payload);
-                          persistToPersonalExpenses(
-                            values as ExpenseFormValues,
-                            "draft",
+                          
+                          // Only persist to localStorage for new expenses (not edit mode)
+                          // And only store metadata, not base64 images
+                          try {
+                            persistToPersonalExpenses(
+                              values as ExpenseFormValues,
+                              "draft",
+                            );
+                          } catch (storageError) {
+                            // If localStorage fails (quota exceeded), log but don't fail the request
+                            console.warn("Failed to persist to localStorage:", storageError);
+                          }
+
+                          queryClient.invalidateQueries({
+                            queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
+                          });
+
+                          toast.success("Saved as draft.");
+                          sessionStorage.removeItem("uploadedReceipts");
+                          const returnTab =
+                            sessionStorage.getItem("expensesReturnTab") ||
+                            "personal-expenses";
+                          const returnPage =
+                            sessionStorage.getItem("expensesReturnPage") || "1";
+                          router.push(
+                            `/expenses?tab=${returnTab}&page=${returnPage}`,
                           );
                         }
-
-                        queryClient.invalidateQueries({
-                          queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES],
-                        });
-
-                        toast.success("Saved as draft.");
-                        sessionStorage.removeItem("uploadedReceipts");
-                        const returnTab =
-                          sessionStorage.getItem("expensesReturnTab") ||
-                          "personal-expenses";
-                        const returnPage =
-                          sessionStorage.getItem("expensesReturnPage") || "1";
-                        router.push(
-                          `/expenses?tab=${returnTab}&page=${returnPage}`,
-                        );
-                      } catch (error: any) {
+                      } catch (error: unknown) {
                         console.error("Error saving draft:", error);
+                        const err = error as {
+                          response?: { data?: { message?: string; error?: string } };
+                          message?: string;
+                        };
                         const errorMessage =
-                          error?.response?.data?.message ||
-                          error?.response?.data?.error ||
-                          error?.message ||
+                          err?.response?.data?.message ||
+                          err?.response?.data?.error ||
+                          err?.message ||
                           "Failed to save draft. Please try again.";
                         toast.error(errorMessage);
                       } finally {

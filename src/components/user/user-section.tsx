@@ -156,6 +156,7 @@ export function UserSection() {
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
   const isNewExpensePage = pathname === "/expenses/new-expense";
+  const isNewReportPage = pathname === "/expenses/new-report";
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -168,6 +169,7 @@ export function UserSection() {
         isPersonalExpenseEditPage ||
         isUploadReceiptPage ||
         isNewExpensePage ||
+        isNewReportPage ||
         isBatchExpensePage ? (
           <Button
             variant="ghost"
@@ -265,6 +267,16 @@ export function UserSection() {
                 } else {
                   router.push("/expenses");
                 }
+                return;
+              }
+              if (isNewReportPage) {
+                // Return to expenses list
+                const returnTab =
+                  sessionStorage.getItem("expensesReturnTab") ||
+                  "personal-expenses";
+                const returnPage =
+                  sessionStorage.getItem("expensesReturnPage") || "1";
+                router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
                 return;
               }
               // Default for expense detail page
