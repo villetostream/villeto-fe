@@ -12,12 +12,14 @@ const ExpenseTable = ({
   data = reimbursements,
   onFilteredDataChange,
   columnsOverride,
+  page = 1,
 }: {
   actionButton: React.ReactElement;
   statusFilter?: string | null;
   data?: typeof reimbursements;
   onFilteredDataChange?: (filteredData: typeof reimbursements) => void;
   columnsOverride?: ColumnDef<any, any>[];
+  page?: number;
 }) => {
   const [filteredData, setFilteredData] = useState(data);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
@@ -26,7 +28,7 @@ const ExpenseTable = ({
   const { fromDate, toDate } = useDateFilterStore();
 
   const tableprops = useDataTable({
-    initialPage: 1,
+    initialPage: page,
     initialPageSize: 10,
     totalItems: reimbursements.length,
     manualSorting: false,
@@ -114,6 +116,7 @@ const ExpenseTable = ({
   }, [data, globalSearch, appliedFilters, statusFilter, fromDate, toDate]);
   return (
     <DataTable
+      initialColumnVisibility={{ actions: false }}
       data={filteredData}
       columns={(columnsOverride ?? columns) as any}
       paginationProps={tableprops.paginationProps}

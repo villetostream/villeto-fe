@@ -80,6 +80,7 @@ export type DataTableProps<Data extends object, Value = unknown> = {
   manualFiltering?: boolean;
   initialSorting?: SortingState;
   initialColumnFilters?: ColumnFiltersState;
+  initialColumnVisibility?: VisibilityState;
   height?: string | number;
   tableHeader?: ITableHeader;
   selectedDataIds?: Set<string>;
@@ -113,6 +114,7 @@ function DataTable<Data extends object, Value = unknown>(
     height = "400px",
     initialSorting = [],
     initialColumnFilters = [],
+    initialColumnVisibility = {},
     tableHeader,
     selectedDataIds = new Set(),
     setSelectedDataIds,
@@ -128,7 +130,7 @@ function DataTable<Data extends object, Value = unknown>(
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] =
     useState<ColumnFiltersState>(initialColumnFilters);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Navigation context for conditional row click behavior
@@ -395,11 +397,19 @@ function DataTable<Data extends object, Value = unknown>(
                       // For personal expenses, use reportId (UUID); for company expenses, use id (numeric)
                       const id = expensesClickMode === "personal" ? original?.reportId : original?.id;
                       if (id) {
-                        const dest =
-                          expensesClickMode === "personal"
-                            ? `/expenses/personal/${id}`
-                            : `/expenses/${id}`;
-                        router.push(dest);
+                      // For personal expenses:
+                      // - Draft -> Edit page (/expenses/personal/[id]/edit)
+                      // - Pending/Others -> Detail page (/expenses/personal/[id])
+                      if (expensesClickMode === "personal") {
+                        if (original?.status === "draft") {
+                            router.push(`/expenses/personal/${id}/edit`);
+                        } else {
+                            router.push(`/expenses/personal/${id}`);
+                        }
+                      } else {
+                        // Company expenses -> Detail page
+                        router.push(`/expenses/${id}`);
+                      }
                       }
                     }}
                   >

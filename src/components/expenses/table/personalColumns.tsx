@@ -19,7 +19,8 @@ export type PersonalExpenseStatus =
   | "approved"
   | "declined"
   | "rejected"
-  | "paid";
+  | "paid"
+  | "flagged";
 
 export type PersonalExpenseRow = {
   id: number;

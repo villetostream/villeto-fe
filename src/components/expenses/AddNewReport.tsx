@@ -77,14 +77,17 @@ const AddNewReport = ({
   } = formHook;
 
   const onSubmit = (data: ReportFormData) => {
+    // Capitalize the first letter of the report name
+    const capitalizedName = data.reportName.charAt(0).toUpperCase() + data.reportName.slice(1);
+    
     // Ensure a brand-new report starts with a clean receipt state.
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("uploadedReceipts");
     }
     router.push(
-      `/expenses/new-expense/upload?name=${encodeURIComponent(
-        data.reportName,
-      )}&date=${encodeURIComponent(new Date().toDateString())}`,
+      `/expenses/new-report?name=${encodeURIComponent(
+        capitalizedName,
+      )}`,
     );
     close();
     reset();
@@ -96,34 +99,44 @@ const AddNewReport = ({
         open={isOpen}
         onOpenChange={(open: boolean) => (open ? toggle(true) : close())}
       >
-        <DialogContent className="sm:max-w-[560px] rounded-lg">
+        <DialogContent className="sm:max-w-[560px] rounded-lg" showCloseButton={false}>
           <DialogHeader className="text-left">
             <DialogTitle className="text-xl font-semibold text-dashboard-text-primary">
-              Add New Report
+              Report Title
             </DialogTitle>
-            <DialogDescription className="text-dashboard-text-secondary">
-              Kindly enter the following information to continue
-            </DialogDescription>
           </DialogHeader>
           <Form {...formHook}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-6">
                 <FormFieldInput
-                  label="Name of Report"
+                  label=""
                   name="reportName"
-                  placeholder="Enter name of report"
+                  placeholder="Enter title"
                   control={control}
                 />
               </div>
 
-              <Button
-                size={"md"}
-                type="submit"
-                disabled={!isValid || isSubmitting}
-                className="w-fit min-w-40 bg-[#7FE3DB] hover:bg-[#7FE3DB]/90 text-[#344054]"
-              >
-                {isSubmitting ? "Processing..." : "Proceed"}
-              </Button>
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    close();
+                    reset();
+                  }}
+                  className="min-w-24"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size={"md"}
+                  type="submit"
+                  disabled={!isValid || isSubmitting}
+                  className="min-w-24 bg-[#7FE3DB] hover:bg-[#7FE3DB]/90 text-[#344054]"
+                >
+                  {isSubmitting ? "Processing..." : "Confirm"}
+                </Button>
+              </div>
             </form>
           </Form>
         </DialogContent>

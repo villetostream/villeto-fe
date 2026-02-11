@@ -1,76 +1,80 @@
-"use client";
-
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ExpenseDetailSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-6">
-      {/* Header Skeleton */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <Skeleton className="h-8 w-64 mb-4" />
-
-          {/* Report Info */}
-          <div className="flex items-center gap-6 mb-4">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-6 w-24" />
-          </div>
-
-          {/* View Split Expense Link */}
-          <Skeleton className="h-4 w-48 mb-6" />
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-6 w-20" />
         </div>
-
-        {/* Total Amount */}
-        <div className="text-right">
-          <Skeleton className="h-4 w-24 mb-2 ml-auto" />
-          <Skeleton className="h-8 w-32 ml-auto" />
-        </div>
+        <Skeleton className="h-4 w-48 mb-1" />
       </div>
 
-      {/* Main Content Skeleton */}
-      <div className="flex gap-8 items-start">
-        {/* Left Side - Expense Details */}
-        <div className="flex-1 space-y-6">
-          {/* Expense Information Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className={`bg-gray-50 rounded-lg p-4 ${i === 4 ? "col-span-2" : ""}`}
-              >
-                <Skeleton className="h-3 w-24 mb-2" />
-                <Skeleton className="h-5 w-32" />
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Expense Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Preview Items Section */}
+          <div className="bg-white border border-border rounded-lg">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+
+            {/* Table Header */}
+            <div className="bg-muted/30 p-3 flex gap-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+
+            {/* Table Rows */}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border-t border-border p-3 flex gap-4 items-center">
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
               </div>
             ))}
           </div>
 
-          {/* Expense Timeline */}
+          {/* CO's Note Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <div className="bg-[#7FE3DB]/10 rounded-lg p-4">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Timeline */}
+        <div className="lg:col-span-1">
           <div className="space-y-4">
             <Skeleton className="h-6 w-40" />
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex gap-4">
-                  <Skeleton className="h-4 w-4 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
+            <div className="space-y-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                  <div className="flex-1 pt-1">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24 mb-1" />
+                    <Skeleton className="h-3 w-20" />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* CO's Note */}
-          <div className="space-y-3">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-
-        {/* Right Side - Receipt */}
-        <div className="w-80 shrink-0">
-          <Skeleton className="h-96 w-full rounded-lg" />
         </div>
       </div>
     </div>
