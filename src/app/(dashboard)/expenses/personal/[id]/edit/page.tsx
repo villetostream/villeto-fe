@@ -255,7 +255,7 @@ export default function EditReportPage() {
   // Handle Delete Entire Report
   const handleDeleteReport = async () => {
       try {
-          setIsSubmitting(true);
+          setIsDeletingReport(true);
           await axios.delete(`reports/${reportId}`);
           toast.success("Report deleted successfully");
           queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
@@ -263,8 +263,8 @@ export default function EditReportPage() {
       } catch (error) {
           console.error("Error deleting report:", error);
           toast.error("Failed to delete report");
-          setIsSubmitting(false);
       } finally {
+          setIsDeletingReport(false);
           setIsDeleteReportModalOpen(false);
       }
   };
@@ -382,17 +382,17 @@ export default function EditReportPage() {
 
   const isEmpty = expenses.length === 0;
   // Disable if no changes (unless submitting), or if any action is in progress
-  const isActionInProgress = isSavingDraft || isSubmittingReport;
+  const isActionInProgress = isSavingDraft || isSubmittingReport || isDeletingReport;
   const isSaveDisabled = isActionInProgress || isEmpty || !isDirty; 
   const isSubmitDisabled = isActionInProgress || isEmpty; // Can submit even if not dirty? Usually yes if it was draft.
 
-  const saveDraftClass = isSaveDisabled
-    ? "bg-gray-100 text-gray-400 border border-gray-200 rounded-lg h-12 px-8 text-base font-medium cursor-not-allowed" // Disabled style
-    : "bg-white border-2 border-primary  text-primary hover:bg-primary/10 rounded-lg h-12 px-8 text-base font-medium";
+  const saveDraftClass = isSaveDisabled || isEmpty
+    ? "bg-gray-100 text-gray-400 border border-gray-200 rounded-lg h-12 px-8 text-base font-medium cursor-not-allowed focus:outline-none focus:ring-0"
+    : "bg-white border-2 border-primary text-primary hover:bg-primary/10 rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0";
 
-  const submitClass = isSubmitDisabled
-    ? "bg-gray-100 text-gray-400 rounded-lg h-12 px-8 text-base font-medium cursor-not-allowed" // Disabled style
-    : "bg-primary border-2 border-primary text-white hover:bg-primary/90 rounded-lg h-12 px-8 text-base font-medium";
+  const submitClass = isSubmitDisabled || isEmpty
+    ? "bg-gray-100 text-gray-400 rounded-lg h-12 px-8 text-base font-medium cursor-not-allowed focus:outline-none focus:ring-0"
+    : "bg-primary border-2 border-primary text-white hover:bg-primary/90 rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0";
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -443,14 +443,14 @@ export default function EditReportPage() {
           disabled={isSaveDisabled}
           className={saveDraftClass}
         >
-          {isSavingDraft ? "Saving..." : "Save Changes"}
+          {isActionInProgress ? (isSavingDraft ? "Saving..." : "Processing...") : "Save Changes"}
         </Button>
         <Button
           onClick={() => handleSubmit("pending")}
           disabled={isSubmitDisabled}
           className={submitClass}
         >
-          {isSubmittingReport ? "Submitting..." : "Submit Report"}
+          {isActionInProgress ? (isSubmittingReport ? "Submitting..." : "Processing...") : "Submit Report"}
         </Button>
       </div>
 
