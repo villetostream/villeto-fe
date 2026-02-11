@@ -23,16 +23,15 @@ interface ExpenseSubmissionPayload {
 
 // API Response types
 export interface PersonalExpenseReport {
-  restResult: {
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    reportId: string;
-    reportTitle: string;
-    status?: PersonalExpenseStatus;
-  };
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  reportId: string;
+  reportTitle: string;
+  status: PersonalExpenseStatus;
   costCenter: string;
-  totalAmount: string;
+  reportedBy: string;
+  totalAmount: number; // Updated to number based on new API response
 }
 
 export interface ExpenseItem {
@@ -66,6 +65,18 @@ export interface PersonalExpenseDetailApiResponse {
   data: PersonalExpenseDetailResponse;
 }
 
+export interface PersonalExpensesApiResponse {
+  message: string;
+  status: number;
+  data: PersonalExpenseReport[];
+  meta: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
 export interface PersonalExpensesResponse {
   reports: PersonalExpenseReport[];
   meta: {
@@ -94,10 +105,14 @@ export const usePersonalExpenses = (
       if (sortBy) params.append("sortBy", sortBy);
       if (sortOrder) params.append("sortOrder", sortOrder);
 
-      const response = await axios.get<PersonalExpensesResponse>(
+      const response = await axios.get<PersonalExpensesApiResponse>(
         `${API_KEYS.EXPENSE.PERSONAL_EXPENSES}?${params.toString()}`
       );
-      return response.data;
+      // Map to the expected PersonalExpensesResponse shape to avoid breaking downstream code
+      return {
+        reports: response.data.data,
+        meta: response.data.meta,
+      } as PersonalExpensesResponse;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

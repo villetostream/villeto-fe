@@ -440,7 +440,7 @@ export default function Reimbursements() {
     PersonalExpenseRow[]
   >([]);
   const [page, setPage] = useState(initialPage);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(100); // High limit to fetch all data for accurate stats and client-side sorting/filtering
 
   // Persist current tab and page so back from edit/view/delete can restore
   useEffect(() => {
@@ -481,28 +481,22 @@ export default function Reimbursements() {
     if (personalExpensesData?.reports) {
       // Sort reports by createdAt date in descending order (most recent first)
       const sortedReports = [...personalExpensesData.reports].sort((a, b) => {
-        const dateA = new Date(a.restResult.createdAt).getTime();
-        const dateB = new Date(b.restResult.createdAt).getTime();
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA; // Most recent first
       });
 
       const transformedExpenses: PersonalExpenseRow[] = sortedReports.map(
-        (report, index) => ({
-          id: index, // Keep index for table row identification
-          date: formatDate(report.restResult.createdAt),
-          vendor: "", // Not provided in API
+        (report) => ({
+          date: formatDate(report.createdAt),
+          reportName: report.reportTitle,
           category:
             report.costCenter && report.costCenter.trim()
               ? report.costCenter
               : "Uncategorized", // Use costCenter if available, otherwise Uncategorized
-          amount: parseFloat(report.totalAmount),
-          hasReceipt: false, // Assume no receipt for now
-          status: report.restResult.status || ("pending" as const), // Default status from API (reports don't have individual status, they're all pending until reviewed)
-          reportName: report.restResult.reportTitle,
-          description: undefined,
-          reportId: report.restResult.reportId, // Use reportId for navigation to detail page
-          costCenter: report.costCenter, // Include costCenter from API
-          restResult: report.restResult, // Include full restResult structure
+          amount: report.totalAmount,
+          status: report.status,
+          reportId: report.reportId, // Use reportId for navigation to detail page
         }),
       );
       setPersonalExpenses(transformedExpenses);
@@ -558,7 +552,7 @@ export default function Reimbursements() {
     };
 
     for (const e of personalExpenses ?? []) {
-      const status = (e as any)?.status;
+      const status = e?.status;
       if (status === "draft") counts.draft += 1;
       if (status === "approved") counts.approved += 1;
       if (status === "paid") counts.paid += 1;
