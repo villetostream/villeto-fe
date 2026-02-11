@@ -334,12 +334,12 @@ export default function NewReportPage() {
   const isEmpty = expenses.length === 0;
 
   const saveDraftClass = isEmpty
-    ? "bg-white text-white rounded-lg h-12 px-8 text-base font-medium"
-    : "bg-white border-2 border-primary  text-primary hover:bg-primary/10 rounded-lg h-12 px-8 text-base font-medium";
+    ? "bg-white text-white rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0"
+    : "bg-white border-2 border-primary text-primary hover:bg-primary/10 rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0";
 
   const submitClass = isEmpty
-    ? "bg-primary text-white rounded-lg h-12 px-8 text-base font-medium"
-    : "bg-primary border-2 border-primary text-white hover:bg-primary/90 rounded-lg h-12 px-8 text-base font-medium";
+    ? "bg-primary text-white rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0"
+    : "bg-primary border-2 border-primary text-white hover:bg-primary/90 rounded-lg h-12 px-8 text-base font-medium focus:outline-none focus:ring-0";
 
   return (
     <div className="max-w-7xl mx-auto p-6">
