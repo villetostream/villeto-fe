@@ -1,6 +1,6 @@
 "use client";
 
-import { Reimbursement, reimbursements } from "@/app/(dashboard)/expenses/page";
+import { Reimbursement, reimbursements } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

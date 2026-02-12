@@ -17,12 +17,14 @@ interface ExpenseDetailCardProps {
   expense: ExpenseData;
   onApprove?: () => void;
   onReject?: () => void;
+  onFlag?: () => void;
 }
 
 export function ExpenseDetailCard({
   expense,
   onApprove,
   onReject,
+  onFlag,
 }: ExpenseDetailCardProps) {
   return (
     <div className="space-y-4">
@@ -96,21 +98,29 @@ export function ExpenseDetailCard({
       </div>
 
       {/* Action Buttons - Show only when status is pending */}
-      {expense.status === "pending" && (
+      {/** @ts-ignore */}
+      {(expense.status === "pending" || expense.status === "draft") && (
         <div className="flex gap-3 pt-4">
           <Button
             onClick={onApprove}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white flex-1"
             size="lg"
           >
             Approve
           </Button>
           <Button
             onClick={onReject}
-            className="bg-destructive/10 hover:bg-destructive/20 text-destructive"
+            className="bg-destructive/10 hover:bg-destructive/20 text-destructive flex-1"
             size="lg"
           >
             Reject
+          </Button>
+          <Button
+            onClick={onFlag}
+            className="bg-orange-600 hover:bg-orange-700 text-white flex-1"
+            size="lg"
+          >
+            Flag
           </Button>
         </div>
       )}

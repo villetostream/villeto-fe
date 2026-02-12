@@ -12,9 +12,10 @@ import {
 } from "@/components/expenses/table/personalColumns";
 import { useSearchParams, useRouter } from "next/navigation";
 import ExpenseEmptyState from "@/components/expenses/EmptyState";
-import { usePersonalExpenses } from "@/lib/react-query/expenses";
+import { usePersonalExpenses, useCompanyExpenses, CompanyExpenseReport } from "@/lib/react-query/expenses";
 import { Loader2 } from "lucide-react";
 import { PersonalExpensesSkeleton } from "@/components/expenses/PersonalExpensesSkeleton";
+import { companyColumns } from "@/components/expenses/table/companyColumns";
 
 const statusMap: Record<string, string | null> = {
   all: null,
@@ -26,373 +27,7 @@ const statusMap: Record<string, string | null> = {
   paid: "paid",
 };
 
-// Helper function to parse date strings and convert to Date object
-const parseDate = (dateStr: string): Date => {
-  // Handle formats like "Nov 12, 2024" and "15 Oct 2025"
-  return new Date(dateStr);
-};
 
-const unsortedReimbursements = [
-  {
-    id: 1,
-    description: "Client dinner at Restaurant ABC",
-    amount: 145.5,
-    date: "Nov 12, 2024",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "pending",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  {
-    id: 2,
-    description: "Uber rides for business meetings",
-    amount: 67.25,
-    date: "Nov 10, 2024",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Transportation",
-    hasReceipt: true,
-  },
-  {
-    id: 3,
-    description: "Office supplies from Staples",
-    amount: 89.99,
-    date: "Nov 8, 2024",
-    employee: "Emma Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "declined",
-    category: "Office Supplies",
-    hasReceipt: false,
-  },
-  {
-    id: 4,
-    description: "Hotel stay for conference",
-    amount: 299.99,
-    date: "Nov 5, 2024",
-    employee: "John Smith",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john-smith",
-    department: { departmentName: "Finance", departmentId: 4 },
-    status: "approved",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 5,
-    description: "Software license renewal",
-    amount: 199.99,
-    date: "Nov 3, 2024",
-    employee: "Lisa Wang",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa-wang",
-    department: { departmentName: "IT", departmentId: 5 },
-    status: "pending",
-    category: "Software",
-    hasReceipt: true,
-  },
-  {
-    id: 6,
-    description: "Client dinner at Restaurant ABC",
-    amount: 145.5,
-    date: "Nov 12, 2024",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "pending",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  {
-    id: 7,
-    description: "Uber rides for business meetings",
-    amount: 67.25,
-    date: "Nov 10, 2024",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Transportation",
-    hasReceipt: true,
-  },
-  {
-    id: 8,
-    description: "Office supplies from Staples",
-    amount: 89.99,
-    date: "Nov 8, 2024",
-    employee: "Emma Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "draft",
-    category: "Office Supplies",
-    hasReceipt: false,
-  },
-  {
-    id: 9,
-    description: "Hotel stay for conference",
-    amount: 299.99,
-    date: "Nov 5, 2024",
-    employee: "John Smith",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john-smith",
-    department: { departmentName: "Finance", departmentId: 4 },
-    status: "paid",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 10,
-    description: "Software license renewal",
-    amount: 199.99,
-    date: "Nov 3, 2024",
-    employee: "Lisa Wang",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa-wang",
-    department: { departmentName: "IT", departmentId: 5 },
-    status: "pending",
-    category: "Software",
-    hasReceipt: true,
-  },
-  {
-    id: 11,
-    description: "Flight and accommodation for client visit",
-    amount: 2450.75,
-    date: "Nov 15, 2024",
-    employee: "David Martinez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=david-martinez",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "approved",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 12,
-    description: "Annual team retreat accommodation",
-    amount: 3200.0,
-    date: "Nov 20, 2024",
-    employee: "Jessica Lee",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=jessica-lee",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "pending",
-    category: "Travel",
-    hasReceipt: false,
-  },
-  {
-    id: 13,
-    description: "Enterprise software platform subscription",
-    amount: 5999.99,
-    date: "Nov 18, 2024",
-    employee: "Robert Taylor",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=robert-taylor",
-    department: { departmentName: "IT", departmentId: 5 },
-    status: "approved",
-    category: "Software",
-    hasReceipt: true,
-  },
-  {
-    id: 14,
-    description: "Office furniture and equipment setup",
-    amount: 8500.0,
-    date: "Nov 22, 2024",
-    employee: "Amanda White",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=amanda-white",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "pending",
-    category: "Office Equipment",
-    hasReceipt: true,
-  },
-  // Batch expenses for Goodness Swift
-  {
-    id: 15,
-    description: "Lunch with Clients",
-    amount: 3000.0,
-    date: "13 May 2025",
-    employee: "Goodness Swift",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  {
-    id: 16,
-    description: "Lunch with Clients",
-    amount: 3000.0,
-    date: "09 Sep 2025",
-    employee: "Goodness Swift",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "declined",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  {
-    id: 17,
-    description: "Lunch with Clients",
-    amount: 3000.0,
-    date: "17 Jul 2025",
-    employee: "Goodness Swift",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  {
-    id: 18,
-    description: "Lunch with Clients",
-    amount: 3000.0,
-    date: "15 Oct 2025",
-    employee: "Goodness Swift",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=goodness-swift",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "pending",
-    category: "Meals & Entertainment",
-    hasReceipt: true,
-  },
-  // Batch expenses for Sarah Chen
-  {
-    id: 19,
-    description: "Trip to Abuja",
-    amount: 1500.0,
-    date: "20 Oct 2024",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "pending",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 20,
-    description: "Trip to Abuja",
-    amount: 2400.0,
-    date: "5 Jan 2026",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "approved",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 21,
-    description: "Trip to Abuja",
-    amount: 2900.0,
-    date: "21 Feb 2025",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "declined",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 22,
-    description: "Trip to Abuja",
-    amount: 2500.0,
-    date: "20 Oct 2025",
-    employee: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen",
-    department: { departmentName: "Sales", departmentId: 1 },
-    status: "pending",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  // Batch expenses for Michael Rodriguez
-  {
-    id: 23,
-    description: "Software Subscription",
-    amount: 1500.0,
-    date: "27 Aug 2025",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Software Subscription",
-    hasReceipt: true,
-  },
-  {
-    id: 24,
-    description: "Software Subscription",
-    amount: 2000.0,
-    date: "06 Jun 2025",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "pending",
-    category: "Software Subscription",
-    hasReceipt: true,
-  },
-  {
-    id: 25,
-    description: "Software Subscription",
-    amount: 4500.0,
-    date: "10 Mar 2025",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "approved",
-    category: "Software Subscription",
-    hasReceipt: true,
-  },
-  {
-    id: 26,
-    description: "Software Subscription",
-    amount: 3300.0,
-    date: "18 Oct 2025",
-    employee: "Michael Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=michael-rodriguez",
-    department: { departmentName: "Marketing", departmentId: 2 },
-    status: "declined",
-    category: "Software Subscription",
-    hasReceipt: true,
-  },
-  // Batch expenses for Emma Thompson
-  {
-    id: 27,
-    description: "Conference Expenses",
-    amount: 1500.0,
-    date: "11 Dec 2025",
-    employee: "Emma Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "pending",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 28,
-    description: "Conference Expenses",
-    amount: 2800.0,
-    date: "2 Apr 2025",
-    employee: "Emma Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "approved",
-    category: "Travel",
-    hasReceipt: true,
-  },
-  {
-    id: 29,
-    description: "Conference Expenses",
-    amount: 3000.0,
-    date: "22 Oct 2025",
-    employee: "Emma Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma-thompson",
-    department: { departmentName: "Operations", departmentId: 3 },
-    status: "pending",
-    category: "Travel",
-    hasReceipt: true,
-  },
-];
-
-// Sort reimbursements by date from most recent to oldest
-export const reimbursements = unsortedReimbursements.sort((a, b) => {
-  return parseDate(b.date).getTime() - parseDate(a.date).getTime();
-});
-
-export type Reimbursement = (typeof reimbursements)[0];
 
 export default function Reimbursements() {
   const searchParams = useSearchParams();
@@ -433,9 +68,11 @@ export default function Reimbursements() {
   };
 
   const [activeTab, setActiveTab] = useState("all");
-  const [expenseData, setExpenseData] = useState(reimbursements);
-  const [filteredExpenseData, setFilteredExpenseData] =
-    useState(reimbursements);
+  
+  // Company Expenses State
+  const [companyExpenses, setCompanyExpenses] = useState<CompanyExpenseReport[]>([]);
+  const [filteredCompanyExpenses, setFilteredCompanyExpenses] = useState<CompanyExpenseReport[]>([]);
+
   const [personalExpenses, setPersonalExpenses] = useState<
     PersonalExpenseRow[]
   >([]);
@@ -462,6 +99,10 @@ export default function Reimbursements() {
   const { data: personalExpensesData, isLoading: isLoadingPersonalExpenses } =
     usePersonalExpenses(page, limit);
 
+  // Fetch company expenses using React Query
+  const { data: companyExpensesData, isLoading: isLoadingCompanyExpenses } =
+    useCompanyExpenses(page, limit);
+
   // Helper function to format date to user-friendly format
   const formatDate = (dateString: string): string => {
     try {
@@ -479,11 +120,16 @@ export default function Reimbursements() {
   // Transform API data to PersonalExpenseRow format
   useEffect(() => {
     if (personalExpensesData?.reports) {
-      // Sort reports by createdAt date in descending order (most recent first)
+      // Helper function to get the most recent date between createdAt and updatedAt
+      const getMostRecentDate = (report: any): number => {
+        const createdAt = new Date(report.createdAt).getTime();
+        const updatedAt = new Date(report.updatedAt).getTime();
+        return Math.max(createdAt, updatedAt);
+      };
+
+      // Sort reports by the most recent date (comparing both createdAt and updatedAt)
       const sortedReports = [...personalExpensesData.reports].sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA; // Most recent first
+        return getMostRecentDate(b) - getMostRecentDate(a); // Most recent first
       });
 
       const transformedExpenses: PersonalExpenseRow[] = sortedReports.map(
@@ -503,27 +149,34 @@ export default function Reimbursements() {
     }
   }, [personalExpensesData]);
 
-  // Load updated statuses from localStorage on component mount
+  // Transform/Load Company Expenses
   useEffect(() => {
-    const updatedReimbursements = reimbursements.map((expense) => {
-      const savedStatus = localStorage.getItem(`expense-status-${expense.id}`);
-      if (savedStatus) {
-        return { ...expense, status: savedStatus };
-      }
-      return expense;
-    });
-    setExpenseData(updatedReimbursements);
-    setFilteredExpenseData(updatedReimbursements);
-  }, []);
+    if (companyExpensesData?.reports) {
+      // Helper function to get the most recent date
+      const getMostRecentDate = (report: CompanyExpenseReport): number => {
+        const createdAt = new Date(report.createdAt).getTime();
+        const updatedAt = new Date(report.updatedAt).getTime();
+        return Math.max(createdAt, updatedAt);
+      };
+
+      // Sort reports by the most recent date
+      const sortedReports = [...companyExpensesData.reports].sort((a, b) => {
+        return getMostRecentDate(b) - getMostRecentDate(a);
+      });
+
+      setCompanyExpenses(sortedReports);
+      setFilteredCompanyExpenses(sortedReports);
+    }
+  }, [companyExpensesData]);
 
   // Calculate stats based on current data
-  const calculateStats = (data: typeof reimbursements) => {
+  const calculateStats = (data: CompanyExpenseReport[]) => {
     const totalExpenses = data.length;
     const pendingApprovals = data.filter(
       (item) => item.status === "pending",
     ).length;
     const approvedExpenses = data.filter(
-      (item) => item.status === "approved",
+      (item) => item.status === "approved" || item.status === "paid",
     ).length;
     const paidExpenses = data.filter((item) => item.status === "paid").length;
 
@@ -535,12 +188,12 @@ export default function Reimbursements() {
     };
   };
 
-  // Use filtered data for stats if available, otherwise use all data
-  const stats = calculateStats(filteredExpenseData);
+  // Use filtered data for stats
+  const stats = calculateStats(filteredCompanyExpenses as any);
 
-  // Handle filtered data changes from ExpenseTable
-  const handleFilteredDataChange = (filteredData: typeof reimbursements) => {
-    setFilteredExpenseData(filteredData);
+  // Handle filtered data changes for Company Expenses
+  const handleFilteredCompanyDataChange = (filteredData: any) => {
+    setFilteredCompanyExpenses(filteredData);
   };
 
   const personalStats = useMemo(() => {
@@ -729,7 +382,7 @@ export default function Reimbursements() {
 
         <TabsContent value="company-expenses">
           <PermissionGuard requiredPermissions={[]}>
-            <div className="space-y-8">
+              <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
                 <StatsCard
                   title="Total Expenses"
@@ -807,69 +460,79 @@ export default function Reimbursements() {
                   }
                 />
               </div>
-              {/* <ExpenseTable actionButton={<><NewExpenseButtonTrigger /></>} /> */}
-              <Tabs
-                defaultValue="all"
-                value={activeTab}
-                onValueChange={setActiveTab}
-              >
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="draft">Draft</TabsTrigger>
-                  <TabsTrigger value="approved">Approved</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
-                  <TabsTrigger value="paid">Paid</TabsTrigger>
-                </TabsList>
-                <TabsContent value="all">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["all"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="draft">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["draft"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="approved">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["approved"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="rejected">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["rejected"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="pending">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["pending"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-                <TabsContent value="paid">
-                  <ExpenseTable
-                    actionButton={<></>}
-                    statusFilter={statusMap["paid"]}
-                    data={expenseData}
-                    onFilteredDataChange={handleFilteredDataChange}
-                  />
-                </TabsContent>
-              </Tabs>
+              
+              {isLoadingCompanyExpenses ? (
+                <PersonalExpensesSkeleton />
+              ) : (
+                <Tabs
+                  defaultValue="all"
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                >
+                  <TabsList>
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="draft">Draft</TabsTrigger>
+                    <TabsTrigger value="approved">Approved</TabsTrigger>
+                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                    <TabsTrigger value="pending">Pending</TabsTrigger>
+                    <TabsTrigger value="paid">Paid</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="all">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["all"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="draft">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["draft"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="approved">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["approved"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="rejected">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["rejected"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="pending">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["pending"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="paid">
+                    <ExpenseTable
+                      actionButton={<></>}
+                      statusFilter={statusMap["paid"]}
+                      data={companyExpenses as any}
+                      columnsOverride={companyColumns as any}
+                      onFilteredDataChange={handleFilteredCompanyDataChange}
+                    />
+                  </TabsContent>
+                </Tabs>
+              )}
             </div>
           </PermissionGuard>
         </TabsContent>
