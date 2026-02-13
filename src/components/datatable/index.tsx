@@ -52,6 +52,7 @@ import {
   TableRow,
   TableCell,
 } from "../ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE_OPTIONS = [
   { label: "5", value: "5" },
@@ -437,14 +438,16 @@ function DataTable<Data extends object, Value = unknown>(
                 </TableRow>
               )
             ) : (
-              <tr>
-                <td
-                  colSpan={table.getVisibleFlatColumns().length}
-                  className="text-center py-20"
-                >
-                  <p>Loading...</p>
-                </td>
-              </tr>
+              // Skeleton Loading State
+              Array.from({ length: 5 }).map((_, rowIndex) => (
+                <TableRow key={`skeleton-row-${rowIndex}`} className="hover:bg-transparent">
+                  {table.getVisibleFlatColumns().map((column, colIndex) => (
+                    <TableCell key={`skeleton-cell-${rowIndex}-${colIndex}`} className="px-4 py-2.5">
+                      <Skeleton className="h-4 w-full rounded" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>

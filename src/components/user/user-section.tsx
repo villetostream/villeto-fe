@@ -179,7 +179,9 @@ export function UserSection() {
         isUploadReceiptPage ||
         isNewExpensePage ||
         isNewReportPage ||
-        isBatchExpensePage ? (
+        isBatchExpensePage ||
+        pathname === "/people/invite/leadership" ||
+        pathname === "/people/invite/employees" ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary  h-auto! py-1! has-[>svg]:px-0!" // Adjust hover styles as needed
@@ -284,6 +286,7 @@ export function UserSection() {
                 }
                 return;
               }
+
               if (isNewReportPage) {
                 // Return to expenses list
                 const returnTab =
@@ -294,6 +297,28 @@ export function UserSection() {
                 router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
                 return;
               }
+              
+              // Helper to check if we are on specific invite pages
+              if (pathname === "/people/invite/leadership") {
+                  router.push("/people");
+                  return;
+              }
+              
+              if (pathname === "/people/invite/employees") {
+                  // Check if we have the step param
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const step = urlParams.get("step");
+                  
+                  if (step === "preview") {
+                      // Go back to upload step
+                      router.push("/people/invite/employees");
+                  } else {
+                      // Go back to people page
+                      router.push("/people");
+                  }
+                  return;
+              }
+
               // Default for expense detail page
               router.push("/expenses");
             }}

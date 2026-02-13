@@ -30,6 +30,7 @@ export interface AppUser {
     password?: string | null;
     loginCount?: number | null;
     isActive?: boolean | null;
+    status?: string | null;
     phone?: string | null;
     ownershipPercentage?: number | null;
     company?: string | null;

@@ -36,46 +36,6 @@ function ActionsCell({ row }: { row: any }) {
   const status = row.getValue("status") as PersonalExpenseStatus;
   const expense = row.original as PersonalExpenseRow;
   const router = useRouter();
-
-  const handleEdit = () => {
-    // Navigate to edit page with reportId
-    // The edit page will fetch the report details and populate the form
-    router.push(`/expenses/personal/${expense.reportId}/edit`);
-  };
-
-  const handleDelete = () => {
-    router.push(`/expenses/personal/${expense.reportId}/delete`);
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="cursor-pointer">
-          <MoreHorizontal className="w-4 h-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => router.push(`/expenses/personal/${expense.reportId}`)}
-        >
-          <Eye className="size-5" />
-          View Details
-        </DropdownMenuItem>
-        {status === "draft" && (
-          <>
-            <DropdownMenuItem onClick={handleEdit}>
-              <Edit className="size-5" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDelete}>
-              <Trash className="size-5" />
-              Delete
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
@@ -113,10 +73,5 @@ export const personalExpenseColumns: ColumnDef<PersonalExpenseRow>[] = [
         </Badge>
       );
     },
-  },
-  {
-    id: "actions",
-    header: "ACTION",
-    cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];
