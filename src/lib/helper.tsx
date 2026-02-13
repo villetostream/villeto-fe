@@ -8,6 +8,7 @@ export const getStatusIcon = (status: string) => {
         case 'pending':
             return <Timer className="w-4 h-4 " />;
         case 'declined':
+        case 'rejected':
             return <Forbidden className="w-4 h-4 " />;
         case "draft":
             return <ReceiptEdit className="w-4 h-4 " />;

@@ -40,7 +40,7 @@ export interface CompanyExpenseReport {
   deletedAt: string | null;
   reportId: string;
   reportTitle: string;
-  status: "draft" | "pending" | "approved" | "declined" | "paid";
+  status: "draft" | "pending" | "approved" | "declined" | "rejected" | "paid";
   costCenter: string;
   reportedBy: string;
   totalAmount: number;
@@ -67,7 +67,8 @@ export interface PersonalExpenseDetailResponse {
   deletedAt: string | null;
   reportId: string;
   reportTitle: string;
-  status?: PersonalExpenseStatus;
+  status?: PersonalExpenseStatus | "rejected";
+  reporter?: string;
   expenses: ExpenseItem[];
 }
 

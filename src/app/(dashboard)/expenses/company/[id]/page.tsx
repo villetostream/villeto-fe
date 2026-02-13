@@ -248,7 +248,7 @@ export default function CompanyExpenseDetailPage() {
   };
 
   // Extract reporter name from expenseDetail
-  const reporterName = (expenseDetail as any).reporter || "Unknown Reporter";
+  const reporterName = expenseDetail.reporter || "Unknown Reporter";
 
   return (
     <div className="max-w-7xl mx-auto p-6">
