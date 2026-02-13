@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useDataTable } from "@/components/datatable/useDataTable";
-import { columns } from "./column";
 import { DataTable } from "@/components/datatable";
 import { useDateFilterStore } from "@/stores/useDateFilterStore";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -161,7 +160,6 @@ const ExpenseTable = ({
             },
           ],
           onFilter: (filters: Record<string, unknown>) => {
-            console.log("Filters applied:", filters);
             setAppliedFilters(filters as Record<string, string>);
           },
         },

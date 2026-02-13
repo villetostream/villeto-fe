@@ -52,7 +52,7 @@ function ActionsCell({ row }: { row: any }) {
 export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   {
     accessorKey: "employee",
-    header: "Requested By",
+    header: "REQUESTED BY",
     cell: ({ row }) => {
       const report = row.original;
       // API currently doesn't return avatar, so we use fallback
@@ -73,7 +73,7 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "costCenter",
-    header: "Cost Center",
+    header: "COST CENTER",
     cell: ({ row }) => {
       const costCenter = row.getValue("costCenter") as string;
       return <span>{costCenter || "Uncategorized"}</span>;
@@ -81,7 +81,7 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "totalAmount",
-    header: "Amount",
+    header: "AMOUNT",
     cell: ({ row }) => {
         const amount = row.getValue("totalAmount") as number;
         return <span className="font-semibold">${amount.toFixed(2)}</span>;
@@ -89,7 +89,7 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: "STATUS",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       return (
@@ -106,16 +106,21 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "updatedAt",
-    header: "Date",
+    header: "MODIFIED DATE",
     cell: ({ row }) => {
         const updatedAt = row.getValue("updatedAt") as string;
         // Fallback to createdAt if updatedAt is same as createdAt or missing (though API guarantees it)
         return <span>{formatDate(updatedAt)}</span>;
     }
   },
-  { // Explicitly show action for viewing details, as per user request to click report
-    id: "actions",
-    header: "", // Empty header
-    cell: ({ row }) => <ActionsCell row={row} />,
+  {
+    accessorKey: "createdAt",
+    header: "CREATED DATE",
+    cell: ({ row }) => {
+      const createdAt = row.getValue("createdAt") as string;
+      return <span>{formatDate(createdAt)}</span>;
+    },
+    enableHiding: true, // Allow this column to be hidden
   },
+
 ];
