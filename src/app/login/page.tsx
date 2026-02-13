@@ -4,12 +4,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-stores';
+import { Loader2 } from 'lucide-react';
+import { useAuthStore, User } from '@/stores/auth-stores';
 import { MailAtSign01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Form } from '@/components/ui/form';
@@ -18,71 +15,71 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
 import FormFieldInput from '@/components/form fields/formFieldInput';
 import CircleProgress from '@/components/HalfProgressCircle';
-import { useAuthCheck } from '@/actions/auth/auth-check';
 import Link from 'next/link';
+import { useLogin } from '@/actions/auth/auth-login';
+import { AxiosError } from 'axios';
+import { loginSchema } from '@/lib/schemas/schemas';
 
-const formSchema = z.object({
-    email: z.email().min(1, "email is required").max(100),
-
-});
+type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-    const form = useForm({
-        resolver: zodResolver(formSchema),
+    const router = useRouter();
+    const login = useLogin();
+    const isLoading = login.isPending;
+    const setUser = useAuthStore().login;
+    const setAccessToken = useAuthStore().setAccessToken;
+    const setUserPermissions = useAuthStore().setUserPermissions;
+    const [error, setError] = useState<string | null>(null);
+
+    const form = useForm<FormData>({
+        resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: ""
+            email: "",
+            password: ""
         },
     });
-    const [error, setError] = useState('');
 
-    const checkAsync = useAuthCheck()
-    const isLoading = checkAsync.isPending;
-    const router = useRouter();
-
-    const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-
-        setError('');
-
+    const onSubmit = async (data: FormData) => {
         try {
-
-            await checkAsync.mutateAsync(data.email);
-            router.push(`/login-with-password?email=${encodeURIComponent(data.email)}`);
-            // const success = await login(email, password);
-            // console.log(`succes is ${success}`)
-            // if (success) {
-            // } else {
-            //     setError('Invalid email or password');
-            // }
-        } catch (err) {
-            //    toast.error()
+            setError(null);
+            const response = await login.mutateAsync(data);
+            setAccessToken(response.data.accessToken);
+            setUser(response.data.user as User);
+            setUserPermissions(response.data.user?.role.permissions);
+            router.push('/dashboard');
+        } catch (err: any) {
+            console.error(err);
+            setError(((err as AxiosError).response?.data as any)?.message as string ?? "Invalid email or password");
         }
     };
-
 
     return (
         <div className="h-full flex-col flex items-center justify-center">
             <div className='absolute top-0 left-0 mb-auto p-10 flex w-full items-center justify-between'>
                 <div>
-                    <img src="/images/logo.png" className='h-14 w-32 object-cover' />
+                    <img src="/images/logo.png" className='h-14 w-32 object-cover' alt="Villeto" />
                 </div>
-                <CircleProgress currentStep={1} />
+                {/* Optional: Remove CircleProgress or set to full if it's a single step now */}
+                {/* <CircleProgress currentStep={1} /> */}
             </div>
-            <Card className="w-full bg-white !border-0 shadow-none">
+            <Card className="w-full bg-white !border-0 shadow-none max-w-md">
                 <CardHeader className="space-y-2.5 ">
 
                     <HugeiconsIcon icon={MailAtSign01Icon} className="w-10 h-10 text-primary mb-2.5" />
 
                     <CardTitle className="text-2xl font-semibold leading-[100%]">Sign In to Villeto</CardTitle>
                     <CardDescription>
-                        Enter your email address to login to your account
+                        Enter your email and password to login to your account
                     </CardDescription>
                 </CardHeader>
                 <CardContent className='pt-10'>
                     <Form {...form}>
-
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-
-
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            {error && (
+                                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20 mb-4">
+                                    {error}
+                                </div>
+                            )}
 
                             <FormFieldInput
                                 label='Email Address'
@@ -93,12 +90,28 @@ export default function LoginPage() {
                                 inputMode='email'
                             />
 
-
-
+                            <div className="space-y-1">
+                                <FormFieldInput
+                                    label='Password'
+                                    placeholder="Enter your password"
+                                    control={form.control}
+                                    name='password'
+                                    type='password'
+                                    showPasswordToggle={true}
+                                />
+                                <div className="flex justify-end pt-1">
+                                    <Link 
+                                        href="/forgot-password" 
+                                        className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                    >
+                                        Forgot Password?
+                                    </Link>
+                                </div>
+                            </div>
 
                             <Button
                                 type="submit"
-                                className="w-full mt-10"
+                                className="w-full mt-6"
                                 disabled={isLoading}
                                 size={"md"}
                             >
@@ -107,7 +120,9 @@ export default function LoginPage() {
                             </Button>
                         </form>
                     </Form>
-                    <div className='flex justify-center items-center gap-2 text-lg font-medium mt-10'>New to Villeto? <Link href="/pre-onboarding" className="text-primary text-lg font-medium text-no-underline  hover:text-no-underline">Sign up</Link></div>
+                    <div className='flex justify-center items-center gap-2 text-lg font-medium mt-10'>
+                        New to Villeto? <Link href="/pre-onboarding" className="text-primary text-lg font-medium text-no-underline hover:text-no-underline">Sign up</Link>
+                    </div>
 
                 </CardContent>
             </Card>
