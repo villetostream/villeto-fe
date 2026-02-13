@@ -26,6 +26,15 @@ export default function DashboardLayoutContent({
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Lock body scroll to prevent double scrollbars in dashboard
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
   }, []);
   useEffect(() => {
     if (isLoading) return;
