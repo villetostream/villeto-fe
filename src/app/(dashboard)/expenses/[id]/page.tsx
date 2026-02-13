@@ -10,7 +10,6 @@ import { FlagExpenseModal } from "@/components/expenses/FlagExpenseModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { reimbursements } from "@/lib/mock-data";
 
 const Page = () => {
   const params = useParams();
