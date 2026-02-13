@@ -76,6 +76,9 @@ export default function EditReportPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expenseToDeleteId, setExpenseToDeleteId] = useState<string | null>(null);
   const [isDeletingReport, setIsDeletingReport] = useState(false);
+  
+  // Track deleted expense IDs (for existing expenses only)
+  const [deletedExpenseIds, setDeletedExpenseIds] = useState<string[]>([]);
 
   // Dirty state tracking
   const [isDirty, setIsDirty] = useState(false);
@@ -228,26 +231,21 @@ export default function EditReportPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDeleteExpense = async () => {
+  const confirmDeleteExpense = () => {
     if (!expenseToDeleteId) return;
 
     // Check if it's an existing expense (ID doesn't start with "new-")
     const isExisting = !expenseToDeleteId.startsWith("new-");
 
+    // Track deletion for existing expenses (will be handled on save)
     if (isExisting) {
-      try {
-        await axios.delete(`reports/${reportId}/expenses/${expenseToDeleteId}`);
-        toast.success("Expense deleted from report");
-      } catch (error) {
-        console.error("Error deleting expense:", error);
-        toast.error("Failed to delete expense");
-        return; // Don't remove from UI if API failed
-      }
+      setDeletedExpenseIds((prev) => [...prev, expenseToDeleteId]);
     }
 
-    // Update UI
+    // Remove from UI immediately
     setExpenses((prev) => prev.filter((e) => e.id !== expenseToDeleteId));
     setIsDirty(true); // Mark as dirty
+    toast.success("Expense removed (will be deleted on save)");
     setIsDeleteModalOpen(false);
     setExpenseToDeleteId(null);
   };
@@ -304,6 +302,17 @@ export default function EditReportPage() {
     }
 
     try {
+      // First, delete any expenses that were marked for deletion
+      if (deletedExpenseIds.length > 0) {
+        await Promise.all(
+          deletedExpenseIds.map((expenseId) =>
+            axios.delete(`reports/${reportId}/expenses/${expenseId}`)
+          )
+        );
+        // Clear the deleted IDs after successful deletion
+        setDeletedExpenseIds([]);
+      }
+
       // Helper to extract base64
       const extractBase64 = (dataUrl: string) => {
           if (!dataUrl || !dataUrl.startsWith("data:")) return undefined;

@@ -12,15 +12,12 @@ import { ChartUpIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
-import { reimbursements } from "../expenses/page";
 import { useAxios } from "@/hooks/useAxios";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
-  const total = reimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(3);
-  const [integer, decimal] = total.split(".");
   const axios = useAxios();
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);

@@ -7,7 +7,7 @@ import { RejectionModal } from "@/components/expenses/RejectionModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
-import { reimbursements } from "../../page";
+import { reimbursements } from "@/lib/mock-data";
 
 const Page = () => {
   const params = useParams();

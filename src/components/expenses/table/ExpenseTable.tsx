@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDataTable } from "@/components/datatable/useDataTable";
 import { columns } from "./column";
 import { DataTable } from "@/components/datatable";
-import { reimbursements } from "@/app/(dashboard)/expenses/page";
+import { reimbursements } from "@/lib/mock-data";
 import { useDateFilterStore } from "@/stores/useDateFilterStore";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -14,10 +14,10 @@ const ExpenseTable = ({
   columnsOverride,
   page = 1,
 }: {
-  actionButton: React.ReactElement;
+  actionButton?: React.ReactElement;
   statusFilter?: string | null;
-  data?: typeof reimbursements;
-  onFilteredDataChange?: (filteredData: typeof reimbursements) => void;
+  data?: any[];
+  onFilteredDataChange?: (filteredData: any[]) => void;
   columnsOverride?: ColumnDef<any, any>[];
   page?: number;
 }) => {

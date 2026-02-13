@@ -34,6 +34,18 @@ export interface PersonalExpenseReport {
   totalAmount: number; // Updated to number based on new API response
 }
 
+export interface CompanyExpenseReport {
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  reportId: string;
+  reportTitle: string;
+  status: "draft" | "pending" | "approved" | "declined" | "paid";
+  costCenter: string;
+  reportedBy: string;
+  totalAmount: number;
+}
+
 export interface ExpenseItem {
   createdAt: string;
   updatedAt: string;
@@ -87,6 +99,28 @@ export interface PersonalExpensesResponse {
   };
 }
 
+export interface CompanyExpensesApiResponse {
+  message: string;
+  status: number;
+  data: CompanyExpenseReport[];
+  meta: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
+export interface CompanyExpensesResponse {
+  reports: CompanyExpenseReport[];
+  meta: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
 // Query for fetching personal expenses
 export const usePersonalExpenses = (
   page: number = 1,
@@ -113,6 +147,37 @@ export const usePersonalExpenses = (
         reports: response.data.data,
         meta: response.data.meta,
       } as PersonalExpensesResponse;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Query for fetching company expenses
+export const useCompanyExpenses = (
+  page: number = 1,
+  limit: number = 10,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
+) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: [API_KEYS.EXPENSE.COMPANY_REPORTS, page, limit, sortBy, sortOrder],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      if (sortBy) params.append("sortBy", sortBy);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+
+      const response = await axios.get<CompanyExpensesApiResponse>(
+        `${API_KEYS.EXPENSE.COMPANY_REPORTS}?${params.toString()}`
+      );
+      
+      return {
+        reports: response.data.data,
+        meta: response.data.meta,
+      } as CompanyExpensesResponse;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

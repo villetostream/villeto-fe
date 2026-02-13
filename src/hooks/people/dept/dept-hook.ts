@@ -132,7 +132,7 @@ export const useDepartmentHook = (id?: string) => {
 
 
 
-            toast.success(`Department ${selected?.name} deleted!`)
+            toast.success(`Department ${selected?.departmentName} deleted!`)
 
 
             allDepts.refetch();
