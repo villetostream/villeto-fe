@@ -14,10 +14,10 @@ const ExpenseTable = ({
   columnsOverride,
   page = 1,
 }: {
-  actionButton: React.ReactElement;
+  actionButton?: React.ReactElement;
   statusFilter?: string | null;
-  data?: typeof reimbursements;
-  onFilteredDataChange?: (filteredData: typeof reimbursements) => void;
+  data?: any[];
+  onFilteredDataChange?: (filteredData: any[]) => void;
   columnsOverride?: ColumnDef<any, any>[];
   page?: number;
 }) => {

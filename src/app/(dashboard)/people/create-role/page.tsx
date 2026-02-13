@@ -49,7 +49,7 @@ function CreateRolePage() {
         watch,
         reset,
     } = useForm<RoleFormData>({
-        resolver: zodResolver(roleSchema),
+        resolver: zodResolver(roleSchema) as any,
         defaultValues: {
             name: "",
             description: "",
