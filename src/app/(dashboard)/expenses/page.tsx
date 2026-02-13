@@ -220,8 +220,8 @@ export default function Reimbursements() {
       <Tabs value={outerTab} onValueChange={handleTabChange}>
         <div className="flex items-center justify-between mb-10">
           <TabsList>
-            <TabsTrigger value="company-expenses">Company Expenses</TabsTrigger>
-            <TabsTrigger value="personal-expenses">Personal Expenses</TabsTrigger>
+            <TabsTrigger value="company-expenses" className="cursor-pointer">Company Expenses</TabsTrigger>
+            <TabsTrigger value="personal-expenses" className="cursor-pointer">Personal Expenses</TabsTrigger>
           </TabsList>
           {outerTab === "personal-expenses" && <NewExpenseButtonTrigger />}
         </div>
@@ -461,7 +461,7 @@ export default function Reimbursements() {
                 />
               </div>
               
-              {isLoadingCompanyExpenses ? (
+              {isLoadingCompanyExpenses || (companyExpensesData?.reports && companyExpensesData.reports.length > 0 && companyExpenses.length === 0) ? (
                 <PersonalExpensesSkeleton />
               ) : (
                 <Tabs

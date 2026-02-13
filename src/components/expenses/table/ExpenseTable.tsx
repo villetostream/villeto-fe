@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useDataTable } from "@/components/datatable/useDataTable";
 import { columns } from "./column";
 import { DataTable } from "@/components/datatable";
-import { reimbursements } from "@/lib/mock-data";
 import { useDateFilterStore } from "@/stores/useDateFilterStore";
 import type { ColumnDef } from "@tanstack/react-table";
 
 const ExpenseTable = ({
   actionButton = <></>,
   statusFilter = null,
-  data = reimbursements,
+  data = [],
   onFilteredDataChange,
   columnsOverride,
   page = 1,
@@ -30,7 +29,7 @@ const ExpenseTable = ({
   const tableprops = useDataTable({
     initialPage: page,
     initialPageSize: 10,
-    totalItems: reimbursements.length,
+    totalItems: data.length,
     manualSorting: false,
     manualFiltering: false,
     manualPagination: false,

@@ -1,6 +1,5 @@
 "use client";
 
-import { Reimbursement, reimbursements } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,14 +20,16 @@ function ActionsCell({ row }: { row: any }) {
   const router = useRouter();
   const expense = row.original;
 
-  // Check if employee has multiple expenses
-  const employeeExpenseCount = reimbursements.filter(
-    (r) => r.employee === expense.employee
+  // Get all rows from the table to check for multiple expenses by same employee
+  const table = (row as any).table;
+  const allRows = table?.getCoreRowModel?.()?.rows || [];
+  const employeeExpenseCount = allRows.filter(
+    (r: any) => r.original?.employee === expense.employee
   ).length;
   const hasMultipleExpenses = employeeExpenseCount > 1;
 
   // Create URL-friendly employee name for batch route
-  const employeeSlug = expense.employee.toLowerCase().replace(/\s+/g, "-");
+  const employeeSlug = expense.employee?.toLowerCase().replace(/\s+/g, "-") || "";
 
   return (
     <DropdownMenu>
