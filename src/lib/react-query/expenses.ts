@@ -271,3 +271,58 @@ export const useSaveExpenseAsDraft = () => {
     },
   });
 };
+
+// Query for fetching a single company expense detail
+export const useCompanyExpenseDetail = (reportId: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: [API_KEYS.EXPENSE.COMPANY_REPORTS, reportId],
+    queryFn: async () => {
+      const response = await axios.get<PersonalExpenseDetailApiResponse>(
+        `reports/${reportId}`
+      );
+      // Extract the data property from the API response
+      return response.data.data;
+    },
+    enabled: !!reportId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Mutation for updating company expense status (approve/reject)
+export const useUpdateCompanyExpenseStatus = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      reportId,
+      status,
+    }: {
+      reportId: string;
+      status: "approved" | "declined" | "rejected";
+    }) => {
+      const response = await axios.patch(`reports/${reportId}`, { status });
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      const statusLabel = variables.status === "approved" ? "Approved" : "Rejected";
+      toast.success(`Report ${statusLabel.toLowerCase()} successfully.`);
+      // Invalidate queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.COMPANY_REPORTS] });
+      queryClient.invalidateQueries({ 
+        queryKey: [API_KEYS.EXPENSE.COMPANY_REPORTS, variables.reportId] 
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error updating expense status:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to update status. Please try again.";
+      toast.error(errorMessage);
+    },
+  });
+};

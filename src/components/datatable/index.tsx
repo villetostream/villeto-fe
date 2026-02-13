@@ -395,7 +395,7 @@ function DataTable<Data extends object, Value = unknown>(
                       }
                       const original: any = row.original as any;
                       // For personal expenses, use reportId (UUID); for company expenses, use id (numeric)
-                      const id = expensesClickMode === "personal" ? original?.reportId : original?.id;
+                      const id = expensesClickMode === "personal" ? original?.reportId : original?.reportId;
                       if (id) {
                       // For personal expenses:
                       // - Draft -> Edit page (/expenses/personal/[id]/edit)
@@ -407,8 +407,8 @@ function DataTable<Data extends object, Value = unknown>(
                             router.push(`/expenses/personal/${id}`);
                         }
                       } else {
-                        // Company expenses -> Detail page
-                        router.push(`/expenses/${id}`);
+                        // Company expenses -> Detail page (/expenses/company/[id])
+                        router.push(`/expenses/company/${id}`);
                       }
                       }
                     }}

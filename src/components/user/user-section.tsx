@@ -147,11 +147,19 @@ export function UserSection() {
   const isPersonalExpenseDeletePage = pathname.match(
     /^\/expenses\/personal\/[a-f0-9\-]+\/delete$/i,
   );
+  // Company expense detail page
+  const isCompanyExpenseDetailPage = pathname.match(
+    /^\/expenses\/company\/[a-f0-9\-]+$/i,
+  );
   const isBatchExpensePage = pathname.match(/^\/expenses\/batch\/[^/]+$/);
   const expenseIdFromPath = pathname.match(/\/expenses\/(\d+)/)?.[1];
   // Extract reportId from personal expense detail page (UUID format)
   const reportIdFromPath = pathname.match(
     /\/expenses\/personal\/([a-f0-9\-]+)$/i,
+  )?.[1];
+  // Extract reportId from company expense detail page (UUID format)
+  const companyReportIdFromPath = pathname.match(
+    /\/expenses\/company\/([a-f0-9\-]+)$/i,
   )?.[1];
   const isExpensesListPage = pathname === "/expenses";
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
@@ -167,6 +175,7 @@ export function UserSection() {
         isPersonalExpenseDeletePage ||
         isPersonalExpenseDetailPage ||
         isPersonalExpenseEditPage ||
+        isCompanyExpenseDetailPage ||
         isUploadReceiptPage ||
         isNewExpensePage ||
         isNewReportPage ||
@@ -219,6 +228,12 @@ export function UserSection() {
                 const returnPage =
                   sessionStorage.getItem("expensesReturnPage") || "1";
                 router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
+                return;
+              }
+              if (isCompanyExpenseDetailPage) {
+                // Return to company expenses tab
+                const returnTab = "company-expenses";
+                router.push(`/expenses?tab=${returnTab}`);
                 return;
               }
               if (isBatchExpensePage) {
