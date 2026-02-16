@@ -329,44 +329,17 @@ function DataTable<Data extends object, Value = unknown>(
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="bg-gray-50">
                 {headerGroup.headers.map((header) => {
-                  const isSorted = header.column.getIsSorted();
-                  const canSort = header.column.getCanSort();
                   return (
                     <th
                       key={header.id}
-                      onClick={
-                        canSort
-                          ? header.column.getToggleSortingHandler()
-                          : undefined
-                      }
-                      className={`px-4 py-3 text-center text-xs font-semibold text-gray-700  tracking-wider cursor-${
-                        canSort ? "pointer" : "default"
-                      } select-none`}
+                      className="px-4 py-3 text-center text-xs font-semibold text-gray-700 tracking-wider select-none"
                     >
                       <div className="flex items-center justify-start gap-1">
-                        {/* {enableRowSelection && header.id === "select" && (
-                          <Checkbox
-                            checked={
-                              table.getIsAllPageRowsSelected() ||
-                              (table.getIsSomePageRowsSelected() &&
-                                "indeterminate")
-                            }
-                            onCheckedChange={(value) =>
-                              table.toggleAllPageRowsSelected(!!value)
-                            }
-                            aria-label="Select all"
-                          />
-                        )} */}
                         {header.id !== "select" &&
                           flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                        {isSorted && header.id !== "select" && (
-                          <span className="ml-1">
-                            {isSorted === "asc" ? <FaSortUp /> : <FaSortDown />}
-                          </span>
-                        )}
                       </div>
                     </th>
                   );

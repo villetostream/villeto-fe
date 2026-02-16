@@ -2,12 +2,13 @@
 
 import { CompanyExpenseReport } from "@/lib/react-query/expenses";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getStatusIcon } from "@/lib/helper";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { SortableColumnHeader } from "@/components/datatable/SortableColumnHeader";
 
 // Helper for initials
 const getInitials = (name: string) => {
@@ -55,7 +56,6 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
     header: "REQUESTED BY",
     cell: ({ row }) => {
       const report = row.original;
-      // API currently doesn't return avatar, so we use fallback
       return (
         <div className="flex items-center gap-3">
           <Avatar>
@@ -81,7 +81,9 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "totalAmount",
-    header: "AMOUNT",
+    header: ({ column }) => (
+      <SortableColumnHeader column={column} title="AMOUNT" />
+    ),
     cell: ({ row }) => {
         const amount = row.getValue("totalAmount") as number;
         return <span className="font-semibold">${amount.toFixed(2)}</span>;
@@ -106,21 +108,23 @@ export const companyColumns: ColumnDef<CompanyExpenseReport>[] = [
   },
   {
     accessorKey: "updatedAt",
-    header: "MODIFIED DATE",
+    header: ({ column }) => (
+      <SortableColumnHeader column={column} title="MODIFIED DATE" />
+    ),
     cell: ({ row }) => {
         const updatedAt = row.getValue("updatedAt") as string;
-        // Fallback to createdAt if updatedAt is same as createdAt or missing (though API guarantees it)
         return <span>{formatDate(updatedAt)}</span>;
     }
   },
   {
     accessorKey: "createdAt",
-    header: "CREATED DATE",
+    header: ({ column }) => (
+      <SortableColumnHeader column={column} title="CREATED DATE" />
+    ),
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
       return <span>{formatDate(createdAt)}</span>;
     },
-    enableHiding: true, // Allow this column to be hidden
+    enableHiding: true,
   },
-
 ];

@@ -39,7 +39,7 @@ interface SubItem {
 export const navigationItems: NavItem[] = [
   {
     icon: <HugeiconsIcon icon={Home09Icon} />,
-    label: "Dashboard",
+    label: "Overview",
     href: "/dashboard",
     permission: [],
     section: "MAIN MENU",
