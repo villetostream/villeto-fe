@@ -76,9 +76,9 @@ function getCurrentSection(pathname: string): {
     };
   }
 
-  // Default to Dashboard
+  // Default to Overview
   return {
-    label: "Dashboard",
+    label: "Overview",
     icon: <Home className="w-5 h-5" />,
   };
 }

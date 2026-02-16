@@ -172,22 +172,22 @@ export function DashboardSidebar() {
               <SidebarMenuButton
                 tooltip={item.label}
                 isActive={isActive(item.href)}
-                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
+                className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-primary data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
                 onClick={() => item.href && router.push(item.href)}
               >
-                <span className="[&>svg]:size-5 [&>svg]:shrink-0">
+                <span className="shrink-0 [&>svg]:size-5 [&>svg]:shrink-0">
                   {item.icon}
                 </span>
-                <span>{item.label}</span>
+                <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 <ChevronRight
                   className={cn(
-                    "ml-auto h-4 w-4 transition-transform duration-200",
+                    "ml-auto h-4 w-4 transition-transform duration-200 group-data-[collapsible=icon]:hidden",
                     isOpen && "rotate-90",
                   )}
                 />
               </SidebarMenuButton>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 space-y-1 pl-8">
+            <CollapsibleContent className="mt-1 space-y-1 pl-8 group-data-[collapsible=icon]:hidden">
               {item.subItems?.map((sub) => (
                 <SidebarMenuSubButton
                   key={sub.label}
@@ -196,7 +196,7 @@ export function DashboardSidebar() {
                   className={cn(
                     "text-xs",
                     isActive(sub.href!) &&
-                      "bg-sidebar-accent/20 font-medium text-dashboard-accent",
+                      "bg-sidebar-accent/20 font-medium text-primary",
                   )}
                 >
                   <Link href={sub.href!}>{sub.label}</Link>
@@ -214,11 +214,11 @@ export function DashboardSidebar() {
           asChild
           isActive={isActive(item.href)}
           tooltip={item.label}
-          className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-dashboard-accent data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
+          className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-primary data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
         >
           <Link href={item.href}>
-            <span className="[&>svg]:size-5 [&>svg]:shrink-0">{item.icon}</span>
-            <span>{item.label}</span>
+            <span className="shrink-0 [&>svg]:size-5 [&>svg]:shrink-0">{item.icon}</span>
+            <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -303,8 +303,8 @@ export function DashboardSidebar() {
               tooltip="Log Out"
               className="font-normal text-sm text-[#7F7F7F] hover:text-destructive hover:bg-sidebar-accent"
             >
-              <Logout className="size-5" />
-              <span>Log Out</span>
+              <Logout className="size-5 shrink-0" />
+              <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
