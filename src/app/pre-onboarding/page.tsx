@@ -13,10 +13,9 @@ import { AxiosError } from 'axios'
 import FormFieldInput from '@/components/form fields/formFieldInput'
 import CircleProgress from '@/components/HalfProgressCircle'
 import { useConfirmationOnboardingApi } from '@/actions/pre-onboarding/confirm-onbarding-status'
-import { Onboarding, useGetOnboardingDetailsApi } from '@/actions/pre-onboarding/get-onboarding-details'
 import { useOnboardingStore } from '@/stores/useVilletoStore'
-import { toast } from 'sonner'
 import { emailSchema } from '@/lib/schemas/schemas'
+import Link from 'next/link'
 
 
 
@@ -34,108 +33,43 @@ const Page = () => {
   const confirmAccount = useConfirmationOnboardingApi();
   const onboarding = useOnboardingStore()
 
-  // useQuery for onboarding details - but we'll enable it only after confirmation
-  const [shouldFetchDetails, setShouldFetchDetails] = React.useState(false);
-  const [confirmedEmail, setConfirmedEmail] = React.useState('');
-
-
-  const onboardingDetails = useGetOnboardingDetailsApi(
-    shouldFetchDetails ? confirmedEmail : "",
-    {
-      enabled: shouldFetchDetails && !!confirmedEmail,
-    }
-  );
-
-  const loading = confirmAccount.isPending || onboardingDetails.isLoading;
-
-  React.useEffect(() => {
-    if (shouldFetchDetails && onboardingDetails.isSuccess && onboardingDetails.data) {
-      // Navigate based on onboarding details
-      handleNavigation(onboardingDetails.data.data);
-      // Reset the flag
-      setShouldFetchDetails(false);
-    }
-  }, [onboardingDetails.isSuccess, onboardingDetails.data, shouldFetchDetails]);
+  const loading = confirmAccount.isPending;
 
   const onSubmit = async (data: EmailForm) => {
     try {
-      // Step 1: Confirm account
+      // Step 1: Confirm account — if found, this is an existing user
       onboarding.setContactEmail(data.email)
       const confirmResponse = await confirmAccount.mutateAsync(data);
-      console.log({ confirmResponse })
 
-      setConfirmedEmail(confirmResponse.data.onboardingId);
-      onboarding.setOnboardingId(confirmResponse.data?.onboardingId);
-      setShouldFetchDetails(true);
+      // Existing user — store info and go to OTP with "continue from where you left"
+      const onboardingData = confirmResponse.data;
+      onboarding.setOnboardingId(onboardingData.onboardingId);
+      onboarding.setIsExistingUser(true);
+      onboarding.setStoppedAtStep(onboardingData.step);
+      router.push('/pre-onboarding/verify-otp')
 
     } catch (e: any) {
       let error = e as AxiosError
       if (error.status === 404) {
+        // New user — reset and go to registration
         onboarding.reset()
         onboarding.setContactEmail(data.email)
+        onboarding.setIsExistingUser(false)
+        onboarding.setStoppedAtStep(null)
         router.push('/pre-onboarding/registration')
       }
     }
   }
 
-  const handleNavigation = (onboardingData: Onboarding) => {
-
-    const status = onboardingData?.step;
-    const company = onboardingData.company;
-
-    onboarding.setPreOnboarding({ contactEmail: company.contactEmail, companyName: company.companyName, contactFirstName: company.contactFirstName, contactLastName: company.contactLastName, accountType: company.accountType });
-    onboarding.updateBusinessSnapshot({ contactNumber: company.contactPhone ?? "", countryOfRegistration: company?.countryOfRegistration ?? "", website: company?.websiteUrl ?? "" })
-    onboarding.updateUserProfiles([
-      ...(company.owners?.map((owner) => ({
-        ...owner.user,
-        id: owner.user.userId,
-        ownershipPercentage: owner.ownershipPercentage
-      })) || []),
-      ...(company.controllingOfficers?.map((officer) => ({
-        ...officer.user,
-        id: officer.user.userId,
-
-      })) || [])
-    ])
-    if (status === 1) {
-      toast.info("Complete your onboarding!")
-      if (company.websiteUrl) {
-
-        router.push('/onboarding/leadership');
-      }
-      else {
-
-        router.push('/onboarding/business');
-      }
-    }
-    if (status === 2) {
-      router.push('/onboarding/financial');
-
-      toast.info("Complete your onboarding!")
-    }
-    if (status === 3) {
-      router.push('/onboarding/products');
-
-      toast.info("Complete your onboarding!")
-    }
-
-    if (status === 4) {
-      toast.info("Onboarding Complete, Login into your account")
-      onboarding.reset();
-      router.push("/login");
-    }
-
-  }
-
   return (
     <div className="flex-col flex justify-center h-full">
       <div className='  p-10 flex w-full items-center justify-between'>
-        <div>
+        <Link href={"/"}>
           <img src="/images/logo.png" className='h-14 w-32 object-cover' />
-        </div>
+        </Link>
         <CircleProgress currentStep={1} />
       </div>
-      <div className='p-8 pt-10 px-[4.43777%] my-auto -translate-y-[20%]'>
+      <div className='p-8 pt-10 px-[4.43777%] my-auto -translate-y-[20%] max-w-[600px]'>
 
         <div className="mb-8">
           <img
@@ -147,7 +81,7 @@ const Page = () => {
 
         <div className="space-y-3.5 pr-10">
           <OnboardingTitle
-            title="Get started with Villeto"
+            title="Get Started with Villeto"
             subtitle="Fill in your details to access a live demo or apply for a Villeto account."
           />
         </div>

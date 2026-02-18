@@ -27,8 +27,6 @@ const statusMap: Record<string, string | null> = {
   paid: "paid",
 };
 
-
-
 export default function Reimbursements() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -77,7 +75,7 @@ export default function Reimbursements() {
     PersonalExpenseRow[]
   >([]);
   const [page, setPage] = useState(initialPage);
-  const [limit, setLimit] = useState(100); // High limit to fetch all data for accurate stats and client-side sorting/filtering
+  const [limit, setLimit] = useState(100);
 
   // Persist current tab and page so back from edit/view/delete can restore
   useEffect(() => {
@@ -103,7 +101,7 @@ export default function Reimbursements() {
   const { data: companyExpensesData, isLoading: isLoadingCompanyExpenses } =
     useCompanyExpenses(page, limit);
 
-  // Helper function to format date to user-friendly format
+  // Helper function to format date
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
@@ -117,19 +115,17 @@ export default function Reimbursements() {
     }
   };
 
-  // Transform API data to PersonalExpenseRow format
+  // Transform personal expenses
   useEffect(() => {
     if (personalExpensesData?.reports) {
-      // Helper function to get the most recent date between createdAt and updatedAt
       const getMostRecentDate = (report: any): number => {
         const createdAt = new Date(report.createdAt).getTime();
         const updatedAt = new Date(report.updatedAt).getTime();
         return Math.max(createdAt, updatedAt);
       };
 
-      // Sort reports by the most recent date (comparing both createdAt and updatedAt)
       const sortedReports = [...personalExpensesData.reports].sort((a, b) => {
-        return getMostRecentDate(b) - getMostRecentDate(a); // Most recent first
+        return getMostRecentDate(b) - getMostRecentDate(a);
       });
 
       const transformedExpenses: PersonalExpenseRow[] = sortedReports.map(
@@ -139,10 +135,10 @@ export default function Reimbursements() {
           category:
             report.costCenter && report.costCenter.trim()
               ? report.costCenter
-              : "Uncategorized", // Use costCenter if available, otherwise Uncategorized
+              : "Uncategorized",
           amount: report.totalAmount,
           status: report.status,
-          reportId: report.reportId, // Use reportId for navigation to detail page
+          reportId: report.reportId,
         }),
       );
       setPersonalExpenses(transformedExpenses);
@@ -152,14 +148,12 @@ export default function Reimbursements() {
   // Transform/Load Company Expenses
   useEffect(() => {
     if (companyExpensesData?.reports) {
-      // Helper function to get the most recent date
       const getMostRecentDate = (report: CompanyExpenseReport): number => {
         const createdAt = new Date(report.createdAt).getTime();
         const updatedAt = new Date(report.updatedAt).getTime();
         return Math.max(createdAt, updatedAt);
       };
 
-      // Sort reports by the most recent date
       const sortedReports = [...companyExpensesData.reports].sort((a, b) => {
         return getMostRecentDate(b) - getMostRecentDate(a);
       });
@@ -169,7 +163,6 @@ export default function Reimbursements() {
     }
   }, [companyExpensesData]);
 
-  // Calculate stats based on current data
   const calculateStats = (data: CompanyExpenseReport[]) => {
     const totalExpenses = data.length;
     const pendingApprovals = data.filter(
@@ -188,10 +181,8 @@ export default function Reimbursements() {
     };
   };
 
-  // Use filtered data for stats
   const stats = calculateStats(filteredCompanyExpenses as any);
 
-  // Handle filtered data changes for Company Expenses
   const handleFilteredCompanyDataChange = (filteredData: any) => {
     setFilteredCompanyExpenses(filteredData);
   };
@@ -218,7 +209,7 @@ export default function Reimbursements() {
   return (
     <>
       <Tabs value={outerTab} onValueChange={handleTabChange}>
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <TabsList>
             <TabsTrigger value="company-expenses" className="cursor-pointer">Company Expenses</TabsTrigger>
             <TabsTrigger value="personal-expenses" className="cursor-pointer">Personal Expenses</TabsTrigger>
@@ -227,102 +218,89 @@ export default function Reimbursements() {
         </div>
         <TabsContent value="personal-expenses">
           <PermissionGuard requiredPermissions={[]}>
-            {isLoadingPersonalExpenses ? (
-              <PersonalExpensesSkeleton />
-            ) : (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-                  <StatsCard
-                    title="Draft"
-                    value={personalStats.draft.toString()}
-                    icon={
-                      <>
-                        <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                          <img
-                            src={"/images/svgs/draft.svg"}
-                            alt="draft icon"
-                          />
-                        </div>
-                      </>
-                    }
-                    subtitle={
-                      <span className="text-xs leading-[125%]">
-                        Manage your saved items
-                      </span>
-                    }
-                  />
-                  <StatsCard
-                    title="Approved"
-                    value={personalStats.approved.toString()}
-                    icon={
-                      <>
-                        <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
-                          <img
-                            src={"/images/svgs/check.svg"}
-                            alt="check icon"
-                          />
-                        </div>
-                      </>
-                    }
-                    subtitle={
-                      <span className="text-xs leading-[125%]">
-                        View all items that have been reviewed.
-                      </span>
-                    }
-                  />
-                  <StatsCard
-                    title="Rejected"
-                    value={personalStats.rejected.toString()}
-                    icon={
-                      <>
-                        <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                          <img
-                            src={"/images/receipt-pending.png"}
-                            alt="pending icon"
-                          />
-                        </div>
-                      </>
-                    }
-                    subtitle={
-                      <span className="text-xs leading-[125%]">
-                        View all items that have been Rejected.
-                      </span>
-                    }
-                  />
-                  <StatsCard
-                    title="Paid"
-                    value={personalStats.paid.toString()}
-                    icon={
-                      <>
-                        <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
-                          <img
-                            src={"/images/svgs/money.svg"}
-                            alt="money icon"
-                            className="text-white"
-                          />
-                        </div>
-                      </>
-                    }
-                    subtitle={
-                      <span className="text-xs leading-[125%]">
-                        Access records of completed payments.
-                      </span>
-                    }
-                  />
-                </div>
-                {personalExpenses.length === 0 ? (
-                  <ExpenseEmptyState />
-                ) : (
-                  <>
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                <StatsCard
+                  isLoading={isLoadingPersonalExpenses}
+                  title="Draft"
+                  value={personalStats.draft.toString()}
+                  icon={
+                    <>
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
+                        <img src="/images/svgs/draft.svg" alt="draft icon" />
+                      </div>
+                    </>
+                  }
+                  subtitle={
+                    <span className="text-xs leading-[125%]">Manage your saved items</span>
+                  }
+                />
+                <StatsCard
+                  isLoading={isLoadingPersonalExpenses}
+                  title="Approved"
+                  value={personalStats.approved.toString()}
+                  icon={
+                    <>
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
+                        <img src="/images/svgs/check.svg" alt="check icon" />
+                      </div>
+                    </>
+                  }
+                  subtitle={
+                    <span className="text-xs leading-[125%]">View all items reviewed.</span>
+                  }
+                />
+                <StatsCard
+                  isLoading={isLoadingPersonalExpenses}
+                  title="Rejected"
+                  value={personalStats.rejected.toString()}
+                  icon={
+                    <>
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
+                        <img src="/images/receipt-pending.png" alt="pending icon" />
+                      </div>
+                    </>
+                  }
+                  subtitle={
+                    <span className="text-xs leading-[125%]">View all items Rejected.</span>
+                  }
+                />
+                <StatsCard
+                  isLoading={isLoadingPersonalExpenses}
+                  title="Paid"
+                  value={personalStats.paid.toString()}
+                  icon={
+                    <>
+                      <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
+                        <img src="/images/svgs/money.svg" alt="money icon" />
+                      </div>
+                    </>
+                  }
+                  subtitle={
+                    <span className="text-xs leading-[125%]">Access completed payments.</span>
+                  }
+                />
+              </div>
+
+              {isLoadingPersonalExpenses ? (
+                <PersonalExpensesSkeleton showStats={false} />
+              ) : (
+                <>
+                  {personalExpenses.length === 0 ? (
+                    <ExpenseEmptyState />
+                  ) : (
                     <Tabs defaultValue="all">
-                      <TabsList>
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="draft">Draft</TabsTrigger>
-                        <TabsTrigger value="approved">Approved</TabsTrigger>
-                        <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                        <TabsTrigger value="paid">Paid</TabsTrigger>
-                      </TabsList>
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <TabsList>
+                          <TabsTrigger value="all">All</TabsTrigger>
+                          <TabsTrigger value="draft">Draft</TabsTrigger>
+                          <TabsTrigger value="approved">Approved</TabsTrigger>
+                          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                          <TabsTrigger value="pending">Pending</TabsTrigger>
+                          <TabsTrigger value="paid">Paid</TabsTrigger>
+                        </TabsList>
+                        <div id="tab-actions" className="flex items-center gap-2"></div>
+                      </div>
                       <TabsContent value="all">
                         <ExpenseTable
                           statusFilter={null}
@@ -347,7 +325,6 @@ export default function Reimbursements() {
                           page={page}
                         />
                       </TabsContent>
-                      {/* Keep other tabs for visual parity; personal data is draft/pending in this demo */}
                       <TabsContent value="approved">
                         <ExpenseTable
                           statusFilter={"approved"}
@@ -373,10 +350,10 @@ export default function Reimbursements() {
                         />
                       </TabsContent>
                     </Tabs>
-                  </>
-                )}
-              </div>
-            )}
+                  )}
+                </>
+              )}
+            </div>
           </PermissionGuard>
         </TabsContent>
 
@@ -385,98 +362,88 @@ export default function Reimbursements() {
               <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
                 <StatsCard
+                  isLoading={isLoadingCompanyExpenses}
                   title="Total Expenses"
                   value={stats.totalExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src={"/images/svgs/draft.svg"} alt="draft icon" />
+                        <img src="/images/svgs/draft.svg" alt="draft icon" />
                       </div>
                     </>
                   }
                   subtitle={
-                    <span className="text-xs leading-[125%]">
-                      All expenses submitted this month
-                    </span>
+                    <span className="text-xs leading-[125%]">All expenses submitted</span>
                   }
                 />
                 <StatsCard
+                  isLoading={isLoadingCompanyExpenses}
                   title="Pending Approvals"
                   value={stats.pendingApprovals.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                        <img
-                          src={"/images/receipt-pending.png"}
-                          alt="pending icon"
-                        />
+                        <img src="/images/receipt-pending.png" alt="pending icon" />
                       </div>
                     </>
                   }
                   subtitle={
-                    <span className="text-xs leading-[125%]">
-                      Awaiting review.
-                    </span>
+                    <span className="text-xs leading-[125%]">Awaiting review.</span>
                   }
                 />
                 <StatsCard
+                  isLoading={isLoadingCompanyExpenses}
                   title="Approved Expenses"
                   value={stats.approvedExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
-                        <img
-                          src={"/images/svgs/submitted.svg"}
-                          alt="submitted icon"
-                        />
+                        <img src="/images/svgs/submitted.svg" alt="submitted icon" />
                       </div>
                     </>
                   }
                   subtitle={
-                    <span className="text-xs leading-[125%]">
-                      Cleared and ready for payment
-                    </span>
+                    <span className="text-xs leading-[125%]">Ready for payment</span>
                   }
-                  trend="up"
                 />
                 <StatsCard
+                  isLoading={isLoadingCompanyExpenses}
                   title="Paid"
                   value={stats.paidExpenses.toString()}
                   icon={
                     <>
                       <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
-                        <img
-                          src={"/images/svgs/money.svg"}
-                          alt="money icon"
-                          className="text-white"
-                        />
+                        <img src="/images/svgs/money.svg" alt="money icon" />
                       </div>
                     </>
                   }
                   subtitle={
-                    <span className="text-xs leading-[125%]">
-                      Completed & reimbursed transactions
-                    </span>
+                    <span className="text-xs leading-[125%]">Completed transactions</span>
                   }
                 />
               </div>
               
-              {isLoadingCompanyExpenses || (companyExpensesData?.reports && companyExpensesData.reports.length > 0 && companyExpenses.length === 0) ? (
-                <PersonalExpensesSkeleton />
+              {isLoadingCompanyExpenses ? (
+                <PersonalExpensesSkeleton showStats={false} />
+              ) : companyExpensesData?.reports && companyExpensesData.reports.length === 0 ? (
+                 <ExpenseEmptyState 
+                    title="No expense has been added" 
+                    subtitle="" 
+                    showButton={false} 
+                 />
               ) : (
-                <Tabs
-                  defaultValue="all"
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                >
-                  <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="draft">Draft</TabsTrigger>
-                    <TabsTrigger value="approved">Approved</TabsTrigger>
-                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                    <TabsTrigger value="pending">Pending</TabsTrigger>
-                    <TabsTrigger value="paid">Paid</TabsTrigger>
-                  </TabsList>
+                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <TabsList>
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="draft">Draft</TabsTrigger>
+                      <TabsTrigger value="approved">Approved</TabsTrigger>
+                      <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                      <TabsTrigger value="pending">Pending</TabsTrigger>
+                      <TabsTrigger value="paid">Paid</TabsTrigger>
+                    </TabsList>
+                    <div id="tab-actions" className="flex items-center gap-2"></div>
+                  </div>
                   <TabsContent value="all">
                     <ExpenseTable
                       actionButton={<></>}

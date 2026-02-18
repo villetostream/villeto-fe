@@ -10,6 +10,7 @@ import OnboardingTitle from '@/components/onboarding/_shared/OnboardingTitle';
 import { useRouter } from 'next/navigation';
 import { useUpdateOnboardingProductsApi } from '@/actions/onboarding/update-onboarding-product';
 import { Loader2 } from 'lucide-react';
+import { useHydrateOnboardingData } from '@/hooks/useHydrateOnboardingData';
 
 const products = [
     {
@@ -56,6 +57,7 @@ const products = [
 
 export default function ChooseProducts() {
     const { villetoProducts, toggleProduct } = useOnboardingStore();
+    useHydrateOnboardingData();
     const updateOnboarding = useUpdateOnboardingProductsApi()
     const router = useRouter()
     const loading = updateOnboarding.isPending;

@@ -3,19 +3,14 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 
-const steps = [
-    { id: 1, title: "Welcome to Villeto", key: "onboarding" },
-    { id: 2, title: "Business Snapshot", key: "business" },
-    { id: 3, title: "Leadership & Ownership", key: "leadership" },
-    { id: 4, title: "Financial Pulse", key: "financial" },
-    { id: 5, title: "Choose your Villeto Products", key: "products" },
-    { id: 6, title: "Review & Confirmation", key: "review" },
-];
+import { ONBOARDING_STEPS as steps } from "@/lib/constants/onboarding-steps";
 
 export const OnboardingSidebar = () => {
     const pathName = usePathname();
     const router = useRouter();
+    const { stoppedAtStep } = useOnboardingStore();
 
     console.log("Current Pathname:", pathName);
 
@@ -47,9 +42,19 @@ export const OnboardingSidebar = () => {
                 {/* Steps */}
                 <div className="flex flex-col gap-1.5 flex-1">
                     {steps.map((step, index) => {
-                        const isCurrent = step.key === pathName?.split("/").pop();
-                        const currentStep = steps.find(s => s.key === pathName?.split("/").pop())?.id || 0;
-                        const isCompleted = step.id < currentStep;
+                        const pathSegment = pathName?.split("/").pop();
+                        const isVerifyOtp = pathName?.includes('verify-otp');
+                        
+                        const isCurrent = step.key === pathSegment || (step.id === 1 && isVerifyOtp);
+                        const currentStepObj = steps.find(s => s.key === pathSegment);
+                        let currentStep = currentStepObj?.id || 0;
+                        
+                        // If we are on verify-otp, use stoppedAtStep if available, otherwise default to 1
+                        if (currentStep === 0 && isVerifyOtp) {
+                            currentStep = stoppedAtStep || 1; 
+                        }
+
+                        const isCompleted = step.id < currentStep && !isVerifyOtp; // Don't mark as completed if we are on it
                         const isUpcoming = currentStep + 1;
 
                         return (

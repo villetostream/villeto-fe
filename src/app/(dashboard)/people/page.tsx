@@ -10,6 +10,9 @@ import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
+import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
+import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,50 +22,54 @@ import {
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { InviteEmployeesWarningModal } from "@/components/dashboard/people/modals/InviteEmployeesWarningModal";
 
-const statCards = [
-    { 
-        icon: Users, 
-        label: "Total Users", 
-        value: "100", 
-        description: "This month you added 5 users",
-        bgColor: "#384A57",
-        iconSrc: "/images/svgs/draft.svg"
-    },
-    { 
-        icon: CreditCard, 
-        label: "Active Cards", 
-        value: "70", 
-        description: "This month you spent extra $1,000",
-        bgColor: "#F45B69",
-        iconSrc: "/images/receipt-pending.png"
-    },
-    { 
-        icon: Building2, 
-        label: "Departments", 
-        value: "15", 
-        description: "View Departments",
-        bgColor: "#5A67D8",
-        iconSrc: "/images/svgs/submitted.svg"
-    },
-    { 
-        icon: UserCog, 
-        label: "Roles", 
-        value: "5", 
-        description: "View Roles",
-        bgColor: "#418341",
-        iconSrc: "/images/svgs/check.svg"
-    },
-    { 
-        icon: DollarSign, 
-        label: "Total Limits", 
-        value: "$24,536.00", 
-        description: "This month you spent extra $1,000",
-        bgColor: "#38B2AC",
-        iconSrc: "/images/svgs/money.svg"
-    },
-];
-
 function People() {
+    const usersApi = useGetAllUsersApi();
+    const deptsApi = useGetAllDepartmentsApi();
+    const rolesApi = useGetAllRolesApi();
+
+    const statCards = [
+        { 
+            icon: Users, 
+            label: "Total Users", 
+            value: usersApi?.data?.meta?.totalCount || "0", 
+            description: "Total registered users",
+            bgColor: "#384A57",
+            iconSrc: "/images/svgs/draft.svg"
+        },
+        { 
+            icon: CreditCard, 
+            label: "Active Cards", 
+            value: "70", 
+            description: "This month you spent extra $1,000",
+            bgColor: "#F45B69",
+            iconSrc: "/images/receipt-pending.png"
+        },
+        { 
+            icon: Building2, 
+            label: "Departments", 
+            value: deptsApi?.data?.meta?.totalCount || "0", 
+            description: "View Departments",
+            bgColor: "#5A67D8",
+            iconSrc: "/images/svgs/submitted.svg"
+        },
+        { 
+            icon: UserCog, 
+            label: "Roles", 
+            value: rolesApi?.data?.meta?.totalCount || "0", 
+            description: "View Roles",
+            bgColor: "#418341",
+            iconSrc: "/images/svgs/check.svg"
+        },
+        { 
+            icon: DollarSign, 
+            label: "Total Limits", 
+            value: "$24,536.00", 
+            description: "This month you spent extra $1,000",
+            bgColor: "#38B2AC",
+            iconSrc: "/images/svgs/money.svg"
+        },
+    ];
+
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -88,8 +95,8 @@ function People() {
     };
 
     return (
-        <div className=" bg-dashboard-bg">
-            <div className="space-y-6">
+        <div className=" bg-dashboard-bg min-h-screen">
+            <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -105,7 +112,7 @@ function People() {
                             <PermissionGuard requiredPermissions={["create:users"]}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button size="md" className="bg-[#0FA68E] hover:bg-[#0d9178]">
+                                        <Button size="md" className="bg-primary hover:bg-primary/90">
                                             <Plus className="mr-2 h-4 w-4" />
                                             Invite people
                                             <ChevronDown className="ml-2 h-4 w-4" />
@@ -134,42 +141,12 @@ function People() {
                                 </DropdownMenu>
                             </PermissionGuard>
                         )}
-                        {/* {activeTab === "all-users" && (
-                            <>
-                                <PermissionGuard requiredPermissions={[]}>
-
-
-                                    <Button
-                                        variant="outline"
-                                        size={"md"}
-                                        onClick={() => router.push("/people/bulk-invite")}
-
-
-                                    >
-                                        + Bulk Invite Users
-                                    </Button>
-                                </PermissionGuard>
-                                <PermissionGuard requiredPermissions={["create:users"]}>
-
-
-                                    <Button
-                                        onClick={() => router.push("/people/add-user")}
-                                        size={"md"}
-
-
-                                    >
-                                        + Add Single User
-                                    </Button>
-                                </PermissionGuard>
-                            </>
-                        )} */}
                         {activeTab === "roles" && (
                             <PermissionGuard requiredPermissions={["create:roles"]}>
-
                                 <Button
                                     onClick={handleCreateRole}
                                     size={"md"}
-                                    className="px-12"
+                                    className="px-12 bg-primary hover:bg-primary/90"
                                 >
                                     Create Role
                                 </Button>
@@ -177,13 +154,10 @@ function People() {
                         )}
                         {activeTab === "department" && (
                             <PermissionGuard requiredPermissions={["create:departments"]}>
-
-
                                 <Button
                                     onClick={handleCreateDepartment}
                                     size={"md"}
-                                    className=""
-
+                                    className="bg-primary hover:bg-primary/90"
                                 >
                                     Create Department
                                 </Button>
@@ -199,6 +173,7 @@ function People() {
                             key={stat.label}
                             title={stat.label}
                             value={stat.value}
+                            isLoading={stat.label === "Total Users" ? usersApi.isLoading : stat.label === "Departments" ? deptsApi.isLoading : stat.label === "Roles" ? rolesApi.isLoading : false}
                             icon={
                                 <>
                                     <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white" style={{ backgroundColor: stat.bgColor }}>
@@ -217,36 +192,36 @@ function People() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="bg-muted/50 p-1 h-auto rounded-lg">
-                        <PermissionGuard requiredPermissions={["read:users"]}>
-
-                            <TabsTrigger
-                                value="all-users"
-                                className="data-[state=active]:bg-background rounded-md px-6"
-                            >
-                                All Users
-                            </TabsTrigger>
-                        </PermissionGuard>
-                        <PermissionGuard requiredPermissions={["read:roles"]}>
-
-                            <TabsTrigger
-                                value="roles"
-                                className="data-[state=active]:bg-background rounded-md px-6"
-                            >
-                                Roles
-                            </TabsTrigger>
-                        </PermissionGuard>
-                        <PermissionGuard requiredPermissions={["read:departments"]}>
-
-                            <TabsTrigger
-                                value="department"
-                                className="data-[state=active]:bg-background rounded-md px-6"
-                            >
-                                Departments
-                            </TabsTrigger>
-                        </PermissionGuard>
-
-                    </TabsList>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <TabsList className="bg-muted/50 p-1 h-auto rounded-lg">
+                            <PermissionGuard requiredPermissions={["read:users"]}>
+                                <TabsTrigger
+                                    value="all-users"
+                                    className="data-[state=active]:bg-background rounded-md px-6"
+                                >
+                                    All Users
+                                </TabsTrigger>
+                            </PermissionGuard>
+                            <PermissionGuard requiredPermissions={["read:roles"]}>
+                                <TabsTrigger
+                                    value="roles"
+                                    className="data-[state=active]:bg-background rounded-md px-6"
+                                >
+                                    Roles
+                                </TabsTrigger>
+                            </PermissionGuard>
+                            <PermissionGuard requiredPermissions={["read:departments"]}>
+                                <TabsTrigger
+                                    value="department"
+                                    className="data-[state=active]:bg-background rounded-md px-6"
+                                >
+                                    Departments
+                                </TabsTrigger>
+                            </PermissionGuard>
+                        </TabsList>
+                        
+                        <div id="tab-actions" className="flex items-center gap-2"></div>
+                    </div>
 
                     <TabsContent value="all-users" className="mt-6">
                         <AllUsersTab />
@@ -278,4 +253,4 @@ function People() {
     );
 }
 
-export default withPermissions(People, ["read:users", "read:roles", "read:departmets"])
+export default withPermissions(People, ["read:users", "read:roles", "read:departments"])

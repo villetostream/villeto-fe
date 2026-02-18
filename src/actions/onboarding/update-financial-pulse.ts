@@ -32,13 +32,11 @@ type payload = {
 
 export const useUpdateOnboardingFinancialPulseApi = (): UseMutationResult<Response, Error, payload> => {
     const axiosInstance = useAxios();
-    const { onboardingId } = useOnboardingStore()
-    console.log({ onboardingId })
 
     return useMutation<Response, Error, payload>({
         retry: false,
         mutationFn: async (payload: payload) => {
-
+            const { onboardingId } = useOnboardingStore.getState();
             const res = await axiosInstance.patch(API_KEYS.ONBOARDING.ONBOARDING_FINANCIAL(onboardingId), payload,);
             return res.data;
         },

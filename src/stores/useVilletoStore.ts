@@ -54,6 +54,8 @@ export interface OnboardingState {
     villetoProducts: VilletoProduct[];
     contactEmail: string
     preOnboarding?: z.infer<typeof registrationSchema> | null
+    isExistingUser: boolean;
+    stoppedAtStep: number | null;
 }
 
 interface VilletoState {
@@ -68,6 +70,8 @@ interface VilletoState {
     setCurrentStep: (step: number) => void;
     setOnboardingId: (step: string) => void;
     setContactEmail: (email: string) => void;
+    setIsExistingUser: (value: boolean) => void;
+    setStoppedAtStep: (step: number | null) => void;
     updateBusinessSnapshot: (data: Partial<BusinessSnapshot>) => void;
     updateUserProfiles: (profiles: UserProfile[]) => void;
     updateFinancialPulse: (data: Partial<FinancialPulse>) => void;
@@ -85,7 +89,7 @@ interface VilletoState {
 }
 
 const initialState: OnboardingState = {
-    monthlySpend: 1, // 0-3 representing the spend ranges
+    monthlySpend: 0, // 0-3 representing the spend ranges
     onboardingId: "",
     spendRange: '<$10k',
     contactEmail: "",
@@ -94,6 +98,8 @@ const initialState: OnboardingState = {
     bankProcessing: false,
     connectedAccounts: [],
     showConnectModal: false,
+    isExistingUser: false,
+    stoppedAtStep: null,
     businessSnapshot: {
         businessName: '',
         countryOfRegistration: '',
@@ -125,6 +131,8 @@ const loadFromCookies = (): Partial<OnboardingState> => {
     const preOnboarding = getCookie("preOnboarding");
     const contactEmail = getCookie("contactEmail");
     const onboardingId = getCookie("onboarding_id");
+    const isExistingUser = getCookie("isExistingUser");
+    const stoppedAtStep = getCookie("stoppedAtStep");
 
     return {
         // businessSnapshot cookie structure: { businessSnapshot: { businessName, logo, ... } }
@@ -138,13 +146,16 @@ const loadFromCookies = (): Partial<OnboardingState> => {
             bankConnected: financialData.bankConnected,
             bankProcessing: financialData.bankProcessing,
             connectedAccounts: financialData.connectedAccounts,
-            showConnectModal: financialData.showConnectModal,
-            financialPulse: financialData.financialPulse
+            // showConnectModal: financialData.showConnectModal, // Don't persist modal state
+            financialPulse: financialData.financialPulse || initialState.financialPulse
         }),
         ...(productsData && { villetoProducts: productsData.villetoProducts }),
         ...(preOnboarding && { preOnboarding: preOnboarding }),
         ...(contactEmail && { contactEmail: typeof contactEmail === 'string' ? contactEmail : contactEmail?.contactEmail }),
-        ...(onboardingId && { onboardingId: typeof onboardingId === 'string' ? onboardingId : onboardingId?.onboardingId })
+        ...(contactEmail && { contactEmail: typeof contactEmail === 'string' ? contactEmail : contactEmail?.contactEmail }),
+        ...(onboardingId && { onboardingId: typeof onboardingId === 'string' ? onboardingId : onboardingId?.onboardingId }),
+        ...(isExistingUser && { isExistingUser: isExistingUser === 'true' }),
+        ...(stoppedAtStep && { stoppedAtStep: Number(stoppedAtStep) })
 
     };
 };
@@ -157,6 +168,14 @@ export const useOnboardingStore = create<VilletoState & OnboardingState>((set, g
 
 
     setCurrentStep: (step) => set({ currentStep: step }),
+    setIsExistingUser: (value) => {
+        set({ isExistingUser: value });
+        setCookie('isExistingUser', String(value));
+    },
+    setStoppedAtStep: (step) => {
+        set({ stoppedAtStep: step });
+        setCookie('stoppedAtStep', String(step));
+    },
     setOnboardingId: (step) => {
         set({ onboardingId: step }); const state = get();
         setCookie('onboarding_id', {

@@ -15,6 +15,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { OwnerCard } from "../leadership/page";
 import { useRouter } from "next/navigation";
+import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
 
 export default function ReviewConfirmation() {
   const {
@@ -24,9 +25,13 @@ export default function ReviewConfirmation() {
     villetoProducts,
     submitApplication,
     showCongratulations,
+    spendRange,
+    bankConnected,
+    connectedAccounts,
   } = useOnboardingStore();
+  useHydrateOnboardingData();
 
-  const selectedProducts = villetoProducts;
+  const selectedProducts = villetoProducts.filter((p) => p.selected);
   const router = useRouter();
 
   return (
@@ -179,20 +184,24 @@ export default function ReviewConfirmation() {
               <p className="text-sm text-gray-500 mb-1">
                 Teams Expected Monthly Spend
               </p>
-              <p className="font-medium">{financialPulse?.monthlySpend ?? 0}</p>
+              <p className="font-medium">{spendRange ?? 0}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Bank Connection</p>
               <div className="flex items-center space-x-2">
                 <FileText className="w-4 h-4 text-gray-400" />
-                <p className="font-medium">{financialPulse.bankConnection}</p>
+                <p className="font-medium">
+                  {bankConnected ? "Connected" : "Not Connected"}
+                </p>
               </div>
             </div>
           </div>
           <div>
             <p className="text-sm text-gray-500 mb-2">Integrations</p>
             <p className="font-medium">
-              {financialPulse.integrations.join(", ")}
+              {connectedAccounts.length > 0
+                ? connectedAccounts.map((acc) => acc.name).join(", ")
+                : "None"}
             </p>
           </div>
         </CardContent>

@@ -10,11 +10,16 @@ export const emailSchema = z.object({
 export const registrationSchema = z.object({
   contactFirstName: z.string().min(1, "First name is required").max(100),
   contactLastName: z.string().min(1, "Last name is required").max(100),
-  companyName: z.string().min(1, "Company name is required").max(200),
+  position: z.string().min(1, "Position is required").max(200),
   accountType: z.enum(["demo", "enterprise"] as const, {
     error: "Please select an account type",
   }),
   contactEmail: z.string(),
+});
+
+export const otpVerificationSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  otp: z.string().min(6, "OTP must be 6 digits").max(6, "OTP must be 6 digits"),
 });
 
 // Custom HTTP URL validator with optional protocol but required valid domain

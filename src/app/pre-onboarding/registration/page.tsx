@@ -5,10 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, MessageSquare, Rocket } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import CircleProgress from "@/components/HalfProgressCircle";
@@ -17,6 +15,7 @@ import { useStartOnboardingApi } from "@/actions/pre-onboarding/get-started";
 import { toast } from "sonner";
 import { registrationSchema } from "@/lib/schemas/schemas";
 import FormFieldInput from "@/components/form fields/formFieldInput";
+import { Check } from "lucide-react";
 
 
 type FormData = z.infer<typeof registrationSchema>;
@@ -27,15 +26,14 @@ export default function GetStarted() {
     const startOnboarding = useStartOnboardingApi();
     const loading = startOnboarding.isPending;
 
-    console.log(onboarding.preOnboarding)
 
     const form = useForm<FormData>({
         resolver: zodResolver(registrationSchema),
         defaultValues: {
             contactFirstName: onboarding.preOnboarding?.contactFirstName ?? "",
             contactLastName: onboarding.preOnboarding?.contactLastName ?? "",
-            companyName: onboarding.preOnboarding?.companyName ?? "",
-            accountType: onboarding.preOnboarding?.accountType ?? undefined, // Explicitly undefined to ensure selection
+            position: onboarding.preOnboarding?.position ?? "",
+            accountType: onboarding.preOnboarding?.accountType ?? undefined,
             contactEmail: onboarding.contactEmail
         },
     });
@@ -44,7 +42,7 @@ export default function GetStarted() {
             form.reset({
                 contactFirstName: onboarding.preOnboarding.contactFirstName || "",
                 contactLastName: onboarding.preOnboarding.contactLastName || "",
-                companyName: onboarding.preOnboarding.companyName || "",
+                position: onboarding.preOnboarding.position || "",
                 accountType: onboarding.preOnboarding.accountType || undefined,
                 contactEmail: onboarding.contactEmail || "",
             });
@@ -52,17 +50,19 @@ export default function GetStarted() {
     }, [onboarding.preOnboarding, onboarding.contactEmail]);
 
     const onSubmit = async (data: FormData) => {
-        console.log(data);
         try {
-            const response = await startOnboarding.mutateAsync(data);
-            console.log({ response })
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { position, ...payload } = data;
+            // @ts-ignore - position is excluded from payload
+            const response = await startOnboarding.mutateAsync(payload);
             onboarding.setPreOnboarding(data);
             onboarding.setOnboardingId(response.data.onboardingId as string);
-            router.push("/onboarding");
+            onboarding.setIsExistingUser(false);
+            onboarding.setStoppedAtStep(null);
+            router.push("/pre-onboarding/verify-otp");
         } catch (error: any) {
             toast.error(error.message);
         }
-        // Store email for next steps
     };
 
     const accountType = form.watch("accountType");
@@ -76,7 +76,7 @@ export default function GetStarted() {
                 <CircleProgress currentStep={2} />
             </div>
 
-            <div className=" px-[6.43777%] flex flex-col">
+            <div className="px-[6.43777%] flex flex-col">
                 <div className="mb-8">
                     <img
                         src={"/images/svgs/chart-rose.svg"}
@@ -88,7 +88,7 @@ export default function GetStarted() {
                 <div className="space-y-3.5 pr-10">
                     <OnboardingTitle
                         title="Get started with Villeto"
-                        subtitle="Fill in Admin details to access a live demo or apply for a Villeto account."
+                        subtitle="Fill in your details to access a live demo or apply for a Villeto account."
                     />
                 </div>
 
@@ -98,23 +98,23 @@ export default function GetStarted() {
                             <FormFieldInput
                                 control={form.control}
                                 name="contactFirstName"
-                                label="Contact First Name"
+                                label="First Name*"
                                 placeholder="Enter first name"
                             />
 
                             <FormFieldInput
                                 control={form.control}
                                 name="contactLastName"
-                                label="contact Last Name"
+                                label="Last Name*"
                                 placeholder="Enter last name"
                             />
                         </div>
 
                         <FormFieldInput
                             control={form.control}
-                            name="companyName"
-                            label="Company Name"
-                            placeholder="Enter your official company name"
+                            name="position"
+                            label="Position*"
+                            placeholder="Enter your position"
                         />
 
                         <FormField
@@ -126,57 +126,47 @@ export default function GetStarted() {
                                         How would you like to use Villeto?<span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <RadioGroup
-                                            onValueChange={field.onChange}
-                                            value={field.value}
-                                            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2"
-                                        >
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                                             {/* DEMO OPTION */}
-                                            <FormItem>
-                                                <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:bg-primary/5">
-                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === "demo"
-                                                        ? "border-primary bg-primary/5"
-                                                        : "border-border hover:border-primary/50"
-                                                        }`}>
-                                                        <FormControl>
-                                                            <RadioGroupItem value="demo" className="sr-only" />
-                                                        </FormControl>
-                                                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${field.value === "demo"
-                                                            ? "border-primary bg-primary"
-                                                            : "border-gray-400"
-                                                            }`}>
-                                                            {field.value === "demo" && (
-                                                                <div className="h-2 w-2 rounded-full bg-white" />
-                                                            )}
-                                                        </div>
-                                                        <span className="font-medium">I want a Demo account</span>
-                                                    </div>
-                                                </FormLabel>
-                                            </FormItem>
+                                            <button
+                                                type="button"
+                                                onClick={() => field.onChange("demo")}
+                                                className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all text-left ${field.value === "demo"
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border hover:border-primary/50"
+                                                    }`}
+                                            >
+                                                <div className={`h-5 w-5 rounded flex items-center justify-center border-2 transition-colors ${field.value === "demo"
+                                                    ? "border-primary bg-primary"
+                                                    : "border-gray-300"
+                                                    }`}>
+                                                    {field.value === "demo" && (
+                                                        <Check className="h-3.5 w-3.5 text-white" />
+                                                    )}
+                                                </div>
+                                                <span className="font-medium">I want a Demo account</span>
+                                            </button>
 
                                             {/* ENTERPRISE OPTION */}
-                                            <FormItem>
-                                                <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:bg-primary/5">
-                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === "enterprise"
-                                                        ? "border-primary bg-primary/5"
-                                                        : "border-border hover:border-primary/50"
-                                                        }`}>
-                                                        <FormControl>
-                                                            <RadioGroupItem value="enterprise" className="sr-only" />
-                                                        </FormControl>
-                                                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${field.value === "enterprise"
-                                                            ? "border-primary bg-primary"
-                                                            : "border-gray-400"
-                                                            }`}>
-                                                            {field.value === "enterprise" && (
-                                                                <div className="h-2 w-2 rounded-full bg-white" />
-                                                            )}
-                                                        </div>
-                                                        <span className="font-medium">I want to apply for Villeto</span>
-                                                    </div>
-                                                </FormLabel>
-                                            </FormItem>
-                                        </RadioGroup>
+                                            <button
+                                                type="button"
+                                                onClick={() => field.onChange("enterprise")}
+                                                className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all text-left ${field.value === "enterprise"
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border hover:border-primary/50"
+                                                    }`}
+                                            >
+                                                <div className={`h-5 w-5 rounded flex items-center justify-center border-2 transition-colors ${field.value === "enterprise"
+                                                    ? "border-primary bg-primary"
+                                                    : "border-gray-300"
+                                                    }`}>
+                                                    {field.value === "enterprise" && (
+                                                        <Check className="h-3.5 w-3.5 text-white" />
+                                                    )}
+                                                </div>
+                                                <span className="font-medium">I want to apply for Villeto</span>
+                                            </button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

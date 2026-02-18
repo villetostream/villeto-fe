@@ -24,6 +24,8 @@ interface Company {
     address: string | null;
     accountType: "demo" | "enterprise";
     description: string | null;
+    logo?: string | null;
+    logoUrl?: string | null;
     owners?:
     {
         "createdAt": "2025-11-10T22:37:30.363Z",
@@ -69,6 +71,10 @@ interface Company {
     "productModules": [
         "EXPENSE_MANAGEMENT"
     ],
+    "spendLimit"?: {
+        "lower": number,
+        "upper": number
+    },
     "countryOfRegistration": string | null,
 }
 

@@ -28,12 +28,11 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
   payload
 > => {
   const axiosInstance = useAxios();
-  const { onboardingId } = useOnboardingStore();
-  console.log({ onboardingId });
 
   return useMutation<Response, Error, payload>({
     retry: false,
     mutationFn: async (payload: payload) => {
+      const { onboardingId } = useOnboardingStore.getState();
       const latestPayload = { ...payload };
       delete latestPayload.business_name;
 
@@ -44,24 +43,30 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
         return base64Match ? base64Match[1] : dataUrl;
       };
 
-      // Convert logo File to Base64 if it's a File instance
+      // Convert logo File to Base64 only if user uploaded a new file.
+      // If the logo is an existing URL (e.g. Cloudinary), skip it — the API
+      // only accepts base64 and the logo hasn't changed.
       let logoBase64: string | undefined = undefined;
       if (latestPayload.businessLogo instanceof File) {
         logoBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const result = reader.result as string;
-            // Extract pure base64 string (remove data:image/...;base64, prefix)
             const pureBase64 = extractBase64(result);
             resolve(pureBase64);
           };
           reader.onerror = reject;
           reader.readAsDataURL(latestPayload.businessLogo as File);
         });
-      } else if (typeof latestPayload.businessLogo === "string") {
-        // If it's already a string, extract pure base64 if it's a data URL
+      } else if (
+        typeof latestPayload.businessLogo === "string" &&
+        latestPayload.businessLogo.startsWith("data:")
+      ) {
+        // Only send if it's a base64 data URL (newly selected), not a remote URL
         logoBase64 = extractBase64(latestPayload.businessLogo);
       }
+      // If businessLogo is a remote URL (e.g. https://res.cloudinary.com/...),
+      // we intentionally skip it — logo hasn't changed.
 
       // Prepare the payload for API
       const apiPayload: Record<string, any> = {};

@@ -12,17 +12,17 @@ export default function Welcome() {
     };
 
     return (
-        <div className=" flex flex-col items-start justify-center h-full ">
+        <div className="flex flex-col items-start justify-center h-full text-left">
             <div className="mb-8">
                 <img
                     src={"/images/welcome.png"}
                     alt="Welcome celebration"
-                    className="w-32 h-32 mx-auto mb-6"
+                    className="w-32 h-32 mb-6"
                 />
             </div>
 
-            <div className="space-y-3.5 pr-10">
-                <h1 className="text-3xl leading-11 font-bold text-black ">
+            <div className="space-y-3.5 max-w-lg">
+                <h1 className="text-3xl leading-11 font-bold text-black">
                     Welcome to Villeto <span className="inline-block">🖐</span> - let us setup your company account.
                 </h1>
 
@@ -31,7 +31,7 @@ export default function Welcome() {
                 </p>
             </div>
 
-            <div className="pt-8 flex w-full items-center  justify-end gap-4">
+            <div className="pt-8 flex w-full items-center justify-start gap-4">
 
                 <Button
                     onClick={handleStart}

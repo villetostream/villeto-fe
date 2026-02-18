@@ -5,11 +5,11 @@ import { LucideIcon } from 'lucide-react' // or your icon library
 import { ArrowDown2, Filter } from 'iconsax-reactjs'
 
 interface ModalComponentInterface {
-    buttonText: String
+    buttonText: string
     isOpen: boolean
     onOpen: () => void;
-    title: String
-    description?: String
+    title: string
+    description?: string
     children: ReactNode
     variant?: UIButtonProps['variant']
     icon?: LucideIcon
@@ -36,7 +36,7 @@ const ModalComponent = ({
                     <ArrowDown2 />
                 </Button>
             </DialogTrigger>
-            <DialogContent className='!p-6 max-h-[80%] overflow-y-auto'>
+            <DialogContent className='!p-6 max-h-[80%] overflow-y-auto rounded-lg'>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     {description && (

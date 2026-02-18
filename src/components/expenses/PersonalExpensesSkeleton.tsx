@@ -2,19 +2,34 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function PersonalExpensesSkeleton() {
+export function PersonalExpensesSkeleton({ 
+  statsCount = 4,
+  showStats = true 
+}: { 
+  statsCount?: number;
+  showStats?: boolean;
+}) {
   return (
     <div className="space-y-8">
       {/* Stats Cards Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-3 p-4 border rounded-lg">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        ))}
-      </div>
+      {showStats && (
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${statsCount} gap-1.5`}>
+          {Array.from({ length: statsCount }).map((_, i) => (
+            <div key={i} className="p-1 border border-muted rounded-xl bg-white space-y-1">
+              <div className="flex items-center justify-between border border-muted rounded-lg p-3 pb-[.6rem]">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+              <div className="p-2.5 px-3 border border-muted rounded">
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tabs Skeleton */}
       <div className="space-y-4">

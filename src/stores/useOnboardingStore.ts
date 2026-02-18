@@ -32,7 +32,7 @@ export interface OnboardingActions {
 
 const initialState: OnboardingState = {
     currentStep: 4, // Start at Financial Pulse step
-    monthlySpend: 1, // 0-3 representing the spend ranges
+    monthlySpend: 0, // 0-3 representing the spend ranges
     spendRange: '<$10k',
     bankConnected: false,
     bankProcessing: false,

@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Path } from "react-hook-form";
-import { X, Upload } from "lucide-react";
+import { X, Upload, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 
@@ -29,6 +29,7 @@ interface LogoUploadContentProps {
   onChange: (value: File | undefined) => void;
   maxSize: number;
   accept: Record<string, string[]>;
+  variant?: "default" | "button";
 }
 
 const LogoUploadContent: React.FC<LogoUploadContentProps> = ({
@@ -36,6 +37,7 @@ const LogoUploadContent: React.FC<LogoUploadContentProps> = ({
   onChange,
   maxSize,
   accept,
+  variant = "default",
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(() => {
     if (value instanceof File) {
@@ -90,12 +92,14 @@ const LogoUploadContent: React.FC<LogoUploadContentProps> = ({
     [maxSize, onChange]
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject } =
+  const { getRootProps, getInputProps, isDragActive, isDragReject, open } =
     useDropzone({
       onDrop,
       accept,
       maxSize,
       multiple: false,
+      noClick: variant === "button", // Disable click on container for button variant
+      noKeyboard: variant === "button",
     });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +113,23 @@ const LogoUploadContent: React.FC<LogoUploadContentProps> = ({
     onChange(undefined);
     setError(null);
   };
+
+  if (variant === "button") {
+      return (
+          <div>
+              <input {...getInputProps()} />
+               <Button
+                type="button"
+                variant="outline"
+                className="text-teal-500 border-teal-500 hover:text-teal-600 hover:border-teal-600 bg-transparent hover:bg-teal-50 flex items-center gap-2"
+                onClick={open}
+              >
+                  {!value && <Upload className="w-4 h-4" />}
+                  {value ? "Change Logo" : "Upload business logo"}
+              </Button>
+          </div>
+      )
+  }
 
   return (
     <div className="w-full">
@@ -196,6 +217,7 @@ const FormFieldLogoUpload = <T extends Record<string, any>>({
   description,
   maxSize = 5 * 1024 * 1024, // 5MB default
   accept = { "image/*": [".png", ".jpg", ".jpeg", ".svg", ".webp"] },
+  variant = "default", // Default to original behavior
 }: FormFieldLogoUploadProps<T>) => {
   return (
     <FormField
@@ -203,16 +225,49 @@ const FormFieldLogoUpload = <T extends Record<string, any>>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          {variant === "default" && <FormLabel>{label}</FormLabel>}
           <FormControl>
-            <LogoUploadContent
-              value={field.value}
-              onChange={field.onChange}
-              maxSize={maxSize}
-              accept={accept}
-            />
+            {variant === "button" ? (
+              // Compact Button Variant
+              <div className="flex items-center gap-4">
+                {/* Preview Circle / Placeholder */}
+                {/* Preview Circle / Placeholder */}
+                <div className={`relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center ${field.value ? 'bg-transparent' : 'bg-teal-50'}`}>
+                  {field.value ? (
+                    <img
+                      src={
+                        field.value instanceof File
+                          ? URL.createObjectURL(field.value)
+                          : field.value
+                      }
+                      alt="Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-black" />
+                  )}
+                </div>
+
+                {/* Upload Button */}
+                <LogoUploadContent
+                  value={field.value}
+                  onChange={field.onChange}
+                  maxSize={maxSize}
+                  accept={accept}
+                  variant={variant}
+                />
+              </div>
+            ) : (
+              // Default Dropzone Variant
+              <LogoUploadContent
+                value={field.value}
+                onChange={field.onChange}
+                maxSize={maxSize}
+                accept={accept}
+              />
+            )}
           </FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
+          {variant === "default" && description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

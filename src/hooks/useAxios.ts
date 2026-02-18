@@ -62,7 +62,8 @@ export function useAxios(): AxiosInstance {
         if (
           error.response?.status !== 401 && // Don't show for 401s (handled above)
           !originalRequest._skipErrorToast && // Allow callers to skip toast
-          !originalRequest.url.includes("account-confirmation")
+          !originalRequest.url.includes("account-confirmation") &&
+          !originalRequest.url.includes("onboardings/pre-fetch")
         ) {
           // Only show error toast if there's a meaningful error message
           const errorMessage =
@@ -73,8 +74,8 @@ export function useAxios(): AxiosInstance {
           if (errorMessage && errorMessage !== "Network Error") {
             toast.error(errorMessage);
           }
-        } else if (originalRequest.url.includes("account-confirmation")) {
-          toast.info("onboarding required!, redirecting to Onboarding ");
+        } else if (originalRequest.url.includes("account-confirmation") || originalRequest.url.includes("onboardings/pre-fetch")) {
+          // toast.info("onboarding required!, redirecting to Onboarding ");
         }
         
         return Promise.reject(error);
