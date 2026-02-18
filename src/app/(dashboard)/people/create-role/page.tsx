@@ -1,17 +1,21 @@
 "use client"
 
-
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { Plus, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PermissionGroup } from "@/components/dashboard/people/PermissionGroup";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useRouter, useSearchParams } from "next/navigation";
-import FormSectionHeader from "@/components/dashboard/people/FormSectionHeader";
-import { Permission, useGetAllPermissionsApi } from "@/actions/auth/auth-permissions";
-import { groupPermissionsByResource, PermissionsGroup } from "@/lib/utils";
+import { useGetAllPermissionsApi } from "@/actions/auth/auth-permissions";
+import { groupPermissionsByResource, PermissionsGroup, cn } from "@/lib/utils";
 import { RoleFormData, roleSchema } from "@/lib/schemas/schemas";
 import { useCreateRoleApi } from "@/actions/role/create-role";
 import { useUpdateRoleApi } from "@/actions/role/update-role";
@@ -23,8 +27,6 @@ import toast from "react-hot-toast";
 import withPermissions from "@/components/permissions/permission-protected-routes";
 import SuccessModal from "@/components/modals/SuccessModal";
 
-
-
 function CreateRolePage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -35,10 +37,9 @@ function CreateRolePage() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const allPermissions = useGetAllPermissionsApi();
-
     const createRoleMutation = useCreateRoleApi();
     const updateRoleMutation = useUpdateRoleApi();
-    const roleData = useGetARoleApi(roleId ?? "", { enabled: isEditMode })
+    const roleData = useGetARoleApi(roleId ?? "", { enabled: isEditMode });
     const allRoles = useGetAllRolesApi();
 
     const {
@@ -58,27 +59,16 @@ function CreateRolePage() {
         },
     });
 
-    const selectedPermissionIds = watch("permissionIds");
+    const selectedPermissionIds = watch("permissionIds") || [];
     const formValues = watch();
 
     useEffect(() => {
         if (allPermissions.data?.data) {
             const groupedPermissions = groupPermissionsByResource(allPermissions.data.data);
-
-            // Initialize permissions with enabled state based on selectedPermissionIds
-            const initializedPermissions = groupedPermissions.map(group => ({
-                ...group,
-                permissions: group.permissions.map(permission => ({
-                    ...permission,
-                    enabled: (selectedPermissionIds ?? []).includes(permission.permissionId)
-                }))
-            }));
-
-            setPermissions(initializedPermissions);
+            setPermissions(groupedPermissions);
         }
-    }, [allPermissions.data, selectedPermissionIds]);
+    }, [allPermissions.data]);
 
-    // Fetch role data for editing (you'll need to implement this hook)
     useEffect(() => {
         if (roleData?.data && isEditMode) {
             reset({
@@ -86,53 +76,31 @@ function CreateRolePage() {
                 name: roleData?.data?.data.name ?? "",
                 isActive: roleData?.data?.data.isActive,
                 permissionIds: (roleData?.data?.data?.permissions ?? []).map((permission) => permission.permissionId)
-            })
-        }
-    }, [roleData?.data]);
-
-    const handlePermissionToggle = (groupIndex: number, permissionId: string) => {
-        setPermissions(prev => {
-            return prev.map((group, index) => {
-                if (index !== groupIndex) return group;
-
-                return {
-                    ...group,
-                    permissions: group.permissions.map(permission =>
-                        permission.permissionId === permissionId
-                            ? { ...permission, enabled: !permission.enabled }
-                            : permission
-                    )
-                };
             });
-        });
-
-        // Update form value
-        const currentPermissionIds = [...selectedPermissionIds ?? []];
-        const permissionIndex = currentPermissionIds.indexOf(permissionId);
-
-        if (permissionIndex > -1) {
-            currentPermissionIds.splice(permissionIndex, 1);
-        } else {
-            currentPermissionIds.push(permissionId);
         }
+    }, [roleData?.data, isEditMode, reset]);
 
-        setValue("permissionIds", currentPermissionIds, { shouldValidate: true, shouldDirty: true });
+    const handlePermissionToggle = (permissionId: string) => {
+        const currentIds = [...selectedPermissionIds];
+        const index = currentIds.indexOf(permissionId);
+        if (index > -1) {
+            currentIds.splice(index, 1);
+        } else {
+            currentIds.push(permissionId);
+        }
+        setValue("permissionIds", currentIds, { shouldValidate: true, shouldDirty: true });
     };
 
     const onSubmit = async (data: RoleFormData) => {
         try {
             if (isEditMode && roleId) {
                 await updateRoleMutation.mutateAsync({ id: roleId, data });
-                // Show success message
             } else {
                 await createRoleMutation.mutateAsync(data);
-                // Show success message
             }
-            toast.success(`Role ${isEditMode ? "updated" : "created"}!`)
-
-            setShowSuccessModal(true)
+            toast.success(`Role ${isEditMode ? "updated" : "created"}!`);
+            setShowSuccessModal(true);
         } catch (error) {
-            // Handle error (show toast, etc.)
             console.error("Error submitting role:", error);
         }
     };
@@ -142,115 +110,128 @@ function CreateRolePage() {
     const handleSuccessClose = async () => {
         setShowSuccessModal(false);
         await Promise.all([
-
             allRoles.refetch(),
             roleData.refetch()
-        ])
-        reset({})
+        ]);
+        reset({});
         router.push("/people?tab=roles");
     };
 
     return (
-        <div>
-            <div className="">
-                {/* Header */}
-                <div className="mb-6">
-                    <FormSectionHeader
-                        title={isEditMode ? "Edit Role" : "Create New Role"}
-                        description="This is to help you define a role for a new user"
-                    />
-                </div>
+        <div className="p-6">
+            <h1 className="text-2xl font-bold mb-8">Roles and Permissions</h1>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit(onSubmit as SubmitHandler<FieldValues>)} className="space-y-6">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">
-                                Role Name<span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="name"
-                                placeholder="e.g DEVELOPER"
-                                {...register("name")}
-                            />
-                            {errors.name && (
-                                <p className="text-sm text-destructive">{errors.name.message}</p>
-                            )}
+            <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-12">
+                {/* Sidebar */}
+                <aside className="space-y-4">
+                    <button 
+                        className="w-full flex items-center justify-between p-4 border-2 border-primary rounded-xl text-primary bg-white hover:bg-primary/5 transition-colors"
+                        type="button"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Plus className="w-5 h-5" />
+                            <span className="font-semibold">Add New Role</span>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="isActive">
-                                Status<span className="text-destructive">*</span>
-                            </Label>
-                            <select
-                                id="isActive"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                {...register("isActive", { setValueAs: (value) => value === "true" })}
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </aside>
+
+                {/* Main Content */}
+                <main className="max-w-2xl">
+                    <form onSubmit={handleSubmit(onSubmit as SubmitHandler<FieldValues>)} className="space-y-8">
+                        <section className="space-y-6">
+                            <h2 className="text-xl font-bold">Describe New Role</h2>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="text-sm font-semibold">
+                                    Role Name<span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="name"
+                                    placeholder="Enter role name"
+                                    className="h-12 border-gray-200 rounded-lg focus-visible:ring-primary"
+                                    {...register("name")}
+                                />
+                                {errors.name && (
+                                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description" className="text-sm font-semibold">
+                                    Description<span className="text-destructive">*</span>
+                                </Label>
+                                <Textarea
+                                    id="description"
+                                    placeholder="Describe role"
+                                    className="min-h-[140px] resize-none border-gray-200 rounded-lg focus-visible:ring-primary"
+                                    {...register("description")}
+                                />
+                                {errors.description && (
+                                    <p className="text-sm text-destructive">{errors.description.message}</p>
+                                )}
+                            </div>
+                        </section>
+
+                        <Accordion type="single" collapsible className="w-full bg-slate-50/50 rounded-xl">
+                            <AccordionItem value="permissions" className="border-none">
+                                <AccordionTrigger className="px-6 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                                    <span className="text-lg font-semibold">Permission</span>
+                                    <ChevronDown className="w-5 h-5 transition-transform duration-200" />
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-6 border-t border-slate-100 mt-2 pt-6">
+                                    <div className="space-y-10">
+                                        {permissions.map((group) => (
+                                            <div key={group.resource} className="space-y-6">
+                                                <h3 className="text-lg font-bold text-slate-800">{group.resource}</h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                                                    {group.permissions.map((permission) => (
+                                                        <div key={permission.permissionId} className="flex items-center space-x-3">
+                                                            <Checkbox
+                                                                id={permission.permissionId}
+                                                                checked={selectedPermissionIds.includes(permission.permissionId)}
+                                                                onCheckedChange={() => handlePermissionToggle(permission.permissionId)}
+                                                                className="w-5 h-5 border-2 border-slate-300 rounded data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                                                            />
+                                                            <label
+                                                                htmlFor={permission.permissionId}
+                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
+                                                            >
+                                                                {permission.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-4 pt-8 border-t">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="px-8 h-12 rounded-xl text-slate-700 border-slate-200 hover:bg-slate-50"
+                                onClick={() => router.push("/people?tab=roles")}
+                                disabled={isLoading}
                             >
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                            </select>
-                            {errors.isActive && (
-                                <p className="text-sm text-destructive">{errors.isActive.message}</p>
-                            )}
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="px-12 h-12 rounded-xl bg-primary hover:bg-primary/90 text-white"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Role" : "Create Role")}
+                            </Button>
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="description">
-                            Description
-                        </Label>
-                        <Textarea
-                            id="description"
-                            placeholder="Description (optional)"
-                            className="min-h-[100px] resize-none"
-                            {...register("description")}
-                        />
-                        {errors.description && (
-                            <p className="text-sm text-destructive">{errors.description.message}</p>
-                        )}
-                    </div>
-
-                    {/* Permissions */}
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-medium leading-[150%]">Permissions</h2>
-
-                        {errors.permissionIds && (
-                            <p className="text-sm text-destructive">{errors.permissionIds.message}</p>
-                        )}
-
-                        {permissions.map((group, index) => (
-                            <PermissionGroup
-                                key={group.resource}
-                                name={group.resource}
-                                permissions={group.permissions}
-                                onPermissionToggle={(permId) => handlePermissionToggle(index, permId)}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end gap-8 pt-4">
-                        <Button
-                            type="button"
-                            size={"md"}
-                            variant="outline"
-                            onClick={() => router.push("/dashboard/people")}
-                            disabled={isLoading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            size={"md"}
-                            className="px-12!"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? isEditMode ? "Updating..." : "Creating..." : isEditMode ? "Update Role" : "Create Role"}
-                        </Button>
-                    </div>
-                </form>
+                    </form>
+                </main>
             </div>
+
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={handleSuccessClose}

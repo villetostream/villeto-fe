@@ -14,6 +14,7 @@ import { LeaderShipPayload, useUpdateOnboardingLeadersApi } from "@/actions/onbo
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { PencilEdit02FreeIcons, UserGroup03FreeIcons, UserGroup03Icon } from "@hugeicons/core-free-icons";
+import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
 
 interface Person {
     id: string;
@@ -177,14 +178,28 @@ export function ActionButtons({
         );
     }
 
+    // If no owners, show single Add button at the bottom right with primary styling
+    if (!hasOwners) {
+        return (
+            <div className="flex justify-end pt-8 mt-auto w-full">
+                <Button
+                    onClick={onAdd}
+                    className="flex items-center gap-2"
+                    disabled={loading}
+                >
+                    {addButtonText} <Plus className="h-4 w-4" />
+                </Button>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex justify-between items-center pt-8 mt-auto gap-5">
+        <div className="flex justify-between items-center pt-8 mt-auto gap-5 w-full">
             <Button
                 variant="outline"
                 onClick={onAdd}
                 className="flex items-center gap-2 flex-1"
                 disabled={loading}
-
             >
                 {addButtonText}
                 <Plus className="h-4 w-4" />
@@ -192,10 +207,10 @@ export function ActionButtons({
 
             <Button
                 onClick={onContinue}
-                className={`flex items-center gap-2 flex-1 ${!hasOwners ? 'opacity-50' : ''}`}
-                disabled={!loading && !hasOwners}
+                className="flex items-center gap-2 flex-1"
+                disabled={loading}
             >
-                {hasOwners ? continueButtonText : "Next Step"}
+                {continueButtonText}
                 <ArrowRight className="h-4 w-4" />
             </Button>
         </div>
@@ -205,13 +220,13 @@ export function ActionButtons({
 export default function Leadership() {
     const router = useRouter();
     const { userProfiles, updateUserProfiles } = useOnboardingStore();
+    useHydrateOnboardingData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTab, setSelectedTab] = useState<"beneficial" | "officer">("beneficial");
     const [editingPerson, setEditingPerson] = useState<{ id: string; type: "beneficial" | "officer" } | null>(null);
 
-    // Separate profiles into beneficial owners and officers
+    // Filter only beneficial owners (though we might clear others if they exist from before)
     const beneficialOwners = userProfiles.filter(profile => profile.ownershipPercentage !== undefined) as BeneficialOwner[];
-    const officers = userProfiles.filter(profile => profile.ownershipPercentage === undefined) as Officer[];
 
     const updateOnboarding = useUpdateOnboardingLeadersApi()
     const loading = updateOnboarding.isPending;
@@ -245,8 +260,7 @@ export default function Leadership() {
     const handleEditPerson = (id: string) => {
         const person = userProfiles.find(p => p.id === id);
         if (person) {
-            const type = person.ownershipPercentage !== undefined ? "beneficial" : "officer";
-            setEditingPerson({ id, type });
+            setEditingPerson({ id, type: "beneficial" });
             setIsModalOpen(true);
         }
     };
@@ -267,12 +281,7 @@ export default function Leadership() {
                 ownershipPercentage: owner.ownershipPercentage || 0,
 
             })),
-            officers: officers.map(officer => ({
-                firstName: officer.firstName,
-                lastName: officer.lastName,
-                email: officer.email,
-
-            }))
+            // officers: [] // Removed officers from payload as requested
         };
         return payload;
     };
@@ -291,72 +300,9 @@ export default function Leadership() {
         }
     };
 
-    console.log({ beneficialOwners }, { officers })
+    console.log({ beneficialOwners })
 
-    const beneficialHasOwners = beneficialOwners.length > 0;
-    const officersHasPeople = officers.length > 0;
-
-    const renderTabContent = (type: "beneficial" | "officer", layout: "default" | "equal" = "default") => {
-        const people = type === "beneficial" ? beneficialOwners : officers;
-        const hasPeople = beneficialHasOwners && officersHasPeople;
-        const hasContent = type === "beneficial" ? beneficialHasOwners : officersHasPeople
-
-        return (
-            <div className="mt-7 h-full flex-col flex">
-                <ComplianceNotice
-                    title={type === "beneficial"
-                        ? "No Single Owner holds 25% or more"
-                        : "Accepted User Roles:"}
-                    description={type === "beneficial"
-                        ? "We ask for this to stay compliant with financial regulations"
-                        : "Chief Executive Officers, Chief Financial Officers, Admin Officers etc"}
-                />
-
-                {!hasContent ? (
-                    <EmptyState
-                        imageSrc="/images/leadership.png"
-                        imageAlt={type === "beneficial" ? "Add beneficial owners" : "Add company officers"}
-                        message={"No user has been added yet, click button below to add."}
-                    />
-                ) : (
-                    <div className="space-y-4 mt-5">
-                        {people.map((person) => (
-                            <OwnerCard
-                                key={person.id}
-                                owner={person}
-                                onEdit={handleEditPerson}
-                                onDelete={handleDeletePerson}
-                                type={type}
-                                showIcons
-                            />
-                        ))}
-                    </div>
-                )}
-
-                <ActionButtons
-                    onAdd={() => setIsModalOpen(true)}
-                    onContinue={handleContinue}
-                    hasOwners={hasPeople}
-                    addButtonText={type === "beneficial" ? "Add Beneficial Owner" : "Add Controlling Officer"}
-                    continueButtonText="Continue"
-                    layout={layout}
-                    loading={loading}
-                />
-
-                <AddBeneficialOwnerModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setEditingPerson(null);
-                    }}
-                    onAdd={handleAddPerson}
-                    mode={type}
-                    isOwner={type == "beneficial" ? true : false}
-                    editingPerson={editingPerson ? userProfiles.find(p => p.id === editingPerson.id) : undefined}
-                />
-            </div>
-        );
-    };
+    const hasOwners = beneficialOwners.length > 0;
 
     return (
         <div className="h-full flex-col flex">
@@ -367,29 +313,60 @@ export default function Leadership() {
                 </div>
 
                 <OnboardingTitle
-                    title="User Profiles"
-                    subtitle="Add company employees and assign roles"
+                    title="Beneficial Owner"
+                    subtitle="Enter details of owner(s) of the company."
                 />
             </div>
 
-            <Tabs defaultValue="beneficial" className="w-full mt-7 h-full" onValueChange={(value) => setSelectedTab(value as "beneficial" | "officer")}>
-                <TabsList className="w-full flex">
-                    <TabsTrigger value="beneficial" className="flex-1">
-                        Beneficial Owner
-                    </TabsTrigger>
-                    <TabsTrigger value="officer" className="flex-1">
-                        Controlling  Officer
-                    </TabsTrigger>
-                </TabsList>
+            <div className="mt-7 h-full flex-col flex">
+                <ComplianceNotice
+                    title="No Single Owner holds 25% or more"
+                    description="We ask for this to stay compliant with financial regulations"
+                />
 
-                <TabsContent value="beneficial" className="h-full">
-                    {renderTabContent("beneficial", "default")}
-                </TabsContent>
+                {!hasOwners ? (
+                    <EmptyState
+                        imageSrc="/images/leadership.png"
+                        imageAlt="Add beneficial owners"
+                        message={"No beneficial owner has been added yet, click button below to add."}
+                    />
+                ) : (
+                    <div className="space-y-4 mt-5">
+                        {beneficialOwners.map((person) => (
+                            <OwnerCard
+                                key={person.id}
+                                owner={person}
+                                onEdit={handleEditPerson}
+                                onDelete={handleDeletePerson}
+                                type="beneficial"
+                                showIcons
+                            />
+                        ))}
+                    </div>
+                )}
 
-                <TabsContent value="officer" className="h-full">
-                    {renderTabContent("officer", "equal")}
-                </TabsContent>
-            </Tabs>
+                <ActionButtons
+                    onAdd={() => setIsModalOpen(true)}
+                    onContinue={handleContinue}
+                    hasOwners={hasOwners}
+                    addButtonText="Add Beneficial Owner"
+                    continueButtonText="Next Step" // "Next Step" even if owners exist, as requested
+                    layout="default"
+                    loading={loading}
+                />
+
+                <AddBeneficialOwnerModal
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingPerson(null);
+                    }}
+                    onAdd={handleAddPerson}
+                    mode="beneficial"
+                    isOwner={true}
+                    editingPerson={editingPerson ? userProfiles.find(p => p.id === editingPerson.id) : undefined}
+                />
+            </div>
         </div>
     );
 }

@@ -68,12 +68,12 @@ const FormFieldInput = ({
           <FormControl>
             <div className="relative">
               {prefixIcon && (
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   {prefixIcon}
                 </div>
               )}
               <Input
-                className={`w-full pl-3 text-left font-normal rounded-lg h-10! ${prefixIcon ? "pl-10" : ""} ${showPasswordToggle && type === "password" ? "pr-10" : ""}`}
+                className={`w-full text-left font-normal rounded-lg h-12 border border-gray-200 ${prefixIcon ? "pl-12" : "pl-4"} pr-4 ${showPasswordToggle && type === "password" ? "pr-10" : ""}`}
                 type={inputType}
                 placeholder={placeholder}
                 inputMode={inputMode}

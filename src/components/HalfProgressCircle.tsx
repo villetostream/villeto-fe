@@ -26,7 +26,7 @@ const CircleProgress: React.FC<CircularProgressStepsProps> = ({
     stepTextColor = '#00000',
 }) => {
     // Calculate progress percentage
-    const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    const progress = (currentStep / totalSteps) * 100;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (progress / 100) * circumference;

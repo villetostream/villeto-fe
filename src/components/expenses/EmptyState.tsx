@@ -2,10 +2,16 @@ import { PenLine } from "lucide-react";
 import NewExpenseButtonTrigger from "./NewExpenseButtonTrigger";
 
 interface EmptyStateProps {
-  onNewReport: () => void;
+  title?: string;
+  subtitle?: string;
+  showButton?: boolean;
 }
 
-const ExpenseEmptyState = () => {
+const ExpenseEmptyState = ({
+  title = "No expenses yet",
+  subtitle = "You haven't added any expenses. Create your first expense to get started.",
+  showButton = true,
+}: EmptyStateProps) => {
   return (
     <>
       <div className="flex flex-col items-center justify-center py-20">
@@ -18,13 +24,12 @@ const ExpenseEmptyState = () => {
           />
         </div>
         <h3 className="text-2xl font-semibold text-foreground mb-2">
-          No expenses yet
+          {title}
         </h3>
         <p className="text-muted-foreground mb-8">
-          You haven&apos;t added any expenses. Create your first expense to get
-          started.
+          {subtitle}
         </p>
-        <NewExpenseButtonTrigger />
+        {showButton && <NewExpenseButtonTrigger />}
       </div>
     </>
   );

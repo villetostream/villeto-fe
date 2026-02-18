@@ -1,128 +1,91 @@
+
 import { Department } from "@/actions/departments/get-all-departments";
-import ExpenseDetails from "@/components/expenses/ExpenseDetails";
-import useModal from "@/hooks/useModal";
-import { getStatusIcon } from "@/lib/helper";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { CloseCircle, Edit2, MessageEdit } from "iconsax-reactjs";
-import { Eye, MoreHorizontal, Send, Trash, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { dateFormatter } from "@/lib/utils";
-import Link from "next/link";
-import { STATE_KEYS } from "@/lib/constants/state_key";
-import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { useDepartmentHook } from "@/hooks/people/dept/dept-hook";
-import SuccessModal from "@/components/modals/SuccessModal";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 
 const columnHelper = createColumnHelper<Department>();
 
 export const columns: ColumnDef<Department, any>[] = [
-    columnHelper.accessor("departmentName", {
-        header: "DEPARTMENT",
-        cell: (info) => <p className="capitalize">{`${info.getValue() || "-"}`}</p>,
-    }),
-
-    columnHelper.accessor("code", {
-        header: "DEPT CODE",
-        cell: (info) => <p className="capitalize">{`${info.getValue() || "-"}`}</p>,
-    }),
-    columnHelper.accessor("description", {
-        header: "DESCRIPTION",
+    columnHelper.display({
+        id: "idNo",
+        header: "S/N",
         cell: (info) => {
-            return <p className=" max-w-48 text-ellipsis line-clamp-1">{`${info.getValue() || "-"}`}</p>;
+            const rowNum = String(info.row.index + 1).padStart(2, '0');
+            return <p className="text-sm">{rowNum}</p>;
         },
     }),
-    columnHelper.accessor("head", {
-        header: "DEPT HEAD",
-        cell: (info) => <p className="capitalize">{`${info.getValue()?.firstName || ""} ${info.getValue()?.lastName || "-"}`}</p>,
+    columnHelper.accessor("departmentName", {
+        header: "DEPARTMENTS",
+        cell: (info) => <p className="font-bold">{`${info.getValue() || "-"}`}</p>,
+    }),
+    columnHelper.display({
+        id: "usersCount",
+        header: "USERS",
+        cell: (info) => <p className="">{info.row.original.members?.length || "0"}</p>,
     }),
     columnHelper.accessor("manager", {
         header: "REPORTS TO",
-        cell: (info) => <p className="capitalize">{`${info.getValue()?.firstName || ""} ${info.getValue()?.lastName || "-"}`}</p>,
-    }),
-    columnHelper.accessor("createdAt", {
-        header: "Date ",
         cell: (info) => {
-            return <p className="capitalize">{`${dateFormatter(info.getValue()) || "-"}`}</p>;
+            const manager = info.getValue();
+            const managerName = manager ? `${manager.firstName || ""} ${manager.lastName || ""}`.trim() : "-";
+            return <p className="capitalize">{managerName}</p>;
         },
     }),
-    columnHelper.accessor("isActive", {
-        header: "Status",
+    columnHelper.accessor("createdAt", {
+        header: "ADDED",
         cell: (info) => {
-            return <Badge variant={info.row.original.isActive ? "active" : "inactive"}>
-
-                <span className="ml-1 capitalize">{info.row.original.isActive ? "active" : "inactive"}</span>
-            </Badge>;
+            const date = info.getValue() ? new Date(info.getValue()) : null;
+            const formattedDate = date ? date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-";
+            return <p className="">{formattedDate}</p>;
         },
     }),
     columnHelper.display({
         id: "actions",
-        header: "Actions",
+        header: "ACTION",
         enableHiding: false,
         cell: (data) => {
-
-            const hook = useDepartmentHook();
-            const { selected, setSelected, state, setState, handleDeleteAction, actionIsLoading
-            } = hook
-            return (<div className="flex justify-end gap-2" >
-                {
-                    STATE_KEYS.DELETE == state && (
-                        <ConfirmDialog
-                            title={"Delete Department"}
-                            description={`Do you want to delete department ${selected?.departmentName}?`}
-                            confirmText={"Delete"}
-                            cancelText="Cancel"
-                            loading={actionIsLoading}
-                            onOpenChange={() => {
-                                if (state) {
-                                    setState(null);
-                                } else {
-                                    setState(STATE_KEYS.DELETE);
-                                }
-                            }}
-                            isOpen={state == STATE_KEYS.DELETE}
-                            onConfirm={async () => {
-                                //console.log("i am running")
-                                try {
-                                    await handleDeleteAction();
-
-                                    // setIsOpen(false); // close after success
-                                } catch (e) { }
-                            }}
-                            buttonText={"Delete Product"}
-                        />
-                    )
-                }
-
-                <SuccessModal
-                    isOpen={STATE_KEYS.SUCCESS == state}
-                    onClose={() => {
-                        setState(null)
-                    }}
-                    title={`Department deleted Successfully`}
-                    description={""}
-                />
-                <PermissionGuard requiredPermissions={["update:departments"]}>
-
-                    < Button variant="ghost" size="icon" className="h-8 w-8" >
-                        <Link href={`/people/add-department?departmentId=${data.row.original.departmentId}`}>
-                            <Edit2 className="w-4 h-4" />
-                        </Link>
-                    </Button >
-                </PermissionGuard>
-                <PermissionGuard requiredPermissions={["delete:departments"]}>
-
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => {
-                        setSelected(data.row.original);
-                        setState(STATE_KEYS.DELETE);
-                    }}>
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </PermissionGuard>
-
-            </div >);
+            return (
+                <div className="flex justify-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
+                            <PermissionGuard requiredPermissions={["read:departments"]}>
+                                <DropdownMenuItem 
+                                    className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
+                                    onClick={() => console.log("View department:", data.row.original.departmentId)}
+                                >
+                                    <Eye className="w-5 h-5" />
+                                    <span className="font-medium">View Department</span>
+                                </DropdownMenuItem>
+                            </PermissionGuard>
+                            
+                            <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
+                            
+                            <PermissionGuard requiredPermissions={["update:departments"]}>
+                                <DropdownMenuItem 
+                                    className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
+                                    onClick={() => console.log("Deactivate department:", data.row.original.departmentId)}
+                                >
+                                    <Lock className="w-5 h-5" />
+                                    <span className="font-medium">Deactivate Department</span>
+                                </DropdownMenuItem>
+                            </PermissionGuard>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
         },
     }),
 ];

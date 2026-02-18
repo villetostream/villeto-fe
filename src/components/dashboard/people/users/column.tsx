@@ -10,16 +10,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { Eye, Lock, MoreHorizontal, UserCheck } from "lucide-react";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 
 
 const columnHelper = createColumnHelper<AppUser>();
 
-export const columns: ColumnDef<AppUser, any>[] = [
+export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppUser, any>[] => [
     columnHelper.display({
         id: "idNo",
-        header: "ID NO",
+        header: "S/N",
         cell: (info) => {
             const rowNum = String(info.row.index + 1).padStart(2, '0');
             return <p className="text-sm">{rowNum}</p>;
@@ -57,7 +57,7 @@ export const columns: ColumnDef<AppUser, any>[] = [
             const formattedPosition = position 
                 ? position.replace(/_/g, ' ').toLowerCase() 
                 : "-";
-            return <p className="capitalize">{formattedPosition}</p>;
+            return <p className="capitalize text-sm">{formattedPosition}</p>;
         },
     }),
     columnHelper.accessor("department", {
@@ -106,36 +106,44 @@ export const columns: ColumnDef<AppUser, any>[] = [
             const isActive = status?.toLowerCase() === "active";
             
             return (
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <PermissionGuard requiredPermissions={["read:user"]}>
-                                <DropdownMenuItem onClick={() => {
-                                    console.log("View profile:", data.row.original.userId);
-                                }}>
-                                    View Profile
+                        <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
+                            <PermissionGuard requiredPermissions={["read:users"]}>
+                                <DropdownMenuItem 
+                                    className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
+                                    onClick={() => onViewProfile(data.row.original.userId)}
+                                >
+                                    <Eye className="w-5 h-5" />
+                                    <span className="font-medium">View Profile</span>
                                 </DropdownMenuItem>
                             </PermissionGuard>
                             
+                            <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
+                            
                             {isActive ? (
                                 <PermissionGuard requiredPermissions={["update:users"]}>
-                                    <DropdownMenuItem onClick={() => {
-                                        console.log("Deactivate user:", data.row.original.userId);
-                                    }}>
-                                        Deactivate User
+                                    <DropdownMenuItem 
+                                        className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
+                                        onClick={() => console.log("Deactivate user:", data.row.original.userId)}
+                                    >
+                                        <Lock className="w-5 h-5" />
+                                        <span className="font-medium">Deactivate User</span>
                                     </DropdownMenuItem>
                                 </PermissionGuard>
                             ) : (
                                 <PermissionGuard requiredPermissions={["update:users"]}>
-                                    <DropdownMenuItem onClick={() => {
-                                        console.log("Activate user:", data.row.original.userId);
-                                    }}>
-                                        Activate User
+                                    <DropdownMenuItem 
+                                        className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#0FA68E]"
+                                        onClick={() => console.log("Activate user:", data.row.original.userId)}
+                                    >
+                                        <UserCheck className="w-5 h-5" />
+                                        <span className="font-medium">Activate User</span>
                                     </DropdownMenuItem>
                                 </PermissionGuard>
                             )}

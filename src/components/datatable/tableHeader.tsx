@@ -1,8 +1,9 @@
-import React, { JSX } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import { Table } from "@tanstack/react-table";
+import { createPortal } from "react-dom";
 
 import { Filter, FilterData } from "./filter";
-import { Download, SearchIcon, Settings } from "lucide-react";
+import { Download, Search as SearchIcon, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +14,11 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { Input } from "../ui/input";
 
 export interface ITableHeader {
+  title?: string;
+  subtitle?: string;
   isSearchable?: boolean;
   isExportable?: boolean;
   isFilter?: boolean;
@@ -46,9 +50,96 @@ export function TableHeader({
   enableColumnVisibility?: boolean;
   table?: Table<any>;
 }) {
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Only attempt to mount if on client
+    if (typeof window !== "undefined") {
+      setPortalTarget(document.getElementById("tab-actions"));
+    }
+  }, []);
+
+  const actionsContent = (
+    <div className="flex sm:flex-row flex-col items-center gap-2">
+      {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
+
+      {tableHeader?.isSearchable && (
+        <div className="relative w-full sm:w-64">
+          <SearchIcon
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
+          <Input
+            placeholder="Search..."
+            className="pl-10 h-10 w-full bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-sm"
+            value={tableHeader?.search}
+            onChange={(e) => tableHeader?.searchQuery?.(e.target.value)}
+          />
+        </div>
+      )}
+
+      {tableHeader?.isFilter && tableHeader.filterProps && (
+        <Filter filterProps={tableHeader.filterProps} />
+      )}
+
+      {enableColumnVisibility && table && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 px-4 border-gray-200 hover:bg-gray-50 text-gray-600 font-medium rounded-lg flex items-center gap-2"
+            >
+              <Settings size={18} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-2">
+            <DropdownMenuLabel className="mb-2 px-2 py-1.5 text-sm font-semibold text-gray-900 border-b border-gray-100">
+              Toggle Columns
+            </DropdownMenuLabel>
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuItem
+                  key={column.id}
+                  className="capitalize py-2 cursor-pointer focus:bg-primary/5"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    column.toggleVisibility(!column.getIsVisible());
+                  }}
+                >
+                  <Checkbox
+                    checked={column.getIsVisible()}
+                    onCheckedChange={() => {}}
+                    className="mr-2"
+                  />
+                  {typeof column.columnDef.header === "string"
+                    ? column.columnDef.header
+                    : column.id}
+                </DropdownMenuItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {tableHeader?.isExportable && (
+        <Button
+          onClick={handleExport}
+          variant="outline"
+          size="sm"
+          className="h-10 px-4 flex items-center gap-2 border-gray-200 hover:bg-gray-50 text-gray-600 font-medium rounded-lg"
+        >
+          <Download size={18} />
+          <span className="hidden sm:inline">Export CSV</span>
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div>
-      {/* Bulk Actions Bar - Show when items are selected */}
+    <div className="w-full">
+      {/* Bulk Actions Bar */}
       {selectedCount > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
           <div className="flex items-center justify-between">
@@ -71,82 +162,20 @@ export function TableHeader({
           </div>
         </div>
       )}
-      <div className="flex sm:flex-row flex-col items-center gap-2 md:space-x-2 space-x-0 space-y-2 md:space-y-0 font-semibold text-md mb-4 bg-white justify-end relative">
-        <div className="flex sm:flex-row flex-col items-center gap-2 absolute right-0 -top-12.5">
-          {tableHeader?.actionButton && <div>{tableHeader.actionButton}</div>}
 
-          {tableHeader?.isSearchable && (
-            <div
-              className={`flex items-center border rounded-md focus-within:ring-2 focus-within:ring-primary max-w-sm w-full`}
-            >
-              <span className="pl-3 text-gray-400">
-                <SearchIcon className="w-4 h-4" />
-              </span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+        {tableHeader?.title && (
+          <div className="flex flex-col mb-4 md:mb-0">
+            <h2 className="text-xl font-bold font-primary text-gray-900">
+              {tableHeader?.title}
+            </h2>
+            {tableHeader?.subtitle && (
+              <p className="text-sm text-gray-500 mt-1">{tableHeader.subtitle}</p>
+            )}
+          </div>
+        )}
 
-              <input
-                id="searchInput"
-                type="text"
-                placeholder="Search..."
-                value={tableHeader.search}
-                onChange={(e) => tableHeader.searchQuery?.(e.target.value)}
-                className="px-1 py-2 w-full !focus:outline-none bg-transparent !focus:ring-0 in-focus-visible:ring-0 border-0"
-              />
-            </div>
-          )}
-
-          {tableHeader?.isFilter && (
-            <>
-              {tableHeader?.filterProps && (
-                <Filter filterProps={tableHeader.filterProps} />
-              )}
-            </>
-          )}
-          {enableColumnVisibility && table && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuItem
-                        key={column.id}
-                        className="capitalize"
-                        onClick={() =>
-                          column.toggleVisibility(!column.getIsVisible())
-                        }
-                      >
-                        <Checkbox
-                          checked={column.getIsVisible()}
-                          onChange={() => {}}
-                          className="mr-2"
-                        />
-                        {typeof column.columnDef.header === "string"
-                          ? column.columnDef.header
-                          : column.id}
-                      </DropdownMenuItem>
-                    );
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {tableHeader?.isExportable && (
-            <div
-              onClick={handleExport}
-              className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 hover:bg-gray-200 cursor-pointer"
-            >
-              <Download />
-            </div>
-          )}
-        </div>
+        {portalTarget ? createPortal(actionsContent, portalTarget) : actionsContent}
       </div>
     </div>
   );

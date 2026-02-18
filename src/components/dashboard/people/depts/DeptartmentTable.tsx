@@ -27,28 +27,15 @@ const DepartmentTable = () => {
                 search: tableprops.globalSearch,
                 searchQuery: tableprops.setGlobalSearch,
                 filterProps: {
-                    title: "Reimbursements",
+                    title: "Filter Departments",
                     filterData: [
                         {
                             name: "status",
                             label: "Status",
                             type: "select",
                             options: [
-                                { label: "Pending", value: "pending" },
-                                { label: "Approved", value: "approved" },
-                                { label: "Declined", value: "declined" },
-                            ],
-                        },
-                        {
-                            name: "category",
-                            label: "Category",
-                            type: "select",
-                            options: [
-                                { label: "Meals & Entertainment", value: "Meals & Entertainment" },
-                                { label: "Transportation", value: "Transportation" },
-                                { label: "Office Supplies", value: "Office Supplies" },
-                                { label: "Travel", value: "Travel" },
-                                { label: "Software", value: "Software" },
+                                { label: "Active", value: "active" },
+                                { label: "Inactive", value: "inactive" },
                             ],
                         },
                     ],

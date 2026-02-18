@@ -75,7 +75,7 @@ export function EditInvitedUserModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] rounded-lg">
                 <DialogHeader>
                     <DialogTitle>Edit User Details</DialogTitle>
                 </DialogHeader>

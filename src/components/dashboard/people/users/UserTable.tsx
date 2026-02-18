@@ -1,22 +1,24 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { DataTable } from '@/components/datatable';
 import { columns } from './column';
 import { useDataTable } from '@/components/datatable/useDataTable';
-import { Role, useGetAllRolesApi } from '@/actions/role/get-all-roles';
+import { useGetAllRolesApi } from '@/actions/role/get-all-roles';
 import { useGetAllUsersApi } from '@/actions/users/get-all-users';
-import { AppUser } from '@/actions/departments/get-all-departments';
+import { useGetAllDepartmentsApi, AppUser } from '@/actions/departments/get-all-departments';
 
 const UsersTable = () => {
+    const usersApi = useGetAllUsersApi();
+    const depts = useGetAllDepartmentsApi();
+    const roles = useGetAllRolesApi();
 
-    const users = useGetAllUsersApi()
-    const tableprops = tableData(users?.data?.data ?? []);
+    const tableprops = tableData(usersApi?.data?.data ?? []);
 
     return (
         <DataTable
-            data={users?.data?.data ?? []}
-            isLoading={users.isLoading}
+            data={usersApi?.data?.data ?? []}
+            isLoading={usersApi.isLoading || depts.isLoading || roles.isLoading}
             columns={columns}
-            paginationProps={{ ...tableprops.paginationProps, total: users?.data?.meta.totalCount ?? 0 }}
+            paginationProps={{ ...tableprops.paginationProps, total: usersApi?.data?.meta.totalCount ?? 0 }}
             enableRowSelection={true}
             enableColumnVisibility={true}
             selectedDataIds={tableprops.selectedDataIds}
@@ -30,39 +32,41 @@ const UsersTable = () => {
                 search: tableprops.globalSearch,
                 searchQuery: tableprops.setGlobalSearch,
                 filterProps: {
-                    title: "Reimbursements",
+                    title: "Filter Users",
                     filterData: [
                         {
                             name: "status",
                             label: "Status",
                             type: "select",
                             options: [
-                                { label: "Pending", value: "pending" },
-                                { label: "Approved", value: "approved" },
-                                { label: "Declined", value: "declined" },
+                                { label: "Active", value: "active" },
+                                { label: "Inactive", value: "inactive" },
                             ],
                         },
                         {
-                            name: "category",
-                            label: "Category",
+                            name: "departmentId",
+                            label: "Department",
                             type: "select",
-                            options: [
-                                { label: "Meals & Entertainment", value: "Meals & Entertainment" },
-                                { label: "Transportation", value: "Transportation" },
-                                { label: "Office Supplies", value: "Office Supplies" },
-                                { label: "Travel", value: "Travel" },
-                                { label: "Software", value: "Software" },
-                            ],
+                            options: depts?.data?.data?.map((d: any) => ({
+                                label: d.name,
+                                value: d.id,
+                            })) || [],
+                        },
+                        {
+                            name: "roleId",
+                            label: "Role",
+                            type: "select",
+                            options: roles?.data?.data?.map((r: any) => ({
+                                label: r.name ? r.name.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ') : 'Unknown',
+                                value: r.id,
+                            })) || [],
                         },
                     ],
                     onFilter: (filters) => {
-
+                        console.log("Filters:", filters);
                     },
                 },
-                bulkActions: [
-
-                ],
-
+                bulkActions: [],
             }}
         />
     )
@@ -71,7 +75,6 @@ const UsersTable = () => {
 export default UsersTable
 
 export const tableData = (data: AppUser[]) => {
-
     return useDataTable({
         initialPage: 1,
         initialPageSize: 10,
@@ -80,4 +83,4 @@ export const tableData = (data: AppUser[]) => {
         manualFiltering: false,
         manualPagination: false,
     });
-} 
+}

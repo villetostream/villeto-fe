@@ -1,122 +1,119 @@
 
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { Edit2 } from "iconsax-reactjs";
-import { Trash2 } from "lucide-react";
+import { Eye, Lock, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { dateFormatter } from "@/lib/utils";
-import Link from "next/link";
-import { STATE_KEYS } from "@/lib/constants/state_key";
-import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { useDepartmentHook } from "@/hooks/people/dept/dept-hook";
-import SuccessModal from "@/components/modals/SuccessModal";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Role } from "@/actions/role/get-all-roles";
-import { useRoleHook } from "@/hooks/people/role/role-hook";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
+import Link from "next/link";
 
 const columnHelper = createColumnHelper<Role>();
 
 export const columns: ColumnDef<Role, any>[] = [
+    columnHelper.display({
+        id: "idNo",
+        header: "S/N",
+        cell: (info) => {
+            const rowNum = String(info.row.index + 1).padStart(2, '0');
+            return <p className="text-sm">{rowNum}</p>;
+        },
+    }),
     columnHelper.accessor("name", {
         header: "ROLE",
-        cell: (info) => <p className="capitalize">{`${info.getValue() || "-"}`}</p>,
+        cell: (info) => {
+            const name = info.getValue() || "";
+            const formattedName = name.replace(/_/g, ' ').toLowerCase();
+            return <p className="font-bold capitalize">{formattedName || "-"}</p>;
+        },
     }),
-
-
     columnHelper.accessor("description", {
         header: "DESCRIPTION",
         cell: (info) => {
-            return <p className=" max-w-48 text-ellipsis line-clamp-1">{`${info.getValue() || "-"}`}</p>;
+            const description = info.getValue() || "";
+            const formattedDescription = description.replace(/_/g, ' ').toLowerCase();
+            return <p className="max-w-48 text-ellipsis line-clamp-1 first-letter:uppercase">{formattedDescription || "-"}</p>;
         },
     }),
     columnHelper.accessor("totalAssignedUsers", {
-        header: "USER ASSIGNED",
-        cell: (info) => <p className="capitalize">{`${info.getValue() || "0"}`}</p>,
+        header: "USERS",
+        cell: (info) => <p className="">{`${info.getValue() || "0"}`}</p>,
     }),
     columnHelper.accessor("createdBy", {
         header: "CREATED BY",
-        cell: (info) => <p className="capitalize">{`${info.getValue()?.firstName || ""} ${info.getValue()?.lastName || "DEFAULT"}`}</p>,
+        cell: (info) => {
+            const creator = info.getValue();
+            const creatorName = creator ? `${creator.firstName || ""} ${creator.lastName || ""}`.trim() : "Default";
+            return <p className="capitalize">{creatorName}</p>;
+        },
     }),
     columnHelper.accessor("createdAt", {
-        header: "Date ",
+        header: "DATE CREATED",
         cell: (info) => {
-            return <p className="capitalize">{`${dateFormatter(info.getValue()) || "-"}`}</p>;
+            // Using a simpler date format if needed to match screenshot "10 Sept 2025"
+            const date = info.getValue() ? new Date(info.getValue()) : null;
+            const formattedDate = date ? date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-";
+            return <p className="">{formattedDate}</p>;
         },
     }),
     columnHelper.accessor("isActive", {
-        header: "Status",
+        header: "STATUS",
         cell: (info) => {
-            return <Badge variant={info.row.original.isActive ? "active" : "inactive"}>
-
-                <span className="ml-1 capitalize">{info.row.original.isActive ? "active" : "inactive"}</span>
-            </Badge>;
+            return (
+                <Badge variant={info.row.original.isActive ? "active" : "inactive"}>
+                    <span className="ml-1 capitalize">{info.row.original.isActive ? "active" : "inactive"}</span>
+                </Badge>
+            );
         },
     }),
     columnHelper.display({
         id: "actions",
-        header: "Actions",
+        header: "ACTION",
         enableHiding: false,
         cell: (data) => {
-
-            const hook = useRoleHook();
-            const { selected, setSelected, state, setState, handleDeleteAction, actionIsLoading
-            } = hook
-            return (<div className="flex justify-end gap-2" >
-                {
-                    STATE_KEYS.DELETE == state && (
-                        <ConfirmDialog
-                            title={"Delete Role"}
-                            description={`Do you want to delete role ${selected?.name}?`}
-                            confirmText={"Delete"}
-                            cancelText="Cancel"
-                            loading={actionIsLoading}
-                            onOpenChange={() => {
-                                if (state) {
-                                    setState(null);
-                                } else {
-                                    setState(STATE_KEYS.DELETE);
-                                }
-                            }}
-                            isOpen={state == STATE_KEYS.DELETE}
-                            onConfirm={async () => {
-                                //console.log("i am running")
-                                try {
-                                    await handleDeleteAction();
-
-                                    // setIsOpen(false); // close after success
-                                } catch (e) { }
-                            }}
-                            buttonText={"Delete Product"}
-                        />
-                    )
-                }
-
-                <SuccessModal
-                    isOpen={STATE_KEYS.SUCCESS == state}
-                    onClose={() => {
-                        setState(null)
-                    }}
-                    title={`Role deleted Successfully`}
-                    description={""}
-                />
-                <PermissionGuard requiredPermissions={["update:roles"]}>
-
-                    < Button variant="ghost" size="icon" className="h-8 w-8" >
-                        <Link href={`/people/create-role?id=${data.row.original.roleId}`}>
-                            <Edit2 className="w-4 h-4" />
-                        </Link>
-                    </Button >
-                </PermissionGuard>
-                <PermissionGuard requiredPermissions={["delete:roles"]} >
-
-                    <Button variant="ghost" disabled={data.row.original.createdBy == null} size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => {
-                        setSelected(data.row.original);
-                        setState(STATE_KEYS.DELETE);
-                    }}>
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </PermissionGuard>
-            </div >);
+            const roleId = data.row.original.roleId;
+            return (
+                <div className="flex justify-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
+                            <PermissionGuard requiredPermissions={["read:roles"]}>
+                                <DropdownMenuItem asChild>
+                                    <Link 
+                                        href={`/people/view-role/${roleId}`}
+                                        className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
+                                    >
+                                        <Eye className="w-5 h-5" />
+                                        <span className="font-medium">View Role</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            </PermissionGuard>
+                            
+                            <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
+                            
+                            <PermissionGuard requiredPermissions={["update:roles"]}>
+                                <DropdownMenuItem 
+                                    className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
+                                    onClick={() => console.log("Deactivate role:", roleId)}
+                                >
+                                    <Lock className="w-5 h-5" />
+                                    <span className="font-medium">Deactivate Role</span>
+                                </DropdownMenuItem>
+                            </PermissionGuard>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
         },
     }),
 ];

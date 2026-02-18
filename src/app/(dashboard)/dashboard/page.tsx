@@ -8,13 +8,13 @@ import { RecentActivity } from "@/components/dashboard/landing/RecentActivity";
 import { ExpenseChart } from "@/components/dashboard/landing/ExpenseChart";
 import { PolicyAlertsTable } from "@/components/dashboard/landing/PolicyAlertTable";
 import { Input } from "@/components/ui/input";
-import { ChartUpIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import { useAxios } from "@/hooks/useAxios";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DollarSign } from "lucide-react";
+import { StatusUp, WalletMoney, LampOn } from "iconsax-reactjs";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -114,21 +114,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-[1rem]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-1.5">
             <StatsCard
               title="Total Spend"
               value="$24,536.00"
-              subtitle={<>This month you spent $3,000</>}
+              subtitle={<span className="text-muted-foreground">This month you spent <span className="text-success">$3,000</span> </span>}
               trend="up"
               icon={
-                <div className="p-1 rounded bg-success/5 border-[0.5px] border-success text-success font-normal text-[.5rem] flex items-center justify-center gap-0.5 mr-2">
-                  <div className="w-3 h-3 flex items-center justify-center">
-                    <HugeiconsIcon
-                      icon={ChartUpIcon}
-                      className="w-3 h-3 text-success"
-                    />
-                  </div>
-                  +10%
+                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#38B2AC]">
+                  <DollarSign className="w-5 h-5" />
                 </div>
               }
             />
@@ -142,16 +136,21 @@ export default function DashboardPage() {
                 </span>
               }
               trend="neutral"
-            />
-            <StatsCard
-              title="Overall Budget Utilization"
-              value="40%"
-              subtitle="You have 10 accounts to pay"
+              icon={
+                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#5A67D8]">
+                  <StatusUp className="w-5 h-5" />
+                </div>
+              }
             />
             <StatsCard
               title="Total Accounts Payable"
               value="$24,536.00"
               subtitle={<>You have 10 accounts to pay</>}
+              icon={
+                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#F45B69]">
+                  <WalletMoney className="w-5 h-5" />
+                </div>
+              }
             />
             <StatsCard
               title="Open Approvals"
@@ -162,6 +161,11 @@ export default function DashboardPage() {
                 </Link>
               }
               trend="up"
+              icon={
+                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#418341]">
+                  <LampOn className="w-5 h-5" />
+                </div>
+              }
             />
             <StatsCard
               title="Critical Policy Alerts"
@@ -172,6 +176,11 @@ export default function DashboardPage() {
                 </Link>
               }
               trend="down"
+              icon={
+                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#384A57]">
+                  <StatusUp className="w-5 h-5" />
+                </div>
+              }
             />
           </div>
 

@@ -165,6 +165,7 @@ export function UserSection() {
   const isUploadReceiptPage = pathname === "/expenses/new-expense/upload";
   const isNewExpensePage = pathname === "/expenses/new-expense";
   const isNewReportPage = pathname === "/expenses/new-report";
+  const isViewRolePage = pathname.startsWith("/people/view-role/");
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -180,8 +181,10 @@ export function UserSection() {
         isNewExpensePage ||
         isNewReportPage ||
         isBatchExpensePage ||
+        isViewRolePage ||
         pathname === "/people/invite/leadership" ||
-        pathname === "/people/invite/employees" ? (
+        pathname === "/people/invite/employees" ||
+        pathname === "/people/create-role" ? (
           <Button
             variant="ghost"
             className="flex items-center gap-2 px-0 text-xl hover:bg-transparent hover:text-primary  h-auto! py-1! has-[>svg]:px-0!" // Adjust hover styles as needed
@@ -301,6 +304,11 @@ export function UserSection() {
               // Helper to check if we are on specific invite pages
               if (pathname === "/people/invite/leadership") {
                   router.push("/people");
+                  return;
+              }
+              
+              if (pathname === "/people/create-role" || isViewRolePage) {
+                  router.push("/people?tab=roles");
                   return;
               }
               

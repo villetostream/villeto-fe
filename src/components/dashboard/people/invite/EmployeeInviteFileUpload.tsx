@@ -1,7 +1,7 @@
 
 "use client";
 
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, Download } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
@@ -52,30 +52,30 @@ export default function EmployeeInviteFileUpload({
 
     return (
         <div className="w-full">
-            <div className="mb-6 border-b border-gray-200 pb-4">
-                            <h1 className="text-2xl font-bold text-gray-900">Employees Invite</h1>
-                            <p className="text-gray-500 mt-1">
-                                You can choose to upload a CSV with the right details or provide an api
-                            </p>
-                        </div>
+            <div className="mb-4 border-b border-gray-200 pb-3">
+                <h1 className="text-2xl font-bold text-gray-900">Employees Invite</h1>
+                <p className="text-gray-500 mt-1">
+                    You can choose to upload a CSV with the right details or provide an api
+                </p>
+            </div>
                         
-            <div className="flex justify-end mb-4">
-                            <Button variant="ghost" className="text-[#00BFA5]">
-                                <span className="mr-2">⬇</span> Download a Template
-                            </Button>
-                        </div>
+            <div className="flex justify-end mb-2">
+                <Button variant="ghost" className="text-[#00BFA5]">
+                    <Download className="mr-2 h-4 w-4" /> Download a Template
+                </Button>
+            </div>
             <div
                 {...getRootProps()}
                 className={`
-                    border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200 ease-in-out
-                    flex flex-col items-center justify-center gap-4
-                    ${isDragActive ? "border-primary bg-primary/10" : "border-gray-200 bg-white"}
+                    border-2 border-dashed rounded-lg py-6 px-6 text-center transition-all duration-200 ease-in-out
+                    flex flex-col items-center justify-center gap-3
+                    ${isDragActive ? "border-primary bg-primary/10" : "border-primary/40 bg-white"}
                 `}
             >
                 <input {...getInputProps()} />
                 
-                <div className="bg-gray-100 p-4 rounded-full mb-2">
-                    <UploadCloud className="w-8 h-8 text-gray-500" />
+                <div className="bg-gray-100 p-3 rounded-full">
+                    <UploadCloud className="w-7 h-7 text-gray-500" />
                 </div>
                 
                 <h3 className="text-lg font-semibold text-gray-900">Upload CSV or Excel File</h3>

@@ -110,7 +110,7 @@ export const AddBeneficialOwnerModal = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleCancel}>
-            <DialogContent className="!sm:min-w-[600px] p-0">
+            <DialogContent className="!sm:min-w-[600px] p-0 rounded-lg">
                 <DialogHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-7 border-b border-b-muted">
                     <div className="flex items-center gap-2.5">
                         <div className="w-14 h-14 bg-muted/80 rounded-full flex items-center justify-center">

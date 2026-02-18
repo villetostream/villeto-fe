@@ -1,6 +1,7 @@
 export const API_KEYS = {
   ONBOARDING: {
-    ACCOUNT_CONFIRMATION: "onboardings/account-confirmation",
+    ACCOUNT_CONFIRMATION: "onboardings/pre-fetch",
+    EXISTING_ONBOARDING: "onboardings/fetch",
     START_ONBOARDING: "onboardings/start",
     ONBOARDING: "onboardings",
     ONBOARDING_COMPANY_DETAILS: (id: string) =>
@@ -20,6 +21,7 @@ export const API_KEYS = {
   },
   ROLE: {
     ROLES: "roles/",
+    ROLE_DETAIL: (roleId: string) => `roles/${roleId}` as const,
   },
   USER: {
     USERS: "users/",

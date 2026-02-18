@@ -4,17 +4,17 @@ import { Button } from "@/components/ui/button";
 import { spendingRanges, SpendingSlider } from "@/components/onboarding/financial/SpendingSlider";
 import { BankConnection } from "@/components/onboarding/financial/BankConnection";
 import { ConnectBankModal } from "@/components/onboarding/financial/ConnectBankModal";
-import { useOnboardingStore } from "@/stores/useOnboardingStore";
-import { useOnboardingStore as store } from "@/stores/useVilletoStore";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Invoice02Icon } from '@hugeicons/core-free-icons';
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
 import { useRouter } from "next/navigation";
 import { useUpdateOnboardingFinancialPulseApi } from "@/actions/onboarding/update-financial-pulse";
+import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
 
 export default function FinancialPulse() {
     const { bankConnected, connectedAccounts, spendRange } = useOnboardingStore();
-    const { } = store()
+    useHydrateOnboardingData();
 
     const router = useRouter()
     const updateFinancial = useUpdateOnboardingFinancialPulseApi()

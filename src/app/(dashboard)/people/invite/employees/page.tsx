@@ -29,7 +29,7 @@ export default function InviteEmployeesPage() {
 
     const handleFileSelect = async (file: File) => {
         // Mock parsing logic
-        const mockData: EmployeeData[] = Array(7).fill(null).map((_, i) => ({
+        const mockData: EmployeeData[] = Array(20).fill(null).map((_, i) => ({
             id: `emp-${i}`,
             fullName: "Sarah Chen",
             email: "Sarahchen@company.com",
@@ -63,31 +63,31 @@ export default function InviteEmployeesPage() {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-4 max-w-7xl mx-auto">
             
 
-            <div className="bg-white rounded-lg shadow-sm border p-6 min-h-[400px]">
+            <div className={`bg-white rounded-lg shadow-sm border p-4 ${step === "preview" ? "h-[calc(100vh_-_140px)]" : "min-h-[350px]"}`}>
                 
                 {step === "upload" ? (
-                    <div className="max-w-6xl mx-auto mt-8">
+                    <div className="max-w-6xl mx-auto mt-2">
                         <EmployeeInviteFileUpload onFileSelect={handleFileSelect} />
                         
                         
-                         <h3 className="font-semibold mt-6 border-t border-gray-200 pt-8">Required Fields</h3>
+                         <h3 className="font-semibold mt-4 border-t border-gray-200 pt-4">Required Fields</h3>
                          
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-8">
                            
                             
                             <div>
-                                <h3 className="font-semibold mb-2">Full Name</h3>
+                                <h3 className="font-semibold mb-1">Full Name</h3>
                                 <p className="text-xs text-gray-500">User's first & last name</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold mb-2">Email Address</h3>
+                                <h3 className="font-semibold mb-1">Email Address</h3>
                                 <p className="text-xs text-gray-500">User's corporate email address</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold mb-2">Manager</h3>
+                                <h3 className="font-semibold mb-1">Manager</h3>
                                 <p className="text-xs text-gray-500">User's assigned manager/team lead</p>
                             </div>
                         </div>

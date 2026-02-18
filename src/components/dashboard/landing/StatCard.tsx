@@ -7,6 +7,7 @@ interface StatsCardProps {
   subtitle?: ReactNode;
   trend?: "up" | "down" | "neutral";
   icon?: ReactNode;
+  isLoading?: boolean;
 }
 
 export const StatsCard = ({
@@ -15,6 +16,7 @@ export const StatsCard = ({
   subtitle,
   trend,
   icon,
+  isLoading,
 }: StatsCardProps) => {
   return (
     <Card className="p-1 border border-muted gap-1">
@@ -25,7 +27,11 @@ export const StatsCard = ({
               {title}
             </p>
           </div>
-          <p className="text-xl leading-[150%] font-bold">{value}</p>
+          {isLoading ? (
+            <div className="h-8 w-16 bg-gray-200 animate-pulse rounded my-1" />
+          ) : (
+            <p className="text-xl leading-[150%] font-bold">{value}</p>
+          )}
         </div>
         {icon}
       </div>

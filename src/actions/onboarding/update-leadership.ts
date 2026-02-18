@@ -32,7 +32,7 @@ export type LeaderShipPayload = {
         "ownershipPercentage": number
     }[]
     ,
-    "officers":
+    "officers"?:
     {
         "firstName": string,
         "lastName": string,
@@ -46,13 +46,11 @@ export type LeaderShipPayload = {
 
 export const useUpdateOnboardingLeadersApi = (): UseMutationResult<Response, Error, LeaderShipPayload> => {
     const axiosInstance = useAxios();
-    const { onboardingId } = useOnboardingStore()
-
 
     return useMutation<Response, Error, LeaderShipPayload>({
         retry: false,
         mutationFn: async (payload: LeaderShipPayload) => {
-
+            const { onboardingId } = useOnboardingStore.getState();
             const res = await axiosInstance.patch(API_KEYS.ONBOARDING.ONBOARDING_LEADERS(onboardingId), payload,);
             return res.data;
         },

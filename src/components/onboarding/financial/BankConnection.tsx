@@ -1,6 +1,6 @@
 import { Building2, ExternalLink, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useOnboardingStore } from "@/stores/useOnboardingStore";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LinkSquare01FreeIcons, BankIcon, Delete01Icon, PencilEdit02Icon, Link01Icon } from '@hugeicons/core-free-icons';
@@ -42,7 +42,7 @@ export const BankConnection = () => {
                             <div className="text-[13px] tracking-[0%] leading-[100%] text-muted-foreground">View two ways to connect your bank</div>
                         </div>
                         <Button variant="ghost"
-                            onClick={handleConnect} className="bg-white text-black ml-auto" >
+                            onClick={handleConnect} className="bg-gray-100 hover:bg-gray-200 text-black ml-auto" >
                             Connect
                             <HugeiconsIcon icon={LinkSquare01FreeIcons} className="size-4 text-black" />
                         </Button>

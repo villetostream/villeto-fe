@@ -1,4 +1,4 @@
-import { useOnboardingStore } from "@/stores/useOnboardingStore";
+import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { cn } from "@/lib/utils";
 
 export const spendingRanges = [
@@ -66,7 +66,7 @@ export const SpendingSlider = () => {
                     step={1}
                     value={monthlySpend}
                     onChange={(e) => setMonthlySpend(parseInt(e.target.value))}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="absolute w-full h-8 -top-3 opacity-0 cursor-pointer z-10"
                 />
             </div>
         </div>
