@@ -319,7 +319,10 @@ export function UserSection() {
                   
                   if (step === "preview") {
                       // Go back to upload step
-                      router.push("/people/invite/employees");
+                      router.push("/people/invite/employees?step=upload");
+                  } else if (step === "directory") {
+                      // Go back to people directory tab
+                      router.push("/people?tab=directory");
                   } else {
                       // Go back to people page
                       router.push("/people");

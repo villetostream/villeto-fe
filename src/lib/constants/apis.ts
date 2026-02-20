@@ -27,6 +27,7 @@ export const API_KEYS = {
     USERS: "users/",
     INVITEUSER: "users/invite",
     ME: "users/me",
+    DELETE_USER: (userId: string) => `users/${userId}` as const,
   },
   COMPANY: {
     BULK_IMPORT: "companies/bulk/import",

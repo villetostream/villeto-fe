@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, CreditCard, Building2, UserCog, DollarSign, Plus, ChevronDown, PlusCircle } from "lucide-react";
-import { DepartmentsTab } from "@/components/dashboard/people/depts/DepartmentTab";
 import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
+import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryTab";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Upload04Icon } from "@hugeicons/core-free-icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
@@ -26,6 +28,23 @@ function People() {
     const usersApi = useGetAllUsersApi();
     const deptsApi = useGetAllDepartmentsApi();
     const rolesApi = useGetAllRolesApi();
+
+    // Count unique departments from the users list — same logic as OrganizationDirectoryPage filter
+    const uniqueDeptCount = useMemo(() => {
+        const users: any[] = usersApi?.data?.data ?? [];
+        const depts = new Set<string>();
+        users.forEach((u) => {
+            let deptName = "";
+            if (!u.department) return;
+            if (typeof u.department === "string") {
+                deptName = u.department;
+            } else if (typeof u.department === "object") {
+                deptName = u.department.departmentName || u.department.name || "";
+            }
+            if (deptName) depts.add(deptName);
+        });
+        return depts.size;
+    }, [usersApi?.data?.data]);
 
     const statCards = [
         { 
@@ -47,7 +66,7 @@ function People() {
         { 
             icon: Building2, 
             label: "Departments", 
-            value: deptsApi?.data?.meta?.totalCount || "0", 
+            value: uniqueDeptCount, 
             description: "View Departments",
             bgColor: "#5A67D8",
             iconSrc: "/images/svgs/submitted.svg"
@@ -88,10 +107,6 @@ function People() {
 
     const handleCreateRole = () => {
         router.push("/people/create-role");
-    };
-
-    const handleCreateDepartment = () => {
-        router.push("/people/add-department")
     };
 
     return (
@@ -152,14 +167,15 @@ function People() {
                                 </Button>
                             </PermissionGuard>
                         )}
-                        {activeTab === "department" && (
-                            <PermissionGuard requiredPermissions={["create:departments"]}>
+                        {activeTab === "directory" && (
+                            <PermissionGuard requiredPermissions={["create:users"]}>
                                 <Button
-                                    onClick={handleCreateDepartment}
+                                    onClick={() => router.push("/people/invite/employees?step=upload")}
                                     size={"md"}
-                                    className="bg-primary hover:bg-primary/90"
+                                    className="bg-primary hover:bg-primary/90 gap-2"
                                 >
-                                    Create Department
+                                    <HugeiconsIcon icon={Upload04Icon} className="h-4 w-4" />
+                                    Upload Directory
                                 </Button>
                             </PermissionGuard>
                         )}
@@ -173,7 +189,7 @@ function People() {
                             key={stat.label}
                             title={stat.label}
                             value={stat.value}
-                            isLoading={stat.label === "Total Users" ? usersApi.isLoading : stat.label === "Departments" ? deptsApi.isLoading : stat.label === "Roles" ? rolesApi.isLoading : false}
+                            isLoading={stat.label === "Total Users" ? usersApi.isLoading : stat.label === "Departments" ? usersApi.isLoading : stat.label === "Roles" ? rolesApi.isLoading : false}
                             icon={
                                 <>
                                     <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white" style={{ backgroundColor: stat.bgColor }}>
@@ -210,12 +226,12 @@ function People() {
                                     Roles
                                 </TabsTrigger>
                             </PermissionGuard>
-                            <PermissionGuard requiredPermissions={["read:departments"]}>
+                            <PermissionGuard requiredPermissions={["read:users"]}>
                                 <TabsTrigger
-                                    value="department"
+                                    value="directory"
                                     className="data-[state=active]:bg-background rounded-md px-6"
                                 >
-                                    Departments
+                                    Directory
                                 </TabsTrigger>
                             </PermissionGuard>
                         </TabsList>
@@ -231,8 +247,8 @@ function People() {
                         <RolesTab />
                     </TabsContent>
 
-                    <TabsContent value="department" className="mt-6">
-                        <DepartmentsTab />
+                    <TabsContent value="directory" className="mt-6">
+                        <DirectoryTab />
                     </TabsContent>
                 </Tabs>
             </div>
