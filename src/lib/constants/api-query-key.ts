@@ -6,5 +6,6 @@ export const QUERY_KEYS = {
   ROLES: "roles",
   ROLE: "role",
   USERS: "users",
-  USER: "user"
+  USER: "user",
+  DIRECTORY: "directory"
 } as const;

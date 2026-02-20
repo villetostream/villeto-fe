@@ -207,7 +207,7 @@ export default function Reimbursements() {
   }, [personalExpenses]);
 
   return (
-    <>
+    <div style={{ maxHeight: "100%" }}>
       <Tabs value={outerTab} onValueChange={handleTabChange}>
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <TabsList>
@@ -504,6 +504,6 @@ export default function Reimbursements() {
           </PermissionGuard>
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   );
 }

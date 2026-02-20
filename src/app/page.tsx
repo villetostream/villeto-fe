@@ -78,8 +78,7 @@ const LandingContent = () => {
           <MaxWidth
             key={section.id}
             className={`${section.bg} ${section.className || ""}`}
-            data-bg-color={section.dataBgColor}
-          >
+            data-bg-color={section.dataBgColor}        >
             {section.content}
           </MaxWidth>
         ))}

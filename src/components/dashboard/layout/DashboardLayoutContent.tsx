@@ -89,13 +89,13 @@ export default function DashboardLayoutContent({
     <div className="flex bg-dashboard-background h-screen overflow-hidden ">
       <SidebarProvider defaultOpen={defaultOpen}>
         <DashboardSidebar />
-        <div className="overflow-hidden flex-1 h-full">
-          <header className="flex items-center gap-4 px-6 py-3 border-b border-dashboard-border-shade w-full">
+        <div className="flex flex-col flex-1 h-full overflow-hidden">
+          <header className="flex items-center gap-4 px-6 py-3 border-b border-dashboard-border-shade w-full flex-shrink-0">
             <SidebarTrigger className="md:hidden" />
             <UserSection />
           </header>
 
-          <main className="  p-5 overflow-auto h-[calc(100vh-4rem)]" key={pathname}>
+          <main className="flex-1 overflow-y-auto p-5" key={pathname}>
             {children}
           </main>
         </div>

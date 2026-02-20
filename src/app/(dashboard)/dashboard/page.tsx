@@ -65,7 +65,7 @@ export default function DashboardPage() {
   }, [user?.userId, user?.companyId, axios]);
 
   return (
-    <>
+    <div style={{ maxHeight: "100%" }}>
       <PermissionGuard requiredPermissions={[]}>
         <div className="space-y-5">
           {/* Apply Banner */}
@@ -228,6 +228,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </PermissionGuard>
-    </>
+    </div>
   );
 }

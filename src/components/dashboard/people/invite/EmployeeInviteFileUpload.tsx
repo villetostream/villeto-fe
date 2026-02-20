@@ -53,16 +53,20 @@ export default function EmployeeInviteFileUpload({
     return (
         <div className="w-full">
             <div className="mb-4 border-b border-gray-200 pb-3">
-                <h1 className="text-2xl font-bold text-gray-900">Employees Invite</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Upload Your Organization Directory</h1>
                 <p className="text-gray-500 mt-1">
-                    You can choose to upload a CSV with the right details or provide an api
+                    Add your team members to your organization before sending invitations. This separate directory <br /> setup from account activation.
                 </p>
             </div>
                         
             <div className="flex justify-end mb-2">
-                <Button variant="ghost" className="text-[#00BFA5]">
-                    <Download className="mr-2 h-4 w-4" /> Download a Template
-                </Button>
+                <a
+                    href="/Template.csv"
+                    download="Template.csv"
+                    className="inline-flex items-center gap-1.5 text-sm text-[#00BFA5] hover:underline font-medium py-2"
+                >
+                    <Download className="h-4 w-4" /> Download a Template
+                </a>
             </div>
             <div
                 {...getRootProps()}
