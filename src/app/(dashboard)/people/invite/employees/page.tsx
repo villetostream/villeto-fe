@@ -42,7 +42,7 @@ export default function InviteEmployeesPage() {
     const usersApi = useGetDirectoryUsersApi();
 
     const directoryTotalCount = usersApi?.data?.meta?.totalCount ?? 0;
-    const hasDirectoryData = directoryTotalCount >= 2;
+    const hasDirectoryData = directoryTotalCount > 2;
 
     // Parse CSV locally without calling any API
     const handleFileSelect = useCallback((file: File) => {
