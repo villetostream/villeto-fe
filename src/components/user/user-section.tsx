@@ -318,13 +318,22 @@ export function UserSection() {
                   const step = urlParams.get("step");
                   
                   if (step === "preview") {
-                      // Go back to upload step
+                      // Go back to upload step (EmployeeInviteFileUpload)
                       router.push("/people/invite/employees?step=upload");
+                  } else if (step === "upload") {
+                      // Check where the user came from (set by DirectoryTab when clicking Upload Directory)
+                      const referrer = sessionStorage.getItem("uploadDirReferrer");
+                      sessionStorage.removeItem("uploadDirReferrer");
+                      if (referrer === "directory") {
+                          router.push("/people?tab=directory");
+                      } else {
+                          router.push("/people");
+                      }
                   } else if (step === "directory") {
                       // Go back to people directory tab
                       router.push("/people?tab=directory");
                   } else {
-                      // Go back to people page
+                      // Default: go back to people page
                       router.push("/people");
                   }
                   return;

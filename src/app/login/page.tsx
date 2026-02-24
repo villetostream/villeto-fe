@@ -45,7 +45,7 @@ export default function LoginPage() {
             const response = await login.mutateAsync(data);
             setAccessToken(response.data.accessToken);
             setUser(response.data.user as User);
-            setUserPermissions(response.data.user?.role.permissions);
+            setUserPermissions(response.data.user?.role?.permissions ?? []);
             router.push('/dashboard');
         } catch (err: any) {
             console.error(err);

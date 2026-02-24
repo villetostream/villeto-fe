@@ -10,7 +10,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useGetARoleApi } from "@/actions/role/get-a-role";
-import { groupPermissionsByResource, PermissionsGroup } from "@/lib/utils";
+import { groupPermissionsByResource, PermissionsGroup, formatPermissionName } from "@/lib/utils";
 import withPermissions from "@/components/permissions/permission-protected-routes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,7 +128,7 @@ function ViewRolePage() {
                                     <div className="space-y-10">
                                         {permissionsGroups.map((group) => (
                                             <div key={group.resource} className="space-y-6">
-                                                <h3 className="text-base font-semibold text-slate-800">{group.resource}</h3>
+                                                <h3 className="text-base font-semibold text-slate-800">{formatPermissionName(group.resource)}</h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                                                     {group.permissions.map((permission) => (
                                                         <div key={permission.permissionId} className="flex items-center space-x-3">
@@ -142,7 +142,7 @@ function ViewRolePage() {
                                                                 htmlFor={permission.permissionId}
                                                                 className="text-sm leading-none text-slate-600"
                                                             >
-                                                                {permission.name}
+                                                                {formatPermissionName(permission.name)}
                                                             </label>
                                                         </div>
                                                     ))}

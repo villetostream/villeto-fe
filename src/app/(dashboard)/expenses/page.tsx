@@ -16,6 +16,7 @@ import { usePersonalExpenses, useCompanyExpenses, CompanyExpenseReport } from "@
 import { Loader2 } from "lucide-react";
 import { PersonalExpensesSkeleton } from "@/components/expenses/PersonalExpensesSkeleton";
 import { companyColumns } from "@/components/expenses/table/companyColumns";
+import { useAuthStore } from "@/stores/auth-stores";
 
 const statusMap: Record<string, string | null> = {
   all: null,
@@ -30,10 +31,17 @@ const statusMap: Record<string, string | null> = {
 export default function Reimbursements() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  // Users with no role OR position=EMPLOYEE only see personal expenses
+  const canViewCompanyExpenses =
+    !!user?.role &&
+    (user.role as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
+    (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
+
   const initialOuterTab =
     searchParams.get("tab") === "personal-expenses"
       ? "personal-expenses"
-      : "company-expenses";
+      : canViewCompanyExpenses ? "company-expenses" : "personal-expenses";
   const [outerTab, setOuterTab] = useState(initialOuterTab);
 
   // Sync outerTab with URL parameter changes
@@ -41,9 +49,9 @@ export default function Reimbursements() {
     const tabFromUrl =
       searchParams.get("tab") === "personal-expenses"
         ? "personal-expenses"
-        : "company-expenses";
+        : canViewCompanyExpenses ? "company-expenses" : "personal-expenses";
     setOuterTab(tabFromUrl);
-  }, [searchParams]);
+  }, [searchParams, canViewCompanyExpenses]);
 
   // Read initial page from URL for personal expenses (so back from edit/view/delete restores page)
   const pageParam = searchParams.get("page");
@@ -208,231 +216,308 @@ export default function Reimbursements() {
 
   return (
     <div style={{ maxHeight: "100%" }}>
-      <Tabs value={outerTab} onValueChange={handleTabChange}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
-          <TabsList>
-            <TabsTrigger value="company-expenses" className="cursor-pointer">Company Expenses</TabsTrigger>
-            <TabsTrigger value="personal-expenses" className="cursor-pointer">Personal Expenses</TabsTrigger>
-          </TabsList>
-          {outerTab === "personal-expenses" && <NewExpenseButtonTrigger />}
-        </div>
-        <TabsContent value="personal-expenses">
-          <PermissionGuard requiredPermissions={[]}>
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-                <StatsCard
-                  isLoading={isLoadingPersonalExpenses}
-                  title="Draft"
-                  value={personalStats.draft.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src="/images/svgs/draft.svg" alt="draft icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">Manage your saved items</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingPersonalExpenses}
-                  title="Approved"
-                  value={personalStats.approved.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
-                        <img src="/images/svgs/check.svg" alt="check icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">View all items reviewed.</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingPersonalExpenses}
-                  title="Rejected"
-                  value={personalStats.rejected.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                        <img src="/images/receipt-pending.png" alt="pending icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">View all items Rejected.</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingPersonalExpenses}
-                  title="Paid"
-                  value={personalStats.paid.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
-                        <img src="/images/svgs/money.svg" alt="money icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">Access completed payments.</span>
-                  }
-                />
-              </div>
-
-              {isLoadingPersonalExpenses ? (
-                <PersonalExpensesSkeleton showStats={false} />
-              ) : (
-                <>
-                  {personalExpenses.length === 0 ? (
-                    <ExpenseEmptyState />
-                  ) : (
-                    <Tabs defaultValue="all">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <TabsList>
-                          <TabsTrigger value="all">All</TabsTrigger>
-                          <TabsTrigger value="draft">Draft</TabsTrigger>
-                          <TabsTrigger value="approved">Approved</TabsTrigger>
-                          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                          <TabsTrigger value="pending">Pending</TabsTrigger>
-                          <TabsTrigger value="paid">Paid</TabsTrigger>
-                        </TabsList>
-                        <div id="tab-actions" className="flex items-center gap-2"></div>
-                      </div>
-                      <TabsContent value="all">
-                        <ExpenseTable
-                          statusFilter={null}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                      <TabsContent value="draft">
-                        <ExpenseTable
-                          statusFilter={"draft"}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                      <TabsContent value="pending">
-                        <ExpenseTable
-                          statusFilter={"pending"}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                      <TabsContent value="approved">
-                        <ExpenseTable
-                          statusFilter={"approved"}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                      <TabsContent value="rejected">
-                        <ExpenseTable
-                          statusFilter={"declined"}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                      <TabsContent value="paid">
-                        <ExpenseTable
-                          statusFilter={"paid"}
-                          data={personalExpenses as any}
-                          columnsOverride={personalExpenseColumns as any}
-                          page={page}
-                        />
-                      </TabsContent>
-                    </Tabs>
-                  )}
-                </>
-              )}
-            </div>
-          </PermissionGuard>
-        </TabsContent>
-
-        <TabsContent value="company-expenses">
-          <PermissionGuard requiredPermissions={[]}>
+      {canViewCompanyExpenses ? (
+        // Full two-tab layout for users with company expense permission
+        <Tabs value={outerTab} onValueChange={handleTabChange}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+            <TabsList>
+              <TabsTrigger value="company-expenses" className="cursor-pointer">Company Expenses</TabsTrigger>
+              <TabsTrigger value="personal-expenses" className="cursor-pointer">Personal Expenses</TabsTrigger>
+            </TabsList>
+            {outerTab === "personal-expenses" && <NewExpenseButtonTrigger />}
+          </div>
+          <TabsContent value="personal-expenses">
+            <PermissionGuard requiredPermissions={[]}>
               <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-                <StatsCard
-                  isLoading={isLoadingCompanyExpenses}
-                  title="Total Expenses"
-                  value={stats.totalExpenses.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
-                        <img src="/images/svgs/draft.svg" alt="draft icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">All expenses submitted</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingCompanyExpenses}
-                  title="Pending Approvals"
-                  value={stats.pendingApprovals.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
-                        <img src="/images/receipt-pending.png" alt="pending icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">Awaiting review.</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingCompanyExpenses}
-                  title="Approved Expenses"
-                  value={stats.approvedExpenses.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
-                        <img src="/images/svgs/submitted.svg" alt="submitted icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">Ready for payment</span>
-                  }
-                />
-                <StatsCard
-                  isLoading={isLoadingCompanyExpenses}
-                  title="Paid"
-                  value={stats.paidExpenses.toString()}
-                  icon={
-                    <>
-                      <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
-                        <img src="/images/svgs/money.svg" alt="money icon" />
-                      </div>
-                    </>
-                  }
-                  subtitle={
-                    <span className="text-xs leading-[125%]">Completed transactions</span>
-                  }
-                />
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                  <StatsCard
+                    isLoading={isLoadingPersonalExpenses}
+                    title="Draft"
+                    value={personalStats.draft.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
+                          <img src="/images/svgs/draft.svg" alt="draft icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">Manage your saved items</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingPersonalExpenses}
+                    title="Approved"
+                    value={personalStats.approved.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
+                          <img src="/images/svgs/check.svg" alt="check icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">View all items reviewed.</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingPersonalExpenses}
+                    title="Rejected"
+                    value={personalStats.rejected.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
+                          <img src="/images/receipt-pending.png" alt="pending icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">View all items Rejected.</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingPersonalExpenses}
+                    title="Paid"
+                    value={personalStats.paid.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
+                          <img src="/images/svgs/money.svg" alt="money icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">Access completed payments.</span>
+                    }
+                  />
+                </div>
+
+                {isLoadingPersonalExpenses ? (
+                  <PersonalExpensesSkeleton showStats={false} />
+                ) : (
+                  <>
+                    {personalExpenses.length === 0 ? (
+                      <ExpenseEmptyState />
+                    ) : (
+                      <Tabs defaultValue="all">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <TabsList>
+                            <TabsTrigger value="all">All</TabsTrigger>
+                            <TabsTrigger value="draft">Draft</TabsTrigger>
+                            <TabsTrigger value="approved">Approved</TabsTrigger>
+                            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                            <TabsTrigger value="pending">Pending</TabsTrigger>
+                            <TabsTrigger value="paid">Paid</TabsTrigger>
+                          </TabsList>
+                          <div id="tab-actions" className="flex items-center gap-2"></div>
+                        </div>
+                        <TabsContent value="all">
+                          <ExpenseTable statusFilter={null} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                        <TabsContent value="draft">
+                          <ExpenseTable statusFilter={"draft"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                        <TabsContent value="pending">
+                          <ExpenseTable statusFilter={"pending"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                        <TabsContent value="approved">
+                          <ExpenseTable statusFilter={"approved"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                        <TabsContent value="rejected">
+                          <ExpenseTable statusFilter={"declined"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                        <TabsContent value="paid">
+                          <ExpenseTable statusFilter={"paid"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                        </TabsContent>
+                      </Tabs>
+                    )}
+                  </>
+                )}
               </div>
-              
-              {isLoadingCompanyExpenses ? (
-                <PersonalExpensesSkeleton showStats={false} />
-              ) : companyExpensesData?.reports && companyExpensesData.reports.length === 0 ? (
-                 <ExpenseEmptyState 
-                    title="No expense has been added" 
-                    subtitle="" 
-                    showButton={false} 
-                 />
+            </PermissionGuard>
+          </TabsContent>
+
+          <TabsContent value="company-expenses">
+            <PermissionGuard requiredPermissions={[]}>
+                <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+                  <StatsCard
+                    isLoading={isLoadingCompanyExpenses}
+                    title="Total Expenses"
+                    value={stats.totalExpenses.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
+                          <img src="/images/svgs/draft.svg" alt="draft icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">All expenses submitted</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingCompanyExpenses}
+                    title="Pending Approvals"
+                    value={stats.pendingApprovals.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
+                          <img src="/images/receipt-pending.png" alt="pending icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">Awaiting review.</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingCompanyExpenses}
+                    title="Approved Expenses"
+                    value={stats.approvedExpenses.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#5A67D8] rounded-full">
+                          <img src="/images/svgs/submitted.svg" alt="submitted icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">Ready for payment</span>
+                    }
+                  />
+                  <StatsCard
+                    isLoading={isLoadingCompanyExpenses}
+                    title="Paid"
+                    value={stats.paidExpenses.toString()}
+                    icon={
+                      <>
+                        <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
+                          <img src="/images/svgs/money.svg" alt="money icon" />
+                        </div>
+                      </>
+                    }
+                    subtitle={
+                      <span className="text-xs leading-[125%]">Completed transactions</span>
+                    }
+                  />
+                </div>
+                
+                {isLoadingCompanyExpenses ? (
+                  <PersonalExpensesSkeleton showStats={false} />
+                ) : companyExpensesData?.reports && companyExpensesData.reports.length === 0 ? (
+                   <ExpenseEmptyState 
+                      title="No expense has been added" 
+                      subtitle="" 
+                      showButton={false} 
+                   />
+                ) : (
+                  <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <TabsList>
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="draft">Draft</TabsTrigger>
+                        <TabsTrigger value="approved">Approved</TabsTrigger>
+                        <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                        <TabsTrigger value="pending">Pending</TabsTrigger>
+                        <TabsTrigger value="paid">Paid</TabsTrigger>
+                      </TabsList>
+                      <div id="tab-actions" className="flex items-center gap-2"></div>
+                    </div>
+                    <TabsContent value="all">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["all"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                    <TabsContent value="draft">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["draft"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                    <TabsContent value="approved">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["approved"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                    <TabsContent value="rejected">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["rejected"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                    <TabsContent value="pending">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["pending"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                    <TabsContent value="paid">
+                      <ExpenseTable actionButton={<></>} statusFilter={statusMap["paid"]} data={companyExpenses as any} columnsOverride={companyColumns as any} onFilteredDataChange={handleFilteredCompanyDataChange} />
+                    </TabsContent>
+                  </Tabs>
+                )}
+              </div>
+            </PermissionGuard>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // Personal-only view for invited users without company expense permission
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+            <h2 className="text-xl font-semibold text-gray-900">Personal Expenses</h2>
+            <NewExpenseButtonTrigger />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+            <StatsCard
+              isLoading={isLoadingPersonalExpenses}
+              title="Draft"
+              value={personalStats.draft.toString()}
+              icon={
+                <>
+                  <div className="p-1 mr-3 flex items-center justify-center bg-[#384A57] rounded-full">
+                    <img src="/images/svgs/draft.svg" alt="draft icon" />
+                  </div>
+                </>
+              }
+              subtitle={<span className="text-xs leading-[125%]">Manage your saved items</span>}
+            />
+            <StatsCard
+              isLoading={isLoadingPersonalExpenses}
+              title="Approved"
+              value={personalStats.approved.toString()}
+              icon={
+                <>
+                  <div className="p-1 mr-3 flex items-center justify-center bg-[#418341] rounded-full text-white">
+                    <img src="/images/svgs/check.svg" alt="check icon" />
+                  </div>
+                </>
+              }
+              subtitle={<span className="text-xs leading-[125%]">View all items reviewed.</span>}
+            />
+            <StatsCard
+              isLoading={isLoadingPersonalExpenses}
+              title="Rejected"
+              value={personalStats.rejected.toString()}
+              icon={
+                <>
+                  <div className="p-1 mr-3 flex items-center justify-center bg-[#F45B69] rounded-full text-white">
+                    <img src="/images/receipt-pending.png" alt="pending icon" />
+                  </div>
+                </>
+              }
+              subtitle={<span className="text-xs leading-[125%]">View all items Rejected.</span>}
+            />
+            <StatsCard
+              isLoading={isLoadingPersonalExpenses}
+              title="Paid"
+              value={personalStats.paid.toString()}
+              icon={
+                <>
+                  <div className="p-1 mr-3 flex items-center justify-center bg-[#38B2AC] rounded-full text-white">
+                    <img src="/images/svgs/money.svg" alt="money icon" />
+                  </div>
+                </>
+              }
+              subtitle={<span className="text-xs leading-[125%]">Access completed payments.</span>}
+            />
+          </div>
+
+          {isLoadingPersonalExpenses ? (
+            <PersonalExpensesSkeleton showStats={false} />
+          ) : (
+            <>
+              {personalExpenses.length === 0 ? (
+                <ExpenseEmptyState />
               ) : (
-                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+                <Tabs defaultValue="all">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <TabsList>
                       <TabsTrigger value="all">All</TabsTrigger>
@@ -445,65 +530,29 @@ export default function Reimbursements() {
                     <div id="tab-actions" className="flex items-center gap-2"></div>
                   </div>
                   <TabsContent value="all">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["all"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
+                    <ExpenseTable statusFilter={null} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
                   </TabsContent>
                   <TabsContent value="draft">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["draft"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
-                  </TabsContent>
-                  <TabsContent value="approved">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["approved"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
-                  </TabsContent>
-                  <TabsContent value="rejected">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["rejected"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
+                    <ExpenseTable statusFilter={"draft"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
                   </TabsContent>
                   <TabsContent value="pending">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["pending"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
+                    <ExpenseTable statusFilter={"pending"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                  </TabsContent>
+                  <TabsContent value="approved">
+                    <ExpenseTable statusFilter={"approved"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
+                  </TabsContent>
+                  <TabsContent value="rejected">
+                    <ExpenseTable statusFilter={"declined"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
                   </TabsContent>
                   <TabsContent value="paid">
-                    <ExpenseTable
-                      actionButton={<></>}
-                      statusFilter={statusMap["paid"]}
-                      data={companyExpenses as any}
-                      columnsOverride={companyColumns as any}
-                      onFilteredDataChange={handleFilteredCompanyDataChange}
-                    />
+                    <ExpenseTable statusFilter={"paid"} data={personalExpenses as any} columnsOverride={personalExpenseColumns as any} page={page} />
                   </TabsContent>
                 </Tabs>
               )}
-            </div>
-          </PermissionGuard>
-        </TabsContent>
-      </Tabs>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

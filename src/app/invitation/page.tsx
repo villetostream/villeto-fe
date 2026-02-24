@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import SetPasswordModal from "@/components/invitation/SetPasswordModal";
 import Link from "next/link";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
+import { toast } from "sonner";
 
 const CODE_LENGTH = 6;
 
 export default function InvitationPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const axios = useAxios();
 
     // Read email, company name, and optional name from URL params
     const email = searchParams.get("email") ?? "";
@@ -63,10 +67,18 @@ export default function InvitationPage() {
         if (!isComplete) return;
         setIsLoading(true);
         try {
-            // TODO: Call verify invitation code endpoint when available
-            // await verifyInvitationCode({ email, code: code.join("") });
-            await new Promise((resolve) => setTimeout(resolve, 500)); // stub delay
+            await axios.post(
+                API_KEYS.USER.VERIFICATION,
+                {
+                    email,
+                    otp: code.join("")
+                },
+                { _skipErrorToast: true } as any
+            );
             setShowPasswordModal(true);
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Invalid invitation code. Please check and try again.");
         } finally {
             setIsLoading(false);
         }

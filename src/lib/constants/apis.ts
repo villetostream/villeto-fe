@@ -25,13 +25,18 @@ export const API_KEYS = {
   },
   USER: {
     USERS: "users/",
+    INVITED_USERS: "users?invited=true",
+    DIRECTORY_USERS: "users?invited=false",
     INVITEUSER: "users/invite",
     ME: "users/me",
     DELETE_USER: (userId: string) => `users/${userId}` as const,
+    VERIFICATION: "users/invitation/verification",
+    PASSWORD_SET: "users/invitation/password-set",
   },
   COMPANY: {
     BULK_IMPORT: "companies/bulk/import",
     COMPANY_DETAILS: (id: string) => `companies/${id}` as const,
+    EMPLOYEE_INVITES: "companies/employees/invites",
   },
   EXPENSE: {
     CATEGORIES: "companies/expense/categories",

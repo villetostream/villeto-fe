@@ -1,22 +1,7 @@
-employee_external_id,first_name,last_name,email,job_title,department_name,department_external_id,manager_id,role,status,Column 1
-E1001,Michael,Stone,michael.stone@acme.com,CEO,Executive,DEPT-001,,Finance Admin,Active,
-E1002,Sarah,Lee,sarah.lee@acme.com,Head of Engineering,Engineering,DEPT-002,E1001,Manager,Active,
-E1003,David,Wong,david.wong@acme.com,Head of Sales,Sales,DEPT-003,E1001,Manager,Active,
-E1004,Amaka,Okoro,amaka.okoro@acme.com,Head of Operations,Operations,DEPT-004,E1001,Manager,Active,
-E2001,Tom,Henderson,tom.henderson@acme.com,Engineering Manager,Engineering,DEPT-002,E1002,Manager,Active,
-E2002,Aisha,Mohammed,aisha.mohammed@acme.com,Senior Engineer,Engineering,DEPT-002,E2001,Employee,Active,
-E2003,Larry,Chin,larry.chin@acme.com,Software Engineer,Engineering,DEPT-002,E2001,Employee,Active,
-E2004,Paula,Jimenez,paula.jimenez@acme.com,Junior Engineer,Engineering,DEPT-002,E2002,Employee,Active,
-E3001,Joseph,King,joseph.king@acme.com,Sales Manager,Sales,DEPT-003,E1003,Manager,Active,
-E3002,Linda,Owens,linda.owens@acme.com,Account Executive,Sales,DEPT-003,E3001,Employee,Active,
-E3003,Peter,Smith,peter.smith@acme.com,Sales Associate,Sales,DEPT-003,E3002,Employee,Active,
-E4001,George,Peters,george.peters@acme.com,Operations Manager,Operations,DEPT-004,E1004,Manager,Active,
-E4002,Nadia,Alec,nadia.alec@acme.com,Ops Coordinator,Operations,DEPT-004,E4001,Employee,Active,
-E4003,Derrick,Johnson,derrick.johnson@acme.com,Ops Analyst,Operations,DEPT-004,E4001,Employee,Active,
-E5001,Gloria,Randall,gloria.randall@acme.com,Finance Controller,Finance,DEPT-005,E1001,Controlling Officer,Active,
-E5002,Samuel,Brown,samuel.brown@acme.com,Staff Accountant,Finance,DEPT-005,E5001,Employee,Active,
-E5003,Rachel,Kim,rachel.kim@acme.com,Junior Accountant,Finance,DEPT-005,E5001,Employee,Active,
-E6001,Chris,Taylor,chris.taylor@acme.com,Customer Support Manager,Support,DEPT-006,E1001,Manager,Active,
-E6002,Jane,Newton,jane.newton@acme.com,Customer Support Rep,Support,DEPT-006,E6001,Employee,Active,
-E6003,Esther,Daniels,esther.daniels@acme.com,Support Analyst,Support,DEPT-006,E6001,Employee,Active,
-E7001,Martin,Ford,martin.ford@acme.com,Senior Engineer,Engineering,DEPT-002,E1002,Employee,Inactive,
+employee_external_id,first_name,last_name,email,job_title,department_name,department_external_id,manager_id
+E1001,Sodiq,Atiku,hatikuxordik@gmail.com,Frontend Engineer,Engineering,DEPT-002,E1003
+E1002,Xantus,Ozzy,xantozy@gmail.com,Product Designer,Design,DEPT-006,E1003
+E1003,Michael,Stone,michael.stone@company.com,CTO,Executive,DEPT-001,
+E1004,Sarah,Lee,sarah.lee@company.com,Backend Engineer,Engineering,DEPT-002,E1003
+E1005,David,Wong,david.wong@company.com,Sales Lead,Sales,DEPT-003,E1003
+E1006,Abiodun,Okoro,abiodun.okoro@company.com,Customer Support,Operations,DEPT-004,E1003

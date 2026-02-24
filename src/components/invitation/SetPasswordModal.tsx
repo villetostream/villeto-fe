@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
 
 interface SetPasswordModalProps {
     open: boolean;
@@ -50,6 +52,7 @@ export default function SetPasswordModal({
     email,
 }: SetPasswordModalProps) {
     const router = useRouter();
+    const axios = useAxios();
 
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -72,14 +75,16 @@ export default function SetPasswordModal({
         if (!isValid) return;
         setIsLoading(true);
         try {
-            // TODO: Call accept invitation endpoint when available
-            // await acceptInvitation({ email, password });
-            await new Promise((resolve) => setTimeout(resolve, 600)); // stub delay
+            await axios.post(API_KEYS.USER.PASSWORD_SET, {
+                password,
+                confirmPassword: confirm,
+                email
+            });
             toast.success("Password set successfully! Please log in.");
             onOpenChange(false);
             router.push("/login");
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Failed to set password. Please try again.");
+            console.error(error);
         } finally {
             setIsLoading(false);
         }
