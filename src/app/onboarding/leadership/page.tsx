@@ -300,7 +300,6 @@ export default function Leadership() {
         }
     };
 
-    console.log({ beneficialOwners })
 
     const hasOwners = beneficialOwners.length > 0;
 

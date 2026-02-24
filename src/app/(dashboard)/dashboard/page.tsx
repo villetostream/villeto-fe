@@ -10,59 +10,12 @@ import { PolicyAlertsTable } from "@/components/dashboard/landing/PolicyAlertTab
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
-import { useAxios } from "@/hooks/useAxios";
-import { useState, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign } from "lucide-react";
 import { StatusUp, WalletMoney, LampOn } from "iconsax-reactjs";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
-  const axios = useAxios();
-  const [companyName, setCompanyName] = useState<string | null>(null);
-  const [companyLoading, setCompanyLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      if (!user?.userId) {
-        setCompanyLoading(false);
-        return;
-      }
-
-      setCompanyLoading(true);
-      let fetched = false;
-
-      if (user.companyId) {
-        try {
-          const response = await axios.get(`/companies/${user.companyId}`);
-          const companyData = response?.data?.data || response?.data;
-          if (companyData?.companyName || companyData?.businessName) {
-            setCompanyName(companyData.companyName || companyData.businessName);
-            fetched = true;
-          }
-        } catch (error) {
-          console.error("Primary company fetch failed:", error);
-        }
-      }
-
-      if (!fetched) {
-        try {
-          const userResponse = await axios.get("/users/me");
-          const userData = userResponse?.data?.data || userResponse?.data;
-          const company = userData?.company;
-          if (company?.companyName || company?.businessName) {
-            setCompanyName(company.companyName || company.businessName);
-          }
-        } catch (userError) {
-          console.error("Fallback /users/me fetch failed:", userError);
-        }
-      }
-
-      setCompanyLoading(false);
-    };
-
-    fetchCompanyData();
-  }, [user?.userId, user?.companyId, axios]);
+  const userName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "there";
 
   return (
     <div style={{ maxHeight: "100%" }}>
@@ -93,12 +46,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                Welcome Back,
-                {companyLoading ? (
-                  <Skeleton className="h-7 w-64 inline-block" />
-                ) : (
-                  <span>{companyName || "XYZ Corporation"}!</span>
-                )}
+                Welcome Back, <span>{userName}!</span>
               </h2>
               <p className="text-muted-foreground text-sm font-normal">
                 Here&apos;s what&apos;s happening with your expenses today.
