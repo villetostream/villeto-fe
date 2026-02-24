@@ -20,15 +20,34 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useDataTable } from "@/components/datatable/useDataTable";
 
 export interface EmployeeData {
     id: string;
-    fullName: string;
+    employee_external_id: string;
+    first_name: string;
+    last_name: string;
     email: string;
-    role: string;
-    department: string;
-    manager: string;
-    corporateCard: boolean;
+    job_title: string;
+    department_name: string;
+    department_external_id: string;
+    manager_id: string;
 }
 
 interface EmployeePreviewTableProps {
@@ -38,10 +57,16 @@ interface EmployeePreviewTableProps {
     onUploadDifferent: () => void;
     onSaveToDirectory: () => void;
     onSaveAndInviteAll: () => void;
-    isDeleting?: boolean;
+    isSaving?: boolean;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [
+    { label: "5", value: "5" },
+    { label: "10", value: "10" },
+    { label: "20", value: "20" },
+    { label: "50", value: "50" },
+    { label: "100", value: "100" },
+];
 
 export default function EmployeePreviewTable({
     data,
@@ -50,27 +75,31 @@ export default function EmployeePreviewTable({
     onUploadDifferent,
     onSaveToDirectory,
     onSaveAndInviteAll,
-    isDeleting = false,
+    isSaving = false,
 }: EmployeePreviewTableProps) {
     const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({
         open: false,
         id: "",
         name: "",
     });
-    const [currentPage, setCurrentPage] = useState(1);
 
     const totalItems = data.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
-    const paginatedData = data.slice(startIndex, endIndex);
 
-    const handleToggleCard = (id: string, checked: boolean) => {
-        const newData = data.map(item =>
-            item.id === id ? { ...item, corporateCard: checked } : item
-        );
-        onDataChange(newData);
-    };
+    const tableProps = useDataTable({
+        initialPage: 1,
+        initialPageSize: 10,
+        totalItems,
+        manualPagination: false,
+    });
+    const { paginationProps } = tableProps;
+
+    const pageSize = paginationProps.pageSize;
+    const currentPage = paginationProps.page;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const paginatedData = data.slice(startIndex, endIndex);
 
     const handleDeleteClick = (id: string, name: string) => {
         setDeleteModal({ open: true, id, name });
@@ -79,140 +108,255 @@ export default function EmployeePreviewTable({
     const handleConfirmDelete = () => {
         onDelete(deleteModal.id);
         setDeleteModal({ open: false, id: "", name: "" });
-        // Reset to page 1 if current page would be empty after deletion
+        // Go back a page if the last item on this page was deleted
         if (paginatedData.length === 1 && currentPage > 1) {
-            setCurrentPage(currentPage - 1);
+            paginationProps.setPage(currentPage - 1);
         }
     };
 
-    const getPageNumbers = () => {
+    const getPageNumbers = (current: number, total: number) => {
+        const delta = 2;
         const pages: number[] = [];
-        const maxVisible = 7;
-        if (totalPages <= maxVisible) {
-            for (let i = 1; i <= totalPages; i++) pages.push(i);
-        } else {
-            pages.push(1);
-            const start = Math.max(2, currentPage - 1);
-            const end = Math.min(totalPages - 1, currentPage + 1);
-            if (start > 2) pages.push(-1); // ellipsis
-            for (let i = start; i <= end; i++) pages.push(i);
-            if (end < totalPages - 1) pages.push(-1); // ellipsis
-            pages.push(totalPages);
+        for (
+            let i = Math.max(1, current - delta);
+            i <= Math.min(total, current + delta);
+            i++
+        ) {
+            pages.push(i);
         }
         return pages;
     };
 
+    const pageNumbers = getPageNumbers(currentPage, totalPages);
+
     return (
         <>
             <div className="flex flex-col h-full space-y-4">
+                {/* Header */}
                 <div className="flex justify-between items-center flex-shrink-0">
                     <div>
                         <h2 className="text-xl font-semibold">Preview</h2>
-                        <p className="text-sm text-gray-500">Below are the details extracted from the file</p>
+                        <p className="text-sm text-gray-500">
+                            {totalItems} employee(s) loaded — review before saving
+                        </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={onUploadDifferent}
-                    >
+                    <Button variant="outline" onClick={onUploadDifferent} disabled={isSaving}>
                         Upload a different file
                     </Button>
                 </div>
 
+                {/* Table */}
                 <div className="border rounded-lg flex-1 overflow-hidden relative">
                     <div className="absolute inset-0 overflow-auto">
                         <Table>
                             <TableHeader className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                                 <TableRow>
-                                    <TableHead className="w-[200px] font-semibold">Full NAME</TableHead>
-                                    <TableHead className="w-[250px] font-semibold">EMAIL ADDRESS</TableHead>
-                                    <TableHead className="w-[150px] font-semibold">DEPARTMENT</TableHead>
-                                    <TableHead className="w-[150px] font-semibold">ROLE</TableHead>
-                                    <TableHead className="w-[150px] font-semibold">MANAGER</TableHead>
+                                    <TableHead className="font-semibold">employee_external_id</TableHead>
+                                    <TableHead className="font-semibold">first_name</TableHead>
+                                    <TableHead className="font-semibold">last_name</TableHead>
+                                    <TableHead className="font-semibold">email</TableHead>
+                                    <TableHead className="font-semibold">job_title</TableHead>
+                                    <TableHead className="font-semibold">department_name</TableHead>
+                                    <TableHead className="font-semibold">department_external_id</TableHead>
+                                    <TableHead className="font-semibold">manager_id</TableHead>
                                     <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedData.map((employee) => (
-                                    <TableRow key={employee.id}>
-                                        <TableCell className="font-medium">{employee.fullName}</TableCell>
-                                        <TableCell className="text-gray-500">{employee.email}</TableCell>
-                                        <TableCell>{employee.department}</TableCell>
-                                        <TableCell>{employee.role}</TableCell>
-                                        <TableCell>{employee.manager}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => handleDeleteClick(employee.id, employee.fullName)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                {paginatedData.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9} className="text-center text-gray-400 py-12">
+                                            No employees to preview.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : (
+                                    paginatedData.map((employee) => (
+                                        <TableRow key={employee.id}>
+                                            <TableCell>{employee.employee_external_id || "—"}</TableCell>
+                                            <TableCell className="font-medium">{employee.first_name || "—"}</TableCell>
+                                            <TableCell className="font-medium">{employee.last_name || "—"}</TableCell>
+                                            <TableCell className="text-gray-500">{employee.email || "—"}</TableCell>
+                                            <TableCell>{employee.job_title || "—"}</TableCell>
+                                            <TableCell>{employee.department_name || "—"}</TableCell>
+                                            <TableCell>{employee.department_external_id || "—"}</TableCell>
+                                            <TableCell>{employee.manager_id || "—"}</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleDeleteClick(employee.id, `${employee.first_name} ${employee.last_name}`.trim() || employee.email)}
+                                                    disabled={isSaving}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination — same style as DataTable */}
                 {totalItems > 0 && (
-                    <div className="flex items-center justify-between flex-shrink-0">
-                        <span className="text-sm text-gray-500">
-                            Showing {startIndex + 1}-{endIndex} of {totalItems} entries
-                        </span>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-sm"
-                                disabled={currentPage === 1}
-                                onClick={() => setCurrentPage(currentPage - 1)}
-                            >
-                                Previous
-                            </Button>
-                            {getPageNumbers().map((page, i) =>
-                                page === -1 ? (
-                                    <span key={`ellipsis-${i}`} className="px-2 text-gray-400">…</span>
+                    <div className="flex md:flex-row items-center justify-between bg-gray-50 py-2 px-4 border-t w-full flex-shrink-0">
+                        <div className="flex items-center gap-2 w-full sm:w-auto mb-2 md:mb-0">
+                            <span className="text-sm text-gray-700 whitespace-nowrap">
+                                {totalItems > 0 ? (
+                                    <>
+                                        Showing {startIndex + 1}-{endIndex} of {totalItems} entries
+                                    </>
                                 ) : (
-                                    <Button
-                                        key={page}
-                                        variant={page === currentPage ? "default" : "ghost"}
-                                        size="sm"
-                                        className={`w-8 h-8 p-0 text-sm ${page === currentPage ? "bg-[#00BFA5] hover:bg-[#00BFA5]/90 text-white" : ""}`}
-                                        onClick={() => setCurrentPage(page)}
-                                    >
-                                        {page}
-                                    </Button>
-                                )
-                            )}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-sm"
-                                disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage(currentPage + 1)}
+                                    <>Showing 0 of 0 entries</>
+                                )}
+                            </span>
+                            <Select
+                                value={String(pageSize)}
+                                onValueChange={(value) => {
+                                    paginationProps.setPageSize(Number(value));
+                                    paginationProps.setPage(1);
+                                }}
                             >
-                                Next
-                            </Button>
+                                <SelectTrigger className="w-fit min-w-[80px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PAGE_SIZE_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex w-full md:w-auto justify-end gap-2">
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                paginationProps.setPage(Math.max(1, currentPage - 1));
+                                            }}
+                                            href="#"
+                                            isDisabled={currentPage === 1}
+                                            isActive={currentPage > 1}
+                                            size={"sm"}
+                                        />
+                                    </PaginationItem>
+
+                                    {/* First page + Ellipsis */}
+                                    {pageNumbers[0] > 1 && (
+                                        <>
+                                            <PaginationItem>
+                                                <PaginationLink
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        paginationProps.setPage(1);
+                                                    }}
+                                                    href="#"
+                                                    isActive={1 === currentPage}
+                                                    size={"sm"}
+                                                >
+                                                    1
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                            {pageNumbers[0] > 2 && (
+                                                <PaginationItem>
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            )}
+                                        </>
+                                    )}
+
+                                    <div className="hidden md:flex">
+                                        {pageNumbers.map((page) => (
+                                            <PaginationItem key={page}>
+                                                <PaginationLink
+                                                    className={`${currentPage !== page ? "text-muted-foreground" : ""}`}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        paginationProps.setPage(page);
+                                                    }}
+                                                    href="#"
+                                                    isActive={page === currentPage}
+                                                    size={"sm"}
+                                                >
+                                                    {page}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        ))}
+
+                                        {/* Ellipsis + Last page */}
+                                        {pageNumbers[pageNumbers.length - 1] < totalPages && (
+                                            <>
+                                                {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+                                                    <PaginationItem>
+                                                        <PaginationEllipsis />
+                                                    </PaginationItem>
+                                                )}
+                                                <PaginationItem>
+                                                    <PaginationLink
+                                                        href="#"
+                                                        size="sm"
+                                                        isActive={totalPages === currentPage}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            paginationProps.setPage(totalPages);
+                                                        }}
+                                                    >
+                                                        {totalPages}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="md:hidden block">
+                                        <PaginationItem>
+                                            <PaginationLink isActive size="sm" href={""}>
+                                                {currentPage}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    </div>
+
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                paginationProps.setPage(currentPage + 1);
+                                            }}
+                                            href="#"
+                                            size={"sm"}
+                                            isActive={currentPage < totalPages}
+                                            isDisabled={currentPage === totalPages}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
                         </div>
                     </div>
                 )}
 
+                {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-2 flex-shrink-0">
                     <Button
                         variant="outline"
-                        className="border-[#00BFA5] text-[#00BFA5] hover:bg-[#00BFA5]/5 hover:text-[#00BFA5] min-w-[160px]"
+                        className="border-primary text-primary hover:bg-primary/5 hover:text-primary min-w-[160px]"
                         onClick={onSaveToDirectory}
+                        disabled={isSaving || data.length === 0}
                     >
-                        Save to Directory
+                        {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save to Directory"}
                     </Button>
                     <Button
-                        className="bg-[#00BFA5] hover:bg-[#00BFA5]/90 min-w-[160px]"
+                        className="bg-primary hover:bg-primary/90 min-w-[160px]"
                         onClick={onSaveAndInviteAll}
+                        disabled={isSaving || data.length === 0}
                     >
-                        Save and Invite All
+                        {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save and Invite All"}
                     </Button>
                 </div>
             </div>
@@ -221,9 +365,9 @@ export default function EmployeePreviewTable({
             <Dialog open={deleteModal.open} onOpenChange={(open) => !open && setDeleteModal({ open: false, id: "", name: "" })}>
                 <DialogContent className="sm:max-w-[400px] p-6 bg-white rounded-lg">
                     <DialogHeader>
-                        <DialogTitle className="text-lg font-semibold text-gray-900">Delete Employee</DialogTitle>
+                        <DialogTitle className="text-lg font-semibold text-gray-900">Remove Employee</DialogTitle>
                         <DialogDescription className="text-sm text-gray-500 mt-2">
-                            Are you sure you want to remove <span className="font-medium text-gray-700">{deleteModal.name}</span> from the directory? This action cannot be undone.
+                            Remove <span className="font-medium text-gray-700">{deleteModal.name}</span> from the preview list? This does not delete them from the system.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex gap-3 mt-4">
@@ -238,16 +382,8 @@ export default function EmployeePreviewTable({
                             variant="destructive"
                             onClick={handleConfirmDelete}
                             className="flex-1"
-                            disabled={isDeleting}
                         >
-                            {isDeleting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                </>
-                            ) : (
-                                "Delete"
-                            )}
+                            Remove
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -255,4 +391,3 @@ export default function EmployeePreviewTable({
         </>
     );
 }
-

@@ -1,18 +1,19 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import Papa from "papaparse";
 import EmployeeInviteFileUpload from "@/components/dashboard/people/invite/EmployeeInviteFileUpload";
 import EmployeePreviewTable, { EmployeeData } from "@/components/dashboard/people/invite/EmployeePreviewTable";
 import { OrganizationDirectoryPage } from "@/components/dashboard/people/directory/OrganizationDirectoryPage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBulkImportApi } from "@/actions/users/bulk-import";
-import { useDeleteUserApi } from "@/actions/users/delete-user";
-import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Step = "directory" | "upload" | "preview";
+
 
 export default function InviteEmployeesPage() {
     const router = useRouter();
@@ -21,74 +22,129 @@ export default function InviteEmployeesPage() {
 
     const [step, setStep] = useState<Step>(initialStep);
     const [employeeData, setEmployeeData] = useState<EmployeeData[]>([]);
+    const [rawFile, setRawFile] = useState<File | null>(null);
+
+    // Sync URL step param → React state so browser back/forward updates the view
+    useEffect(() => {
+        const urlStep = (searchParams.get("step") as Step) || "directory";
+        if (urlStep !== step) {
+            setStep(urlStep);
+            // Clear preview data when navigating back to upload
+            if (urlStep === "upload") {
+                setEmployeeData([]);
+                setRawFile(null);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     const bulkImportMutation = useBulkImportApi();
-    const deleteUserMutation = useDeleteUserApi();
-    const usersApi = useGetAllUsersApi();
+    const usersApi = useGetDirectoryUsersApi();
 
-    const directoryUsers = usersApi?.data?.data ?? [];
     const directoryTotalCount = usersApi?.data?.meta?.totalCount ?? 0;
     const hasDirectoryData = directoryTotalCount > 5;
 
-    const handleFileSelect = async (file: File) => {
-        try {
-            await bulkImportMutation.mutateAsync(file);
-            // After successful upload, refetch users and go to preview
-            const refreshed = await usersApi.refetch();
-            const users = refreshed.data?.data ?? [];
+    // Parse CSV locally without calling any API
+    const handleFileSelect = useCallback((file: File) => {
+        setRawFile(file);
 
-            const mapped: EmployeeData[] = users.map((u: any, i: number) => ({
-                id: u.userId || `emp-${i}`,
-                fullName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
-                email: u.email || "",
-                role: u.position || u.jobTitle || "Employee",
-                department:
-                    typeof u.department === "string"
-                        ? u.department
-                        : u.department?.name || "",
-                manager: u.manager || "",
-                corporateCard: u.corporateCard ?? false,
-            }));
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                const rows = results.data as Record<string, string>[];
 
-            setEmployeeData(mapped);
-            setStep("preview");
-            toast.success("File uploaded successfully!");
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Failed to upload file. Please try again.");
-        }
-    };
+                const mapped: EmployeeData[] = rows.map((row, i) => ({
+                    id: `preview-${i}`,
+                    employee_external_id: row["employee_external_id"] ?? "",
+                    first_name: row["first_name"] ?? "",
+                    last_name: row["last_name"] ?? "",
+                    email: row["email"] ?? "",
+                    job_title: row["job_title"] ?? "",
+                    department_name: row["department_name"] ?? "",
+                    department_external_id: row["department_external_id"] ?? "",
+                    manager_id: row["manager_id"] ?? "",
+                }));
+
+                if (mapped.length === 0) {
+                    toast.error("No data found in the file. Please check the CSV format.");
+                    return;
+                }
+
+                setEmployeeData(mapped);
+                setStep("preview");
+                router.replace("/people/invite/employees?step=preview");
+                toast.success(`${mapped.length} employee(s) loaded from file.`);
+            },
+            error: () => {
+                toast.error("Failed to parse file. Please ensure it is a valid CSV.");
+            },
+        });
+    }, []);
 
     const handleDataChange = (newData: EmployeeData[]) => {
         setEmployeeData(newData);
     };
 
-    const handleDelete = async (id: string) => {
-        try {
-            await deleteUserMutation.mutateAsync(id);
-            setEmployeeData((prev) => prev.filter((item) => item.id !== id));
-            toast.success("Employee removed successfully.");
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Failed to delete employee.");
-        }
+    // Delete is local only — just removes from preview state
+    const handleDelete = (id: string) => {
+        setEmployeeData((prev) => prev.filter((item) => item.id !== id));
+        toast.success("Employee removed from preview.");
     };
 
     const handleUploadDifferent = () => {
         setEmployeeData([]);
+        setRawFile(null);
         setStep("upload");
+        router.replace("/people/invite/employees?step=upload");
     };
 
-    const handleSaveToDirectory = () => {
-        router.push("/people?tab=directory");
+    const generateCsvFile = (): File | null => {
+        if (!rawFile || employeeData.length === 0) return null;
+
+        const dataToUnparse = employeeData.map(emp => ({
+            "employee_external_id": emp.employee_external_id,
+            "first_name": emp.first_name,
+            "last_name": emp.last_name,
+            "email": emp.email,
+            "job_title": emp.job_title,
+            "department_name": emp.department_name,
+            "department_external_id": emp.department_external_id,
+            "manager_id": emp.manager_id,
+        }));
+
+        const csvString = Papa.unparse(dataToUnparse);
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        return new File([blob], rawFile.name || "directory.csv", { type: "text/csv" });
     };
 
-    const handleSaveAndInviteAll = () => {
-        // Navigate back to directory step which shows the OrganizationDirectoryPage
-        setStep("directory");
+    // POST to API then navigate
+    const handleSaveToDirectory = async () => {
+        const fileToUpload = generateCsvFile();
+        if (!fileToUpload) return;
+        try {
+            await bulkImportMutation.mutateAsync(fileToUpload);
+            toast.success("Directory saved successfully!");
+            router.push("/people?tab=directory");
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Failed to save directory. Please try again.");
+        }
     };
 
-    // Directory step: show loading while deciding, then directory page or empty state
+    const handleSaveAndInviteAll = async () => {
+        const fileToUpload = generateCsvFile();
+        if (!fileToUpload) return;
+        try {
+            await bulkImportMutation.mutateAsync(fileToUpload);
+            toast.success("Directory saved! Select users to invite.");
+            setStep("directory");
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Failed to save directory. Please try again.");
+        }
+    };
+
+    // Directory step
     if (step === "directory") {
-        // Show loading state while API data is being fetched to avoid flashing empty state
         if (usersApi.isLoading) {
             return (
                 <div className="p-4 max-w-7xl mx-auto">
@@ -117,7 +173,6 @@ export default function InviteEmployeesPage() {
             );
         }
 
-        // No data in directory — show empty directory page with Upload Directory button
         return (
             <div className="p-4 max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg border">
@@ -138,7 +193,7 @@ export default function InviteEmployeesPage() {
                         </div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">Organization Directory is Empty</h3>
                         <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
-                            You haven&apos;t upload your directory, do that and invite you employees from it.
+                            You haven&apos;t uploaded your directory yet. Do that and invite your employees from it.
                         </p>
                         <button
                             onClick={() => setStep("upload")}
@@ -162,24 +217,40 @@ export default function InviteEmployeesPage() {
                     <div className="max-w-6xl mx-auto mt-2">
                         <EmployeeInviteFileUpload onFileSelect={handleFileSelect} />
 
-                        <h3 className="font-semibold mt-4 border-t border-gray-200 pt-4">Required Fields</h3>
+                        <h3 className="font-semibold mt-4 border-t border-gray-200 pt-4">Required CSV Columns</h3>
 
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-8">
                             <div>
-                                <h3 className="font-semibold mb-1">Full Name</h3>
-                                <p className="text-xs text-gray-500">User&apos;s first &amp; last name</p>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">employee_external_id</h3>
+                                <p className="text-xs text-gray-500">Unique ID for the employee</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold mb-1">Email Address</h3>
-                                <p className="text-xs text-gray-500">User&apos;s corporate email address</p>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">first_name</h3>
+                                <p className="text-xs text-gray-500">Employee&apos;s first name</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold mb-1">Manager</h3>
-                                <p className="text-xs text-gray-500">User&apos;s assigned manager/team lead</p>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">last_name</h3>
+                                <p className="text-xs text-gray-500">Employee&apos;s last name</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold mb-1">Department</h3>
-                                <p className="text-xs text-gray-500">User&apos;s department or team</p>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">email</h3>
+                                <p className="text-xs text-gray-500">Corporate email address</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">job_title</h3>
+                                <p className="text-xs text-gray-500">Employee&apos;s job title</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">department_name</h3>
+                                <p className="text-xs text-gray-500">Department or team name</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">department_external_id</h3>
+                                <p className="text-xs text-gray-500">Unique ID for the department</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">manager_id</h3>
+                                <p className="text-xs text-gray-500">employee_external_id of the manager</p>
                             </div>
                         </div>
                     </div>
@@ -191,7 +262,7 @@ export default function InviteEmployeesPage() {
                         onUploadDifferent={handleUploadDifferent}
                         onSaveToDirectory={handleSaveToDirectory}
                         onSaveAndInviteAll={handleSaveAndInviteAll}
-                        isDeleting={deleteUserMutation.isPending}
+                        isSaving={bulkImportMutation.isPending}
                     />
                 )}
             </div>

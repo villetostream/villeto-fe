@@ -14,6 +14,24 @@ import { Eye, Lock, MoreHorizontal, UserCheck } from "lucide-react";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 
 
+function getDepartmentName(dept: any): string {
+  if (!dept) return "—";
+  if (typeof dept === "string") return dept || "—";
+  if (typeof dept === "object" && Object.keys(dept).length > 0) {
+    return (dept.departmentName || dept.name) ?? "—";
+  }
+  return "—";
+}
+
+function formatName(value: string | null | undefined): string {
+  if (!value) return "—";
+  return value
+    .replace(/[_-]/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 const columnHelper = createColumnHelper<AppUser>();
 
 export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppUser, any>[] => [
@@ -54,9 +72,7 @@ export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppU
         cell: (info) => {
             const position = info.getValue();
             // Convert position to readable format (e.g., "CONTROLLING_OFFICER" -> "Controlling Officer")
-            const formattedPosition = position 
-                ? position.replace(/_/g, ' ').toLowerCase() 
-                : "-";
+            const formattedPosition = formatName(position) || "-";
             return <p className="capitalize text-sm">{formattedPosition}</p>;
         },
     }),
@@ -64,11 +80,8 @@ export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppU
         header: "DEPARTMENT",
         cell: (info) => {
             const dept = info.getValue() as any;
-            // Department might be an empty object {}, an object with departmentName, or null
-            const deptName = (dept && typeof dept === 'object' && Object.keys(dept).length > 0) 
-                ? dept.departmentName 
-                : null;
-            return <p className="capitalize">{deptName || "-"}</p>;
+            const deptName = getDepartmentName(dept);
+            return <p className="capitalize">{deptName}</p>;
         },
     }),
     columnHelper.display({
@@ -76,11 +89,15 @@ export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppU
         header: "MANAGER",
         cell: (info) => {
             const manager = (info.row.original as any).manager;
-            // Manager is an object with firstName and lastName, or null
-            const managerName = manager 
-                ? `${manager.firstName || ''} ${manager.lastName || ''}`.trim()
-                : null;
-            return <p className="capitalize">{managerName || "-"}</p>;
+            let managerName = "—";
+            if (manager && typeof manager === "object") {
+                const first = formatName(manager.firstName);
+                const last = formatName(manager.lastName);
+                managerName = `${first} ${last}`.trim() || "—";
+            } else if (typeof manager === "string" && manager) {
+                managerName = formatName(manager);
+            }
+            return <p className="capitalize">{managerName}</p>;
         },
     }),
     columnHelper.accessor("status", {

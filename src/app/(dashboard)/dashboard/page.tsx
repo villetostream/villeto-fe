@@ -117,8 +117,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-1.5">
             <StatsCard
               title="Total Spend"
-              value="$24,536.00"
-              subtitle={<span className="text-muted-foreground">This month you spent <span className="text-success">$3,000</span> </span>}
+              value="$0.00"
+              subtitle={<span className="text-muted-foreground">This month you spent <span className="text-success">$0.00</span> </span>}
               trend="up"
               icon={
                 <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#38B2AC]">
@@ -128,11 +128,11 @@ export default function DashboardPage() {
             />
             <StatsCard
               title="Overall Budget Utilization"
-              value="40%"
+              value="0%"
               subtitle={
                 <span className="">
                   Your budget utilization is{" "}
-                  <span className="text-success">40%</span>
+                  <span className="text-success">0%</span>
                 </span>
               }
               trend="neutral"
@@ -144,8 +144,8 @@ export default function DashboardPage() {
             />
             <StatsCard
               title="Total Accounts Payable"
-              value="$24,536.00"
-              subtitle={<>You have 10 accounts to pay</>}
+              value="$0.00"
+              subtitle={<>You have 0 accounts to pay</>}
               icon={
                 <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#F45B69]">
                   <WalletMoney className="w-5 h-5" />
@@ -154,7 +154,7 @@ export default function DashboardPage() {
             />
             <StatsCard
               title="Open Approvals"
-              value="20"
+              value="0"
               subtitle={
                 <Link href="" className="text-success underline">
                   Authorize Approvals
@@ -169,7 +169,7 @@ export default function DashboardPage() {
             />
             <StatsCard
               title="Critical Policy Alerts"
-              value="10"
+              value="0"
               subtitle={
                 <Link href="" className="text-error underline">
                   Authorize Policy Alerts

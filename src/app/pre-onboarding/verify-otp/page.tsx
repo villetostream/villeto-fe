@@ -129,7 +129,7 @@ export default function VerifyOtp() {
                 router.push("/onboarding");
             }
         } catch (e: any) {
-            toast.error("Invalid OTP. Please try again.");
+            toast.error("Invalid or expired OTP. Please try again");
         }
     };
 

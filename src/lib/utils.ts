@@ -45,3 +45,45 @@ export function groupPermissionsByResource(permissions: Permission[]): Permissio
     permissions
   }));
 }
+
+/**
+ * Converts a technical permission name like "read:users" or "create:roles"
+ * into a plain English label like "View Users" or "Create Roles".
+ */
+const ACTION_LABELS: Record<string, string> = {
+  read: "View",
+  create: "Create",
+  update: "Edit",
+  edit: "Edit",
+  delete: "Delete",
+  manage: "Manage",
+  invite: "Invite",
+  export: "Export",
+  import: "Import",
+  approve: "Approve",
+  reject: "Reject",
+  archive: "Archive",
+  restore: "Restore",
+  view: "View",
+  send: "Send",
+};
+
+export function formatPermissionName(name: string): string {
+  if (!name) return name;
+  // Handle "action:resource" pattern (e.g. "read:users" → "View Users")
+  if (name.includes(":")) {
+    const [action, resource] = name.split(":", 2);
+    const actionLabel = ACTION_LABELS[action.toLowerCase()] ?? capitalize(action);
+    const resourceLabel = capitalize(resource.replace(/[_-]/g, " "));
+    return `${actionLabel} ${resourceLabel}`;
+  }
+  // Handle snake_case or kebab-case permission names
+  return name.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function capitalize(str: string): string {
+  return str
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

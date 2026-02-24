@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/accordion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGetAllPermissionsApi } from "@/actions/auth/auth-permissions";
-import { groupPermissionsByResource, PermissionsGroup, cn } from "@/lib/utils";
+import { groupPermissionsByResource, PermissionsGroup, cn, formatPermissionName } from "@/lib/utils";
 import { RoleFormData, roleSchema } from "@/lib/schemas/schemas";
 import { useCreateRoleApi } from "@/actions/role/create-role";
 import { useUpdateRoleApi } from "@/actions/role/update-role";
@@ -183,7 +183,7 @@ function CreateRolePage() {
                                     <div className="space-y-10">
                                         {permissions.map((group) => (
                                             <div key={group.resource} className="space-y-6">
-                                                <h3 className="text-lg font-bold text-slate-800">{group.resource}</h3>
+                                                <h3 className="text-lg font-bold text-slate-800">{formatPermissionName(group.resource)}</h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                                                     {group.permissions.map((permission) => (
                                                         <div key={permission.permissionId} className="flex items-center space-x-3">
@@ -197,7 +197,7 @@ function CreateRolePage() {
                                                                 htmlFor={permission.permissionId}
                                                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
                                                             >
-                                                                {permission.name}
+                                                                {formatPermissionName(permission.name)}
                                                             </label>
                                                         </div>
                                                     ))}

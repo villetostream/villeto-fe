@@ -17,7 +17,7 @@ export const useVerifyOtpApi = (): UseMutationResult<Response, Error, Payload> =
     return useMutation<Response, Error, Payload>({
         retry: false,
         mutationFn: async (payload: Payload) => {
-            const res = await axiosInstance.post(API_KEYS.ONBOARDING.EXISTING_ONBOARDING, payload);
+            const res = await axiosInstance.post(API_KEYS.ONBOARDING.EXISTING_ONBOARDING, payload, { _skipErrorToast: true } as any);
             return res.data;
         },
     });

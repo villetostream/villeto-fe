@@ -27,6 +27,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAxios } from "@/hooks/useAxios";
 import { useAuthStore } from "@/stores/auth-stores";
 import { useDataTable } from "@/components/datatable/useDataTable";
+import { API_KEYS } from "@/lib/constants/apis";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -85,6 +87,7 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
   const axios = useAxios();
   const user = useAuthStore((state) => state.user);
   const [businessName, setBusinessName] = useState<string>("your company");
+  const [isInviting, setIsInviting] = useState(false);
 
   const users: DirectoryUser[] = usersApi?.data?.data ?? [];
   const isLoading = usersApi.isLoading;
@@ -235,11 +238,20 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
     // TODO: call API endpoint when it becomes available
   };
 
-  const handleInvite = () => {
-    const selectedUsers = users.filter((u) => selected.has(u.userId));
-    console.log("Inviting users:", selectedUsers);
-    // TODO: implement invite API call
-    router.push("/people?tab=directory");
+  const handleInvite = async () => {
+    if (selected.size === 0) return;
+    setIsInviting(true);
+    try {
+      await axios.post(API_KEYS.COMPANY.EMPLOYEE_INVITES, {
+        employeeIds: Array.from(selected),
+      });
+      toast.success("Invitations sent successfully!");
+      router.push("/people?tab=directory");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to send invitations. Please try again.");
+    } finally {
+      setIsInviting(false);
+    }
   };
 
   if (isLoading) {
@@ -506,8 +518,8 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
       )}
 
       <div className="flex justify-end gap-3 pt-2 flex-shrink-0">
-        <Button onClick={handleInvite} className="bg-[#00BFA5] hover:bg-[#00BFA5]/90 min-w-[180px]" disabled={selectedCount === 0}>
-          Invite {selectedCount} User{selectedCount !== 1 ? "s" : ""}
+        <Button onClick={handleInvite} className="bg-[#00BFA5] hover:bg-[#00BFA5]/90 min-w-[180px]" disabled={selectedCount === 0 || isInviting}>
+          {isInviting ? "Sending invites..." : `Invite ${selectedCount} User${selectedCount !== 1 ? "s" : ""}`}
         </Button>
       </div>
     </div>

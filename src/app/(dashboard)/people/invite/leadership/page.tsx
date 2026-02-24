@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
 import { EditInvitedUserModal } from "@/components/dashboard/people/modals/EditInvitedUserModal";
@@ -32,10 +33,11 @@ interface LeadershipInviteForm {
 }
 
 export default function InviteLeadershipPage() {
+    const router = useRouter();
     const [invitedUsers, setInvitedUsers] = useState<LeadershipInviteForm[]>([]);
     const { register, handleSubmit, reset, control, watch, setValue } = useForm<LeadershipInviteForm>();
     const { data: departments } = useGetAllDepartmentsApi();
-    const { data: roles } = useGetAllRolesApi();
+    const rolesApi = useGetAllRolesApi();
 
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -135,20 +137,40 @@ export default function InviteLeadershipPage() {
                                 name="role"
                                 rules={{ required: true }}
                                 render={({ field }) => (
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Manager">Manager</SelectItem>
-                                            <SelectItem value="Admin">Admin</SelectItem>
-                                            <SelectItem value="Finance">Finance</SelectItem>
-                                            <SelectItem value="Organization Owner">Organization Owner</SelectItem>
-                                            <SelectItem value="Controlling Officer">Controlling Officer</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            />
+                                        <Select 
+                                            onValueChange={(val) => {
+                                                if (val === "__create_custom") {
+                                                    router.push("/people/create-role");
+                                                } else {
+                                                    field.onChange(val);
+                                                }
+                                            }} 
+                                            value={field.value}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={rolesApi.isLoading ? "Loading roles…" : "Select Role"} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {rolesApi.isLoading ? (
+                                                    <SelectItem value="__loading" disabled>Loading…</SelectItem>
+                                                ) : (rolesApi.data?.data ?? []).length === 0 ? (
+                                                    <SelectItem value="__empty" disabled>No roles available</SelectItem>
+                                                ) : (
+                                                    (rolesApi.data?.data ?? []).map((role: any) => (
+                                                        <SelectItem key={role.roleId ?? role.id ?? role.name} value={role.name}>
+                                                            {role.name?.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase())}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
+                                                <SelectItem value="__create_custom" className="text-primary font-medium border-t mt-1 cursor-pointer">
+                                                    + Create custom role
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+
+                            
                         </div>
 
                          {/* Department - Hidden for Org Owner */}

@@ -89,24 +89,41 @@ export function DashboardSidebar() {
     );
   };
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return location === href;
+    // Strip query parameters for active state matching
+    const basePath = href.split("?")[0];
+    if (basePath === "/dashboard") {
+      return location === basePath;
     }
-    return location.startsWith(href);
+    return location.startsWith(basePath);
   };
+  const canViewCompanyExpenses =
+    !!user?.role &&
+    (user.role as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
+    (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
+
   const filterItems = (items: NavItem[]): NavItem[] => {
     return items
       .map((item) => {
-        if (item.subItems) {
-          const filteredSubs = item.subItems.filter((sub) =>
+        let currentItem = { ...item };
+
+        // Append default tab query param for Expenses based on user role
+        if (currentItem.href === "/expenses") {
+          currentItem.href = canViewCompanyExpenses
+            ? "/expenses?tab=company-expenses"
+            : "/expenses?tab=personal-expenses";
+        }
+
+        if (currentItem.subItems) {
+          const filteredSubs = currentItem.subItems.filter((sub) =>
             hasPermission(sub.permission),
           );
-          if (!hasPermission(item.permission) && filteredSubs.length === 0)
+          if (!hasPermission(currentItem.permission) && filteredSubs.length === 0)
             return null;
-          return { ...item, subItems: filteredSubs };
+          currentItem.subItems = filteredSubs;
+          return currentItem;
         } else {
-          if (!hasPermission(item.permission)) return null;
-          return item;
+          if (!hasPermission(currentItem.permission)) return null;
+          return currentItem;
         }
       })
       .filter(Boolean) as NavItem[];
@@ -199,7 +216,23 @@ export function DashboardSidebar() {
                       "bg-sidebar-accent/20 font-medium text-primary",
                   )}
                 >
-                  <Link href={sub.href!}>{sub.label}</Link>
+                  <Link href={sub.href!} className="flex items-center justify-between w-full">
+                    <span>{sub.label}</span>
+                    {sub.badge && (
+                        <span className="ml-auto bg-[#F4F0FF] text-[#6941C6] px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap">
+                            {sub.badge}
+                        </span>
+                    )}
+                    {sub.imageUrl === "user-avatar" && (
+                        (user as any)?.profilePicture ? (
+                            <img src={(user as any).profilePicture} alt="Avatar" className="ml-auto w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                            <div className="ml-auto w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 capitalize">
+                                {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                            </div>
+                        )
+                    )}
+                  </Link>
                 </SidebarMenuSubButton>
               ))}
             </CollapsibleContent>

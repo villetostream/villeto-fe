@@ -34,6 +34,8 @@ interface SubItem {
   label: string;
   href: string;
   permission: string[];
+  badge?: string;
+  imageUrl?: string;
 }
 
 export const navigationItems: NavItem[] = [
@@ -50,11 +52,11 @@ export const navigationItems: NavItem[] = [
     permission: [],
     href: "/expenses",
     section: "MAIN MENU",
-    // subItems: [
-    //     { label: "Card transactions", href: "/dashboard/expenses/card-transactions", permission: PERMISSIONS.VIEW_CARD_TRANSACTIONS },
-    //     { label: "Reimbursements", href: "/dashboard/expenses/reimbursements", permission: PERMISSIONS.VIEW_REIMBURSEMENTS },
-    //     { label: "Travel", href: "/dashboard/expenses/travel", permission: PERMISSIONS.VIEW_TRAVEL_EXPENSES },
-    // ],
+    subItems: [
+        { label: "Card Transactions", href: "/expenses/card-transactions", permission: [] },
+        { label: "Reimbursements", href: "/expenses/reimbursements", permission: [], imageUrl: "user-avatar" },
+        { label: "Travel", href: "/expenses/travel", permission: [], badge: "Coming soon" },
+    ],
   },
   {
     icon: <Cards />,
@@ -96,13 +98,6 @@ export const navigationItems: NavItem[] = [
   {
     icon: <LampOn />,
     label: "Insights",
-    href: "/insights",
-    permission: [],
-    section: "ANALYTICS",
-  },
-  {
-    icon: <StatusUp />,
-    label: "Analytics",
     href: "/insights",
     permission: [],
     section: "ANALYTICS",

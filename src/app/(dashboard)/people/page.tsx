@@ -58,8 +58,8 @@ function People() {
         { 
             icon: CreditCard, 
             label: "Active Cards", 
-            value: "70", 
-            description: "This month you spent extra $1,000",
+            value: "0", 
+            description: "This month you spent extra $0.00",
             bgColor: "#F45B69",
             iconSrc: "/images/receipt-pending.png"
         },
@@ -82,8 +82,8 @@ function People() {
         { 
             icon: DollarSign, 
             label: "Total Limits", 
-            value: "$24,536.00", 
-            description: "This month you spent extra $1,000",
+            value: "$0.00", 
+            description: "This month you spent extra $0.00",
             bgColor: "#38B2AC",
             iconSrc: "/images/svgs/money.svg"
         },
@@ -129,7 +129,7 @@ function People() {
                                     <DropdownMenuTrigger asChild>
                                         <Button size="md" className="bg-primary hover:bg-primary/90">
                                             <Plus className="mr-2 h-4 w-4" />
-                                            Invite people
+                                            Invite Users
                                             <ChevronDown className="ml-2 h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -215,7 +215,7 @@ function People() {
                                     value="all-users"
                                     className="data-[state=active]:bg-background rounded-md px-6"
                                 >
-                                    All Users
+                                    Invited Users
                                 </TabsTrigger>
                             </PermissionGuard>
                             <PermissionGuard requiredPermissions={["read:roles"]}>

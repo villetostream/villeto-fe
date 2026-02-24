@@ -1,6 +1,5 @@
 
 import React, { Suspense } from "react";
-import { unstable_ViewTransition as ViewTransition } from "react";
 import { Loader2 } from "lucide-react";
 
 interface PageLoaderProps {
@@ -12,14 +11,10 @@ export async function PageLoader({ children, fallback }: PageLoaderProps) {
     return (
         <Suspense
             fallback={
-                <ViewTransition>
-                    {fallback ?? <DefaultSkeleton />}
-                </ViewTransition>
+                fallback ?? <DefaultSkeleton />
             }
         >
-            <ViewTransition>
-                {children}
-            </ViewTransition>
+            {children}
         </Suspense>
     );
 }
