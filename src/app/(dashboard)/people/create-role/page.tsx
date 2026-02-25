@@ -64,7 +64,9 @@ function CreateRolePage() {
 
     useEffect(() => {
         if (allPermissions.data?.data) {
-            const groupedPermissions = groupPermissionsByResource(allPermissions.data.data);
+            const groupedPermissions = groupPermissionsByResource(allPermissions.data.data)
+                // Remove any permission group related to departments
+                .filter((group) => !group.resource.toLowerCase().includes("department"));
             setPermissions(groupedPermissions);
         }
     }, [allPermissions.data]);
@@ -173,20 +175,31 @@ function CreateRolePage() {
                             </div>
                         </section>
 
-                        <Accordion type="single" collapsible className="w-full bg-slate-50/50 rounded-xl">
+                        <Accordion type="single" collapsible className="w-full border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                             <AccordionItem value="permissions" className="border-none">
-                                <AccordionTrigger className="px-6 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
-                                    <span className="text-lg font-semibold">Permission</span>
-                                    <ChevronDown className="w-5 h-5 transition-transform duration-200" />
+                                <AccordionTrigger className="px-6 py-4 hover:no-underline bg-slate-50 hover:bg-slate-100 transition-colors [&[data-state=open]>svg]:rotate-180 [&[data-state=open]]:border-b [&[data-state=open]]:border-slate-200">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <Check className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-base font-semibold text-slate-800">Permissions</p>
+                                            <p className="text-xs text-slate-500 font-normal">Click to expand and assign permissions to this role</p>
+                                        </div>
+                                    </div>
+                                    <ChevronDown className="w-5 h-5 text-slate-500 transition-transform duration-200 ml-auto flex-shrink-0" />
                                 </AccordionTrigger>
-                                <AccordionContent className="px-6 pb-6 border-t border-slate-100 mt-2 pt-6">
-                                    <div className="space-y-10">
+                                <AccordionContent className="px-6 pb-6 pt-6 bg-white">
+                                    <div className="space-y-8">
                                         {permissions.map((group) => (
-                                            <div key={group.resource} className="space-y-6">
-                                                <h3 className="text-lg font-bold text-slate-800">{formatPermissionName(group.resource)}</h3>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                                            <div key={group.resource} className="space-y-4">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{formatPermissionName(group.resource)}</h3>
+                                                    <div className="flex-1 h-px bg-slate-100" />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8">
                                                     {group.permissions.map((permission) => (
-                                                        <div key={permission.permissionId} className="flex items-center space-x-3">
+                                                        <div key={permission.permissionId} className="flex items-center space-x-3 py-1.5 px-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
                                                             <Checkbox
                                                                 id={permission.permissionId}
                                                                 checked={selectedPermissionIds.includes(permission.permissionId)}
@@ -195,7 +208,7 @@ function CreateRolePage() {
                                                             />
                                                             <label
                                                                 htmlFor={permission.permissionId}
-                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
+                                                                className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
                                                             >
                                                                 {formatPermissionName(permission.name)}
                                                             </label>

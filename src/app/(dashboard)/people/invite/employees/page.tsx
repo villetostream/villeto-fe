@@ -23,6 +23,9 @@ export default function InviteEmployeesPage() {
     const [step, setStep] = useState<Step>(initialStep);
     const [employeeData, setEmployeeData] = useState<EmployeeData[]>([]);
     const [rawFile, setRawFile] = useState<File | null>(null);
+    // True immediately after a successful bulk-import upload so we skip the
+    // stale directoryTotalCount check and always show the directory picker.
+    const [justUploaded, setJustUploaded] = useState(false);
 
     // Sync URL step param → React state so browser back/forward updates the view
     useEffect(() => {
@@ -137,6 +140,11 @@ export default function InviteEmployeesPage() {
         try {
             await bulkImportMutation.mutateAsync(fileToUpload);
             toast.success("Directory saved! Select users to invite.");
+            // Mark that we just uploaded so the directory step renders
+            // OrganizationDirectoryPage immediately without waiting for the
+            // API count to refresh.
+            setJustUploaded(true);
+            await usersApi.refetch();
             setStep("directory");
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Failed to save directory. Please try again.");
@@ -163,11 +171,14 @@ export default function InviteEmployeesPage() {
             );
         }
 
-        if (hasDirectoryData) {
+        if (hasDirectoryData || justUploaded) {
             return (
                 <div className="p-4 max-w-7xl mx-auto h-full overflow-hidden">
                     <OrganizationDirectoryPage
-                        onBack={() => router.push("/people?tab=directory")}
+                        onBack={() => {
+                            setJustUploaded(false);
+                            router.push("/people?tab=directory");
+                        }}
                     />
                 </div>
             );
