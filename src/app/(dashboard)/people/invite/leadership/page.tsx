@@ -373,7 +373,9 @@ export default function InviteLeadershipPage() {
                                                     No roles available
                                                 </SelectItem>
                                             ) : (
-                                                (rolesApi.data?.data ?? []).map((role: any) => (
+                                                (rolesApi.data?.data ?? [])
+                                                    .filter((role: any) => !role.name?.toLowerCase().includes("employee"))
+                                                    .map((role: any) => (
                                                     <SelectItem
                                                         key={role.roleId ?? role.id ?? role.name}
                                                         value={role.name}

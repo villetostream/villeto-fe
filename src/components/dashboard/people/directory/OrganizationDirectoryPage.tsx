@@ -108,10 +108,9 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
     return Array.from(depts).sort();
   }, [users]);
 
-  // Init selection and corporate card state when users load
+  // Init corporate card state when users load (selection starts empty by design)
   useEffect(() => {
     if (users.length > 0) {
-      setSelected(new Set(users.map((u) => u.userId)));
       const cardState: Record<string, boolean> = {};
       users.forEach((u) => {
         cardState[u.userId] = u.corporateCard ?? false;
@@ -204,17 +203,18 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
 
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
+  // Select / deselect ALL filtered users (across all pages)
   const handleSelectAllChange = (checked: boolean | "indeterminate") => {
-    if (checked === "indeterminate") return;
-    const newSelected = new Set(selected);
-    paginatedData.forEach((employee) => {
-      if (checked) {
-        newSelected.add(employee.userId);
-      } else {
-        newSelected.delete(employee.userId);
-      }
-    });
-    setSelected(newSelected);
+    if (checked === "indeterminate") {
+      // indeterminate click → select all filtered users
+      setSelected(new Set(filteredUsers.map((u) => u.userId)));
+      return;
+    }
+    if (checked) {
+      setSelected(new Set(filteredUsers.map((u) => u.userId)));
+    } else {
+      setSelected(new Set());
+    }
   };
 
   const handleSelectChange = (id: string, checked: boolean) => {
@@ -227,8 +227,9 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
     setSelected(newSelected);
   };
 
-  const isAllSelected = paginatedData.length > 0 && paginatedData.every((employee) => selected.has(employee.userId));
-  const isSomeSelected = paginatedData.some((employee) => selected.has(employee.userId)) && !isAllSelected;
+  // Header checkbox reflects state for ALL filtered users (not just current page)
+  const isAllSelected = filteredUsers.length > 0 && filteredUsers.every((u) => selected.has(u.userId));
+  const isSomeSelected = filteredUsers.some((u) => selected.has(u.userId)) && !isAllSelected;
 
   const handleCorporateCardToggle = (userId: string) => {
     setCorporateCardState((prev) => ({
@@ -272,7 +273,12 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Organization Directory</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Select people to invite to {businessName} as users.</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Select people to invite to {businessName} as users.{" "}
+            <span className="text-[#00BFA5] font-medium">
+              Use the checkbox in the table header to select or deselect all.
+            </span>
+          </p>
         </div>
       </div>
 

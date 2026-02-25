@@ -12,7 +12,7 @@ import { Upload04Icon } from "@hugeicons/core-free-icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
-import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { useGetAllUsersApi, useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
 import {
@@ -28,6 +28,11 @@ function People() {
     const usersApi = useGetAllUsersApi();
     const deptsApi = useGetAllDepartmentsApi();
     const rolesApi = useGetAllRolesApi();
+    const directoryApi = useGetDirectoryUsersApi();
+
+    // True when the directory already has data — used to decide where "Continue" goes
+    const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
+    const hasDirectoryData = directoryTotalCount > 2;
 
     // Count unique departments from the users list — same logic as OrganizationDirectoryPage filter
     const uniqueDeptCount = useMemo(() => {
@@ -262,7 +267,13 @@ function People() {
                 }}
                 onContinue={() => {
                     setIsInviteModalOpen(false);
-                    router.push("/people/invite/employees");
+                    // If directory already has data, go straight to the selection
+                    // screen (directory step). Otherwise send them to upload first.
+                    if (hasDirectoryData) {
+                        router.push("/people/invite/employees");
+                    } else {
+                        router.push("/people/invite/employees?step=upload");
+                    }
                 }}
             />
         </div>
