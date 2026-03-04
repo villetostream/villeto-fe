@@ -37,6 +37,7 @@ export const API_KEYS = {
     BULK_IMPORT: "companies/bulk/import",
     COMPANY_DETAILS: (id: string) => `companies/${id}` as const,
     EMPLOYEE_INVITES: "companies/employees/invites",
+    ADMIN_INVITES: "companies/admins/invites",
   },
   EXPENSE: {
     CATEGORIES: "companies/expense/categories",
