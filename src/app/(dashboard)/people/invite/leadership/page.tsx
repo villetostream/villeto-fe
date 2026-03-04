@@ -191,24 +191,19 @@ export default function InviteLeadershipPage() {
         if (stagedUsers.length === 0) return;
         setIsInviting(true);
         try {
-            await Promise.all(
-                stagedUsers.map(async (u) => {
-                    // 1. Send invite
-                    await axios.post(API_KEYS.COMPANY.EMPLOYEE_INVITES, {
-                        employeeIds: [u.directoryUserId],
-                    });
+            const admins = stagedUsers.map((u) => {
+                const entry: Record<string, any> = {
+                    email: u.email,
+                    roleId: u.roleId,
+                };
+                if (u.ownershipPercentage !== undefined) {
+                    entry.percentageOfOwnership = u.ownershipPercentage;
+                }
+                return entry;
+            });
 
-                    // 2. Patch user role (and ownership if applicable)
-                    const patchBody: Record<string, any> = {};
-                    if (u.roleId) patchBody.roleId = u.roleId;
-                    if (u.ownershipPercentage !== undefined) {
-                        patchBody.ownershipPercentage = u.ownershipPercentage;
-                    }
-                    if (Object.keys(patchBody).length > 0) {
-                        await axios.patch(`users/${u.directoryUserId}`, patchBody);
-                    }
-                })
-            );
+            await axios.post(API_KEYS.COMPANY.ADMIN_INVITES, { admins });
+
             toast.success("Invitations sent successfully!");
             router.push("/people?tab=directory");
         } catch (error: any) {
