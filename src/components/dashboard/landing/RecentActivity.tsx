@@ -2,26 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Receipt, TrendingUp, Wallet } from "lucide-react";
 
-const activities = [
-  {
-    icon: Receipt,
-    title: "Invoice",
-    description: "Invoice INV-2025-9867 for $75,000 was...",
-    time: "2 hours ago",
-  },
-  {
-    icon: TrendingUp,
-    title: "Marketing",
-    description: "The Marketing Q4 Budget was increased...",
-    time: "5 hours ago",
-  },
-  {
-    icon: Wallet,
-    title: "Spending",
-    description: "A new policy rule for Software Spending...",
-    time: "1 day ago",
-  },
-];
+const activities: Array<{
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  time: string;
+}> = [];
 
 export const RecentActivity = () => {
   return (

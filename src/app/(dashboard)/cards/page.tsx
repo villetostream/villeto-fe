@@ -14,38 +14,16 @@ import {
     DollarSign
 } from "lucide-react";
 
-const cards = [
-    {
-        id: 1,
-        name: "Marketing Team Card",
-        last4: "4521",
-        holder: "Sarah Chen",
-        department: "Marketing",
-        limit: 5000,
-        spent: 3450,
-        status: "active"
-    },
-    {
-        id: 2,
-        name: "Engineering Card",
-        last4: "8934",
-        holder: "Michael Rodriguez",
-        department: "Engineering",
-        limit: 10000,
-        spent: 7500,
-        status: "active"
-    },
-    {
-        id: 3,
-        name: "Travel Card",
-        last4: "2567",
-        holder: "Emma Thompson",
-        department: "Operations",
-        limit: 15000,
-        spent: 2100,
-        status: "locked"
-    }
-];
+const cards: Array<{
+    id: number;
+    name: string;
+    last4: string;
+    holder: string;
+    department: string;
+    limit: number;
+    spent: number;
+    status: string;
+}> = [];
 
 export default function Cards() {
     const getUsagePercentage = (spent: number, limit: number) => {
@@ -89,7 +67,7 @@ export default function Cards() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Active Cards</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">12</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">0</p>
                                 </div>
                                 <CreditCard className="w-8 h-8 text-dashboard-accent" />
                             </div>
@@ -101,7 +79,7 @@ export default function Cards() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Total Limit</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$250K</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
                                 </div>
                                 <DollarSign className="w-8 h-8 text-status-success" />
                             </div>
@@ -113,7 +91,7 @@ export default function Cards() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">This Month</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$45.2K</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
                                 </div>
                                 <TrendingUp className="w-8 h-8 text-status-warning" />
                             </div>
@@ -125,7 +103,7 @@ export default function Cards() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Available</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$204.8K</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
                                 </div>
                                 <Unlock className="w-8 h-8 text-dashboard-text-secondary" />
                             </div>
@@ -134,89 +112,97 @@ export default function Cards() {
                 </div>
 
                 {/* Cards List */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {cards.map((card) => {
-                        const usagePercentage = getUsagePercentage(card.spent, card.limit);
-                        return (
-                            <Card key={card.id} className="bg-dashboard-card border-dashboard-border">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-dashboard-accent to-dashboard-accent/80 flex items-center justify-center">
-                                                <CreditCard className="w-5 h-5 text-white" />
+                {cards.length === 0 ? (
+                    <Card className="bg-dashboard-card border-dashboard-border">
+                        <CardContent className="p-6">
+                            <p className="text-dashboard-text-secondary text-sm text-center py-8">No cards issued yet</p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {cards.map((card) => {
+                            const usagePercentage = getUsagePercentage(card.spent, card.limit);
+                            return (
+                                <Card key={card.id} className="bg-dashboard-card border-dashboard-border">
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-dashboard-accent to-dashboard-accent/80 flex items-center justify-center">
+                                                    <CreditCard className="w-5 h-5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className="text-dashboard-text-primary">{card.name}</CardTitle>
+                                                    <p className="text-sm text-dashboard-text-secondary">
+                                                        •••• •••• •••• {card.last4}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Badge
+                                                variant={card.status === 'active' ? 'default' : 'secondary'}
+                                                className={card.status === 'active' ? 'bg-status-success text-white' : 'bg-status-error text-white'}
+                                            >
+                                                {card.status === 'active' ? <Unlock className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
+                                                {card.status}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-xs text-dashboard-text-secondary">Cardholder</p>
+                                                <p className="font-medium text-dashboard-text-primary">{card.holder}</p>
                                             </div>
                                             <div>
-                                                <CardTitle className="text-dashboard-text-primary">{card.name}</CardTitle>
-                                                <p className="text-sm text-dashboard-text-secondary">
-                                                    •••• •••• •••• {card.last4}
-                                                </p>
+                                                <p className="text-xs text-dashboard-text-secondary">Department</p>
+                                                <p className="font-medium text-dashboard-text-primary">{card.department}</p>
                                             </div>
                                         </div>
-                                        <Badge
-                                            variant={card.status === 'active' ? 'default' : 'secondary'}
-                                            className={card.status === 'active' ? 'bg-status-success text-white' : 'bg-status-error text-white'}
-                                        >
-                                            {card.status === 'active' ? <Unlock className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
-                                            {card.status}
-                                        </Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-dashboard-text-secondary">Cardholder</p>
-                                            <p className="font-medium text-dashboard-text-primary">{card.holder}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-dashboard-text-secondary">Department</p>
-                                            <p className="font-medium text-dashboard-text-primary">{card.department}</p>
-                                        </div>
-                                    </div>
 
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-dashboard-text-secondary">Spending</span>
-                                            <span className={`font-medium ${getUsageColor(usagePercentage)}`}>
-                                                ${card.spent.toLocaleString()} / ${card.limit.toLocaleString()}
-                                            </span>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-dashboard-text-secondary">Spending</span>
+                                                <span className={`font-medium ${getUsageColor(usagePercentage)}`}>
+                                                    ${card.spent.toLocaleString()} / ${card.limit.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <Progress
+                                                value={usagePercentage}
+                                                className="h-2"
+                                            />
+                                            <p className="text-xs text-dashboard-text-secondary">
+                                                {usagePercentage}% of limit used
+                                            </p>
                                         </div>
-                                        <Progress
-                                            value={usagePercentage}
-                                            className="h-2"
-                                        />
-                                        <p className="text-xs text-dashboard-text-secondary">
-                                            {usagePercentage}% of limit used
-                                        </p>
-                                    </div>
 
-                                    <div className="flex gap-2 pt-2">
-                                        <Button variant="outline" size="sm" className="flex-1">
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            View Details
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className={`flex-1 ${card.status === 'active' ? 'text-status-error border-status-error hover:bg-status-error hover:text-white' : 'text-status-success border-status-success hover:bg-status-success hover:text-white'}`}
-                                        >
-                                            {card.status === 'active' ? (
-                                                <>
-                                                    <Lock className="w-4 h-4 mr-2" />
-                                                    Lock Card
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Unlock className="w-4 h-4 mr-2" />
-                                                    Unlock Card
-                                                </>
-                                            )}
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <Button variant="outline" size="sm" className="flex-1">
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                View Details
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={`flex-1 ${card.status === 'active' ? 'text-status-error border-status-error hover:bg-status-error hover:text-white' : 'text-status-success border-status-success hover:bg-status-success hover:text-white'}`}
+                                            >
+                                                {card.status === 'active' ? (
+                                                    <>
+                                                        <Lock className="w-4 h-4 mr-2" />
+                                                        Lock Card
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Unlock className="w-4 h-4 mr-2" />
+                                                        Unlock Card
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Quick Actions */}
                 <Card className="bg-dashboard-card border-dashboard-border">
