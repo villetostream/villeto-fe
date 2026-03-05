@@ -14,48 +14,16 @@ import {
     DollarSign
 } from "lucide-react";
 
-const bills = [
-    {
-        id: 1,
-        vendor: "Electric Company",
-        description: "Monthly electricity bill",
-        amount: 1250.00,
-        dueDate: "Nov 25, 2024",
-        status: "pending",
-        invoiceNumber: "INV-2024-1105",
-        category: "Utilities"
-    },
-    {
-        id: 2,
-        vendor: "Office Lease Corp",
-        description: "Office rent - December",
-        amount: 8500.00,
-        dueDate: "Dec 1, 2024",
-        status: "scheduled",
-        invoiceNumber: "LEASE-2024-12",
-        category: "Rent"
-    },
-    {
-        id: 3,
-        vendor: "Internet Provider",
-        description: "Business internet service",
-        amount: 450.00,
-        dueDate: "Nov 20, 2024",
-        status: "overdue",
-        invoiceNumber: "INT-2024-987",
-        category: "Utilities"
-    },
-    {
-        id: 4,
-        vendor: "Software Solutions Ltd",
-        description: "Annual software license",
-        amount: 12000.00,
-        dueDate: "Nov 15, 2024",
-        status: "paid",
-        invoiceNumber: "SWL-2024-456",
-        category: "Software"
-    }
-];
+const bills: Array<{
+    id: number;
+    vendor: string;
+    description: string;
+    amount: number;
+    dueDate: string;
+    status: string;
+    invoiceNumber: string;
+    category: string;
+}> = [];
 
 export default function BillPay() {
     const getStatusIcon = (status: string) => {
@@ -124,7 +92,7 @@ export default function BillPay() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Due This Week</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$22.2K</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
                                 </div>
                                 <Clock className="w-8 h-8 text-status-warning" />
                             </div>
@@ -136,7 +104,7 @@ export default function BillPay() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Overdue</p>
-                                    <p className="text-2xl font-bold text-status-error">$450</p>
+                                    <p className="text-2xl font-bold text-status-error">—</p>
                                 </div>
                                 <AlertTriangle className="w-8 h-8 text-status-error" />
                             </div>
@@ -148,7 +116,7 @@ export default function BillPay() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Paid This Month</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$145K</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
                                 </div>
                                 <CheckCircle className="w-8 h-8 text-status-success" />
                             </div>
@@ -160,7 +128,7 @@ export default function BillPay() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Scheduled</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">8</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">0</p>
                                 </div>
                                 <Calendar className="w-8 h-8 text-dashboard-accent" />
                             </div>
@@ -186,52 +154,56 @@ export default function BillPay() {
                         <CardTitle className="text-dashboard-text-primary">Upcoming Bills</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {bills.map((bill) => (
-                                <div key={bill.id} className="flex items-center justify-between p-4 bg-dashboard-hover rounded-lg">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-lg bg-dashboard-accent/10 flex items-center justify-center">
-                                            <FileText className="w-6 h-6 text-dashboard-accent" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-dashboard-text-primary">
-                                                {bill.vendor}
-                                            </h3>
-                                            <p className="text-sm text-dashboard-text-secondary">
-                                                {bill.description}
-                                            </p>
-                                            <div className="flex items-center gap-4 text-xs text-dashboard-text-secondary mt-1">
-                                                <span>{bill.invoiceNumber}</span>
-                                                <span>•</span>
-                                                <span className={isOverdue(bill.dueDate) && bill.status !== 'paid' ? 'text-status-error font-medium' : ''}>
-                                                    Due: {bill.dueDate}
-                                                </span>
-                                                <span>•</span>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {bill.category}
-                                                </Badge>
+                        {bills.length === 0 ? (
+                            <p className="text-dashboard-text-secondary text-sm text-center py-8">No bills found</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {bills.map((bill) => (
+                                    <div key={bill.id} className="flex items-center justify-between p-4 bg-dashboard-hover rounded-lg">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-lg bg-dashboard-accent/10 flex items-center justify-center">
+                                                <FileText className="w-6 h-6 text-dashboard-accent" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-dashboard-text-primary">
+                                                    {bill.vendor}
+                                                </h3>
+                                                <p className="text-sm text-dashboard-text-secondary">
+                                                    {bill.description}
+                                                </p>
+                                                <div className="flex items-center gap-4 text-xs text-dashboard-text-secondary mt-1">
+                                                    <span>{bill.invoiceNumber}</span>
+                                                    <span>•</span>
+                                                    <span className={isOverdue(bill.dueDate) && bill.status !== 'paid' ? 'text-status-error font-medium' : ''}>
+                                                        Due: {bill.dueDate}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {bill.category}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-right">
-                                            <p className="font-semibold text-dashboard-text-primary">
-                                                ${bill.amount.toLocaleString()}
-                                            </p>
-                                            <Badge className={getStatusBadge(bill.status)}>
-                                                {getStatusIcon(bill.status)}
-                                                <span className="ml-1 capitalize">{bill.status}</span>
-                                            </Badge>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <p className="font-semibold text-dashboard-text-primary">
+                                                    ${bill.amount.toLocaleString()}
+                                                </p>
+                                                <Badge className={getStatusBadge(bill.status)}>
+                                                    {getStatusIcon(bill.status)}
+                                                    <span className="ml-1 capitalize">{bill.status}</span>
+                                                </Badge>
+                                            </div>
+                                            {bill.status === 'pending' && (
+                                                <Button size="sm" className="bg-dashboard-accent hover:bg-dashboard-accent/90">
+                                                    Pay Now
+                                                </Button>
+                                            )}
                                         </div>
-                                        {bill.status === 'pending' && (
-                                            <Button size="sm" className="bg-dashboard-accent hover:bg-dashboard-accent/90">
-                                                Pay Now
-                                            </Button>
-                                        )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -243,18 +215,7 @@ export default function BillPay() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between p-3 bg-dashboard-hover rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-dashboard-accent/10 flex items-center justify-center">
-                                            <DollarSign className="w-4 h-4 text-dashboard-accent" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-dashboard-text-primary">Business Checking</p>
-                                            <p className="text-xs text-dashboard-text-secondary">•••• 4521</p>
-                                        </div>
-                                    </div>
-                                    <Badge className="bg-status-success text-white text-xs">Primary</Badge>
-                                </div>
+                                <p className="text-dashboard-text-secondary text-sm text-center py-4">No payment methods added</p>
                                 <Button variant="outline" size="sm" className="w-full">
                                     <Plus className="w-4 h-4 mr-2" />
                                     Add Payment Method
@@ -269,18 +230,7 @@ export default function BillPay() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-dashboard-text-primary">Auto-pay recurring bills</span>
-                                    <Badge className="bg-status-success text-white text-xs">Enabled</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-dashboard-text-primary">Payment reminders</span>
-                                    <Badge className="bg-status-success text-white text-xs">3 days before</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-dashboard-text-primary">Approval required</span>
-                                    <Badge className="bg-status-warning text-white text-xs">Above $5,000</Badge>
-                                </div>
+                                <p className="text-dashboard-text-secondary text-sm text-center py-4">No automation settings configured</p>
                                 <Button variant="outline" size="sm" className="w-full">
                                     Manage Settings
                                 </Button>

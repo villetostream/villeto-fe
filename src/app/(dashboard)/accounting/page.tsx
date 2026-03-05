@@ -15,18 +15,8 @@ import {
 } from "lucide-react";
 
 const accountingData = {
-    monthlyTotals: [
-        { month: "October", income: 125000, expenses: 87500, profit: 37500 },
-        { month: "November", income: 142000, expenses: 95200, profit: 46800 },
-        { month: "December", income: 158000, expenses: 102300, profit: 55700 }
-    ],
-    categories: [
-        { name: "Software & Subscriptions", amount: 25400, percentage: 26.7 },
-        { name: "Office & Equipment", amount: 18200, percentage: 19.1 },
-        { name: "Travel & Entertainment", amount: 15600, percentage: 16.4 },
-        { name: "Professional Services", amount: 12800, percentage: 13.4 },
-        { name: "Utilities & Rent", amount: 23200, percentage: 24.4 }
-    ]
+    monthlyTotals: [] as Array<{ month: string; income: number; expenses: number; profit: number }>,
+    categories: [] as Array<{ name: string; amount: number; percentage: number }>
 };
 
 export default function Accounting() {
@@ -60,8 +50,8 @@ export default function Accounting() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Monthly Revenue</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$158K</p>
-                                    <p className="text-xs text-status-success">+12.3% from last month</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
+                                    <p className="text-xs text-dashboard-text-secondary">No data available</p>
                                 </div>
                                 <TrendingUp className="w-8 h-8 text-status-success" />
                             </div>
@@ -73,8 +63,8 @@ export default function Accounting() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Total Expenses</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$102K</p>
-                                    <p className="text-xs text-status-warning">+7.5% from last month</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
+                                    <p className="text-xs text-dashboard-text-secondary">No data available</p>
                                 </div>
                                 <BarChart3 className="w-8 h-8 text-dashboard-accent" />
                             </div>
@@ -86,8 +76,8 @@ export default function Accounting() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Net Profit</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">$55.7K</p>
-                                    <p className="text-xs text-status-success">+19.1% from last month</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
+                                    <p className="text-xs text-dashboard-text-secondary">No data available</p>
                                 </div>
                                 <Calculator className="w-8 h-8 text-status-success" />
                             </div>
@@ -99,8 +89,8 @@ export default function Accounting() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-dashboard-text-secondary text-sm">Profit Margin</p>
-                                    <p className="text-2xl font-bold text-dashboard-text-primary">35.3%</p>
-                                    <p className="text-xs text-status-success">+2.1% from last month</p>
+                                    <p className="text-2xl font-bold text-dashboard-text-primary">—</p>
+                                    <p className="text-xs text-dashboard-text-secondary">No data available</p>
                                 </div>
                                 <PieChart className="w-8 h-8 text-dashboard-text-secondary" />
                             </div>
@@ -114,33 +104,37 @@ export default function Accounting() {
                         <CardTitle className="text-dashboard-text-primary">Monthly Financial Trends</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {accountingData.monthlyTotals.map((month) => (
-                                <div key={month.month} className="p-4 bg-dashboard-hover rounded-lg">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-medium text-dashboard-text-primary">{month.month} 2024</h3>
-                                        <div className="flex gap-6 text-sm">
-                                            <span className="text-status-success">
-                                                Revenue: ${month.income.toLocaleString()}
-                                            </span>
-                                            <span className="text-dashboard-accent">
-                                                Expenses: ${month.expenses.toLocaleString()}
-                                            </span>
-                                            <span className="text-dashboard-text-primary font-medium">
-                                                Profit: ${month.profit.toLocaleString()}
-                                            </span>
+                        {accountingData.monthlyTotals.length === 0 ? (
+                            <p className="text-dashboard-text-secondary text-sm text-center py-8">No monthly data available</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {accountingData.monthlyTotals.map((month) => (
+                                    <div key={month.month} className="p-4 bg-dashboard-hover rounded-lg">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="font-medium text-dashboard-text-primary">{month.month}</h3>
+                                            <div className="flex gap-6 text-sm">
+                                                <span className="text-status-success">
+                                                    Revenue: ${month.income.toLocaleString()}
+                                                </span>
+                                                <span className="text-dashboard-accent">
+                                                    Expenses: ${month.expenses.toLocaleString()}
+                                                </span>
+                                                <span className="text-dashboard-text-primary font-medium">
+                                                    Profit: ${month.profit.toLocaleString()}
+                                                </span>
+                                            </div>
                                         </div>
+                                        <Progress
+                                            value={(month.profit / month.income) * 100}
+                                            className="h-2"
+                                        />
+                                        <p className="text-xs text-dashboard-text-secondary mt-1">
+                                            Profit margin: {((month.profit / month.income) * 100).toFixed(1)}%
+                                        </p>
                                     </div>
-                                    <Progress
-                                        value={(month.profit / month.income) * 100}
-                                        className="h-2"
-                                    />
-                                    <p className="text-xs text-dashboard-text-secondary mt-1">
-                                        Profit margin: {((month.profit / month.income) * 100).toFixed(1)}%
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -150,23 +144,27 @@ export default function Accounting() {
                         <CardTitle className="text-dashboard-text-primary">Expense Breakdown by Category</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {accountingData.categories.map((category) => (
-                                <div key={category.name} className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-sm font-medium text-dashboard-text-primary">
-                                                {category.name}
-                                            </span>
-                                            <span className="text-sm text-dashboard-text-secondary">
-                                                ${category.amount.toLocaleString()} ({category.percentage}%)
-                                            </span>
+                        {accountingData.categories.length === 0 ? (
+                            <p className="text-dashboard-text-secondary text-sm text-center py-8">No category data available</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {accountingData.categories.map((category) => (
+                                    <div key={category.name} className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-sm font-medium text-dashboard-text-primary">
+                                                    {category.name}
+                                                </span>
+                                                <span className="text-sm text-dashboard-text-secondary">
+                                                    ${category.amount.toLocaleString()} ({category.percentage}%)
+                                                </span>
+                                            </div>
+                                            <Progress value={category.percentage} className="h-2" />
                                         </div>
-                                        <Progress value={category.percentage} className="h-2" />
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -180,7 +178,7 @@ export default function Accounting() {
                             <div className="space-y-3">
                                 <Button variant="outline" className="w-full justify-start">
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Profit & Loss Statement
+                                    Profit &amp; Loss Statement
                                 </Button>
                                 <Button variant="outline" className="w-full justify-start">
                                     <BarChart3 className="w-4 h-4 mr-2" />
@@ -204,32 +202,7 @@ export default function Accounting() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between p-3 bg-dashboard-hover rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-status-success/10 flex items-center justify-center">
-                                            <Settings className="w-4 h-4 text-status-success" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-dashboard-text-primary">QuickBooks</p>
-                                            <p className="text-xs text-dashboard-text-secondary">Connected</p>
-                                        </div>
-                                    </div>
-                                    <Badge className="bg-status-success text-white text-xs">Active</Badge>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 bg-dashboard-hover rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-dashboard-text-secondary/10 flex items-center justify-center">
-                                            <Settings className="w-4 h-4 text-dashboard-text-secondary" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-dashboard-text-primary">Xero</p>
-                                            <p className="text-xs text-dashboard-text-secondary">Not connected</p>
-                                        </div>
-                                    </div>
-                                    <Button size="sm" variant="outline">Connect</Button>
-                                </div>
-
+                                <p className="text-dashboard-text-secondary text-sm text-center py-4">No integrations connected</p>
                                 <Button variant="outline" size="sm" className="w-full">
                                     <Plus className="w-4 h-4 mr-2" />
                                     Add Integration
