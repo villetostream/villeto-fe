@@ -76,7 +76,7 @@ export const navigationItems: NavItem[] = [
   {
     icon: <DocumentText />,
     label: "Policies",
-    href: "/spend-programs",
+    href: "/policies",
     permission: [""],
     section: "MANAGEMENT",
   },

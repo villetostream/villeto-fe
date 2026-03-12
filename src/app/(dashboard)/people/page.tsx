@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CreditCard, Building2, UserCog, DollarSign, Plus, ChevronDown, PlusCircle } from "lucide-react";
+import { Users, CreditCard, Building2, UserCog, DollarSign } from "lucide-react";
 import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryTab";
@@ -15,26 +14,19 @@ import withPermissions from "@/components/permissions/permission-protected-route
 import { useGetAllUsersApi, useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { InviteEmployeesWarningModal } from "@/components/dashboard/people/modals/InviteEmployeesWarningModal";
+import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
 
 function People() {
-    const usersApi = useGetAllUsersApi();
-    const deptsApi = useGetAllDepartmentsApi();
-    const rolesApi = useGetAllRolesApi();
+    const usersApi     = useGetAllUsersApi();
+    const deptsApi     = useGetAllDepartmentsApi();
+    const rolesApi     = useGetAllRolesApi();
     const directoryApi = useGetDirectoryUsersApi();
 
-    // True when the directory already has data — used to decide where "Continue" goes
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
-    const hasDirectoryData = directoryTotalCount > 2;
+    const hasDirectoryData    = directoryTotalCount > 2;
 
-    // Count unique departments from the users list — same logic as OrganizationDirectoryPage filter
     const uniqueDeptCount = useMemo(() => {
         const users: any[] = usersApi?.data?.data ?? [];
         const depts = new Set<string>();
@@ -52,56 +44,22 @@ function People() {
     }, [usersApi?.data?.data]);
 
     const statCards = [
-        { 
-            icon: Users, 
-            label: "Total Users", 
-            value: usersApi?.data?.meta?.totalCount || "0", 
-            description: "Total registered users",
-            bgColor: "#384A57",
-            iconSrc: "/images/svgs/draft.svg"
-        },
-        { 
-            icon: CreditCard, 
-            label: "Active Cards", 
-            value: "0", 
-            description: "This month you spent extra $0.00",
-            bgColor: "#F45B69",
-            iconSrc: "/images/receipt-pending.png"
-        },
-        { 
-            icon: Building2, 
-            label: "Departments", 
-            value: uniqueDeptCount, 
-            description: "View Departments",
-            bgColor: "#5A67D8",
-            iconSrc: "/images/svgs/submitted.svg"
-        },
-        { 
-            icon: UserCog, 
-            label: "Roles", 
-            value: rolesApi?.data?.meta?.totalCount || "0", 
-            description: "View Roles",
-            bgColor: "#418341",
-            iconSrc: "/images/svgs/check.svg"
-        },
-        { 
-            icon: DollarSign, 
-            label: "Total Limits", 
-            value: "$0.00", 
-            description: "This month you spent extra $0.00",
-            bgColor: "#38B2AC",
-            iconSrc: "/images/svgs/money.svg"
-        },
+        { icon: Users,     label: "Total Users",   value: usersApi?.data?.meta?.totalCount || "0", description: "Total registered users",               bgColor: "#384A57" },
+        { icon: CreditCard,label: "Active Cards",  value: "0",                                      description: "This month you spent extra $0.00",     bgColor: "#F45B69" },
+        { icon: Building2, label: "Departments",   value: uniqueDeptCount,                          description: "View Departments",                      bgColor: "#5A67D8" },
+        { icon: UserCog,   label: "Roles",         value: rolesApi?.data?.meta?.totalCount || "0",  description: "View Roles",                            bgColor: "#418341" },
+        { icon: DollarSign,label: "Total Limits",  value: "$0.00",                                  description: "This month you spent extra $0.00",      bgColor: "#38B2AC" },
     ];
 
     const searchParams = useSearchParams();
-    const router = useRouter();
+    const router       = useRouter();
 
-    // Get initial tab from URL search params or default to "all-users"
     const initialTab = searchParams.get("tab") || "all-users";
-    const [activeTab, setActiveTab] = useState(initialTab);
-
+    const [activeTab, setActiveTab]           = useState(initialTab);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+    // Register dynamic header CTA button
+    const { setAction, clearAction } = useHeaderActionStore();
 
     // Update URL when activeTab changes
     useEffect(() => {
@@ -110,82 +68,42 @@ function People() {
         router.replace(`?${params.toString()}`, { scroll: false });
     }, [activeTab]);
 
-    const handleCreateRole = () => {
-        router.push("/people/create-role");
-    };
+    // Register the correct header button per tab
+    useEffect(() => {
+        if (activeTab === "all-users") {
+            setAction({
+                label: "Invite Users",
+                items: [
+                    {
+                        label: "Invite Employees",
+                        onClick: () => setIsInviteModalOpen(true),
+                    },
+                    {
+                        label: "Invite Leadership & Admin",
+                        onClick: () => router.push("/people/invite/leadership"),
+                    },
+                ],
+            });
+        } else if (activeTab === "roles") {
+            setAction({
+                label: "Create Role",
+                onClick: () => router.push("/people/create-role"),
+            });
+        } else if (activeTab === "directory") {
+            setAction({
+                label: "Upload Directory",
+                onClick: () => router.push("/people/invite/employees?step=upload"),
+            });
+        } else {
+            clearAction();
+        }
+
+        return () => clearAction();
+    }, [activeTab, setAction, clearAction, router]);
 
     return (
-        <div className=" bg-dashboard-bg min-h-screen">
+        <div className="bg-dashboard-bg min-h-screen">
             <div className="p-6 space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-2xl font-semibold">People</h1>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Manage team members and their spending permissions
-                        </p>
-                    </div>
-                    <div className="flex gap-5">
-                        {activeTab === "all-users" && (
-                            <PermissionGuard requiredPermissions={["create:users"]}>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button size="md" className="bg-primary hover:bg-primary/90">
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Invite Users
-                                            <ChevronDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-60">
-                                        <DropdownMenuItem 
-                                            className="cursor-pointer py-2.5"
-                                            onClick={() => setIsInviteModalOpen(true)}
-                                        >
-                                            <div className="flex items-center">
-                                                <PlusCircle className="mr-2 h-4 w-4 text-[#0FA68E]" />
-                                                <span>Invite Employees</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem 
-                                            className="cursor-pointer py-2.5"
-                                            onClick={() => router.push("/people/invite/leadership")}
-                                        >
-                                            <div className="flex items-center">
-                                                <PlusCircle className="mr-2 h-4 w-4 text-[#0FA68E]" />
-                                                <span>Invite Leadership & Admin</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </PermissionGuard>
-                        )}
-                        {activeTab === "roles" && (
-                            <PermissionGuard requiredPermissions={["create:roles"]}>
-                                <Button
-                                    onClick={handleCreateRole}
-                                    size={"md"}
-                                    className="px-12 bg-primary hover:bg-primary/90"
-                                >
-                                    Create Role
-                                </Button>
-                            </PermissionGuard>
-                        )}
-                        {activeTab === "directory" && (
-                            <PermissionGuard requiredPermissions={["create:users"]}>
-                                <Button
-                                    onClick={() => router.push("/people/invite/employees?step=upload")}
-                                    size={"md"}
-                                    className="bg-primary hover:bg-primary/90 gap-2"
-                                >
-                                    <HugeiconsIcon icon={Upload04Icon} className="h-4 w-4" />
-                                    Upload Directory
-                                </Button>
-                            </PermissionGuard>
-                        )}
-                    </div>
-                </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-1.5">
@@ -194,18 +112,18 @@ function People() {
                             key={stat.label}
                             title={stat.label}
                             value={stat.value}
-                            isLoading={stat.label === "Total Users" ? usersApi.isLoading : stat.label === "Departments" ? usersApi.isLoading : stat.label === "Roles" ? rolesApi.isLoading : false}
+                            isLoading={
+                                stat.label === "Total Users"  ? usersApi.isLoading :
+                                stat.label === "Departments"  ? usersApi.isLoading :
+                                stat.label === "Roles"        ? rolesApi.isLoading : false
+                            }
                             icon={
-                                <>
-                                    <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white" style={{ backgroundColor: stat.bgColor }}>
-                                        <stat.icon className="w-5 h-5" />
-                                    </div>
-                                </>
+                                <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white shrink-0" style={{ backgroundColor: stat.bgColor }}>
+                                    <stat.icon className="w-5 h-5" />
+                                </div>
                             }
                             subtitle={
-                                <span className="text-xs leading-[125%]">
-                                    {stat.description}
-                                </span>
+                                <span className="text-xs leading-[125%]">{stat.description}</span>
                             }
                         />
                     ))}
@@ -240,8 +158,8 @@ function People() {
                                 </TabsTrigger>
                             </PermissionGuard>
                         </TabsList>
-                        
-                        <div id="tab-actions" className="flex items-center gap-2"></div>
+
+                        <div id="tab-actions" className="flex items-center gap-2" />
                     </div>
 
                     <TabsContent value="all-users" className="mt-6">
@@ -258,7 +176,7 @@ function People() {
                 </Tabs>
             </div>
 
-            <InviteEmployeesWarningModal 
+            <InviteEmployeesWarningModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
                 onInviteLeaders={() => {
@@ -267,17 +185,15 @@ function People() {
                 }}
                 onContinue={() => {
                     setIsInviteModalOpen(false);
-                    // If directory already has data, go straight to the selection
-                    // screen (directory step). Otherwise send them to upload first.
-                    if (hasDirectoryData) {
-                        router.push("/people/invite/employees");
-                    } else {
-                        router.push("/people/invite/employees?step=upload");
-                    }
+                    router.push(
+                        hasDirectoryData
+                            ? "/people/invite/employees"
+                            : "/people/invite/employees?step=upload"
+                    );
                 }}
             />
         </div>
     );
 }
 
-export default withPermissions(People, ["read:users", "read:roles", "read:departments"])
+export default withPermissions(People, ["read:users", "read:roles", "read:departments"]);

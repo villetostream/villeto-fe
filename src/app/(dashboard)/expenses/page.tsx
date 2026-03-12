@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import NewExpenseButtonTrigger from "@/components/expenses/NewExpenseButtonTrigger";
+import NewExpenseHeaderAction from "@/components/expenses/NewExpenseHeaderAction";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import ExpenseTable from "@/components/expenses/table/ExpenseTable";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
@@ -224,7 +224,7 @@ export default function Reimbursements() {
               <TabsTrigger value="company-expenses" className="cursor-pointer">Company Expenses</TabsTrigger>
               <TabsTrigger value="personal-expenses" className="cursor-pointer">Personal Expenses</TabsTrigger>
             </TabsList>
-            {outerTab === "personal-expenses" && <NewExpenseButtonTrigger />}
+            {outerTab === "personal-expenses" && <NewExpenseHeaderAction />}
           </div>
           <TabsContent value="personal-expenses">
             <PermissionGuard requiredPermissions={[]}>
@@ -453,7 +453,7 @@ export default function Reimbursements() {
         <div className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
             <h2 className="text-xl font-semibold text-gray-900">Personal Expenses</h2>
-            <NewExpenseButtonTrigger />
+            <NewExpenseHeaderAction />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
             <StatsCard
