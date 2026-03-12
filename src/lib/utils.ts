@@ -70,6 +70,12 @@ const ACTION_LABELS: Record<string, string> = {
 
 export function formatPermissionName(name: string): string {
   if (!name) return name;
+
+  // Specific overrides for clarity as requested by the user
+  const lowerName = name.toLowerCase();
+  if (lowerName === "read:role" || lowerName === "view:role") return "View Role Details";
+  if (lowerName === "read:user" || lowerName === "view:user") return "View User Details";
+
   // Handle "action:resource" pattern (e.g. "read:users" → "View Users")
   if (name.includes(":")) {
     const [action, resource] = name.split(":", 2);

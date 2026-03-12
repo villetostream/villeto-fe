@@ -1,5 +1,4 @@
 import { PenLine } from "lucide-react";
-import NewExpenseButtonTrigger from "./NewExpenseButtonTrigger";
 
 interface EmptyStateProps {
   title?: string;
@@ -29,7 +28,11 @@ const ExpenseEmptyState = ({
         <p className="text-muted-foreground mb-8">
           {subtitle}
         </p>
-        {showButton && <NewExpenseButtonTrigger />}
+        {showButton && (
+          <p className="text-sm text-muted-foreground italic">
+            Use the "New Report" button in the header to get started.
+          </p>
+        )}
       </div>
     </>
   );

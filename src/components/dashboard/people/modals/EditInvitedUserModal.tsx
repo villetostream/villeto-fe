@@ -97,28 +97,28 @@ export function EditInvitedUserModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] rounded-lg max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
                 <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-                    <DialogTitle>Edit User Details</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold text-gray-800">Edit User Details</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
                     <div className="space-y-5 overflow-y-auto px-6 py-4 flex-1">
                     {/* Email — read-only from directory */}
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium">Email Address</Label>
-                        <Input value={user.email} readOnly className="bg-gray-50 cursor-default" />
-                        <p className="text-xs text-gray-400">From directory · read-only</p>
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</Label>
+                        <Input value={user.email} readOnly className="h-11 bg-gray-50 border-gray-200 text-gray-600 cursor-default" />
+                        <p className="text-[11px] text-gray-400">From directory · read-only</p>
                     </div>
 
                     {/* Name — read-only from directory */}
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium">Name</Label>
-                        <Input value={user.name} readOnly className="bg-gray-50 cursor-default" />
-                        <p className="text-xs text-gray-400">From directory · read-only</p>
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</Label>
+                        <Input value={user.name} readOnly className="h-11 bg-gray-50 border-gray-200 text-gray-600 cursor-default" />
+                        <p className="text-[11px] text-gray-400">From directory · read-only</p>
                     </div>
 
                     {/* Role — editable, loaded from API */}
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium">
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             User Type/Role<span className="text-red-500">*</span>
                         </Label>
                         <Controller
@@ -136,7 +136,7 @@ export function EditInvitedUserModal({
                                     }}
                                     value={field.value}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-11 border-gray-200 focus:ring-[#03C3A6]">
                                         <SelectValue
                                             placeholder={rolesApi.isLoading ? "Loading roles…" : "Select Role"}
                                         />
@@ -161,7 +161,7 @@ export function EditInvitedUserModal({
                                         )}
                                         <SelectItem
                                             value="__create_custom"
-                                            className="text-primary font-medium border-t mt-1 cursor-pointer"
+                                            className="text-[#03C3A6] font-medium border-t mt-1 cursor-pointer"
                                         >
                                             + Create custom role
                                         </SelectItem>
@@ -174,9 +174,9 @@ export function EditInvitedUserModal({
                     {/* Department — read-only, only shown if present */}
                     {user.department && (
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium">Department</Label>
-                            <Input value={user.department} readOnly className="bg-gray-50 cursor-default" />
-                            <p className="text-xs text-gray-400">From directory · read-only</p>
+                            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</Label>
+                            <Input value={user.department} readOnly className="h-11 bg-gray-50 border-gray-200 text-gray-600 cursor-default" />
+                            <p className="text-[11px] text-gray-400">From directory · read-only</p>
                         </div>
                     )}
 
@@ -184,10 +184,10 @@ export function EditInvitedUserModal({
                     {isOwnerRole && (
                         <div className="space-y-4 pt-1">
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium">
+                                <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Percentage Ownership<span className="text-red-500">*</span>
                                 </Label>
-                                <span className={`font-semibold ${(ownershipValue ?? 0) >= MAX_OWNERSHIP ? "text-red-500" : "text-[#00BFA5]"}`}>
+                                <span className={`text-sm font-semibold ${(ownershipValue ?? 0) >= MAX_OWNERSHIP ? "text-red-500" : "text-[#03C3A6]"}`}>
                                     {ownershipValue ?? 0}%
                                     {(ownershipValue ?? 0) >= MAX_OWNERSHIP && " (Max)"}
                                 </span>
@@ -218,7 +218,7 @@ export function EditInvitedUserModal({
                             {/* Compliance note */}
                             <div className="flex items-start space-x-3 p-3 bg-[#E0F2F1] rounded-lg">
                                 <div className="flex items-center h-5">
-                                    <div className="h-4 w-4 rounded bg-[#00BFA5] flex items-center justify-center">
+                                    <div className="h-4 w-4 rounded bg-[#03C3A6] flex items-center justify-center">
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
@@ -234,10 +234,9 @@ export function EditInvitedUserModal({
                                     </div>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium text-gray-900">
+                                    <Label className="text-sm font-semibold text-gray-900">
                                         No Single Owner holds 25% or more
-                                    </Label>
-                                    <p className="text-xs text-gray-500">
+                                    </Label>                                   <p className="text-xs text-gray-500">
                                         We ask for this to stay compliant with financial regulations
                                     </p>
                                 </div>
@@ -249,14 +248,18 @@ export function EditInvitedUserModal({
                     <div className="pt-2 border-t">
                         <div className="flex items-center justify-between mt-3">
                             <div>
-                                <p className="text-sm font-medium">Issue Corporate Card</p>
+                                <p className="text-sm font-semibold text-gray-800">Issue Corporate Card</p>
                                 <p className="text-xs text-gray-500">Automatically issue a corporate card upon account creation</p>
                             </div>
                             <Controller
                                 control={control}
                                 name="issueCard"
                                 render={({ field }) => (
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                    <Switch 
+                                        checked={field.value} 
+                                        onCheckedChange={field.onChange} 
+                                        className="data-[state=checked]:bg-[#03C3A6]"
+                                    />
                                 )}
                             />
                         </div>
@@ -266,10 +269,10 @@ export function EditInvitedUserModal({
 
                     {/* Sticky footer buttons — outside scroll area */}
                     <div className="flex justify-end gap-3 px-6 py-4 border-t flex-shrink-0">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} className="h-11 rounded-lg border-gray-800 text-gray-800 hover:bg-gray-50 font-medium">
                             Cancel
                         </Button>
-                        <Button type="submit" className="bg-[#00BFA5] hover:bg-[#00BFA5]/90">
+                        <Button type="submit" className="h-11 rounded-lg bg-[#03C3A6] hover:bg-[#03C3A6]/90 text-white font-medium px-8 transition-colors">
                             Save Changes
                         </Button>
                     </div>

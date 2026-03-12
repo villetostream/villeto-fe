@@ -39,8 +39,8 @@ export function UserProfileModal({ isOpen, onClose, userId }: UserProfileModalPr
                     {/* Header */}
                     <div className="flex justify-between items-start">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">{user?.firstName} {user?.lastName}</h2>
-                            <p className="text-slate-500 text-sm mt-1">View and manage employee details and permissions</p>
+                            <h2 className="text-2xl font-semibold text-gray-800">{user?.firstName} {user?.lastName}</h2>
+                            <p className="text-gray-500 text-sm mt-1">View and manage employee details and permissions</p>
                         </div>
                         <Button 
                             variant="ghost" 
@@ -56,9 +56,9 @@ export function UserProfileModal({ isOpen, onClose, userId }: UserProfileModalPr
 
                     <Tabs defaultValue="overview" className="w-full">
                         <TabsList className="bg-slate-100/50 p-1 w-full max-w-sm mx-auto rounded-xl mt-4">
-                            <TabsTrigger value="overview" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Overview</TabsTrigger>
-                            <TabsTrigger value="activity" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Activity</TabsTrigger>
-                            <TabsTrigger value="card" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Card</TabsTrigger>
+                            <TabsTrigger value="overview" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-800 text-gray-500 font-medium transition-all">Overview</TabsTrigger>
+                            <TabsTrigger value="activity" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-800 text-gray-500 font-medium transition-all">Activity</TabsTrigger>
+                            <TabsTrigger value="card" className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-800 text-gray-500 font-medium transition-all">Card</TabsTrigger>
                         </TabsList>
 
                         <div className="mt-6">
@@ -78,12 +78,12 @@ export function UserProfileModal({ isOpen, onClose, userId }: UserProfileModalPr
                     <div className="flex justify-center gap-4 pt-6 border-t border-slate-100">
                         <Button 
                             variant="destructive" 
-                            className="bg-[#F04438] hover:bg-red-600 rounded-xl px-8 h-12 font-medium"
+                            className="bg-[#FC6A6A] hover:bg-red-600 rounded-xl px-8 h-12 font-medium border-0 shadow-none transition-all"
                         >
                             Deactivate User
                         </Button>
                         <Button 
-                            className="bg-primary hover:bg-primary/90 text-white rounded-xl px-8 h-12 font-medium"
+                            className="bg-[#03C3A6] hover:bg-[#03C3A6]/90 text-white rounded-xl px-8 h-12 font-medium border-0 shadow-none transition-all"
                         >
                             Save Changes
                         </Button>
@@ -100,44 +100,44 @@ function OverviewTab({ user }: { user?: AppUser }) {
             <div className="grid grid-cols-2 gap-y-6">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400 uppercase tracking-wider">Role</span>
+                        <span className="text-xs text-gray-400 uppercase tracking-wider">Role</span>
                         <Button variant="ghost" size="icon" className="h-4 w-4 p-0 text-primary">
                             <Edit2 className="h-3 w-3" />
                         </Button>
                     </div>
-                    <p className="text-base font-medium text-slate-800 capitalize leading-tight">
+                    <p className="text-base font-medium text-gray-800 capitalize leading-tight">
                         {user?.position?.replace(/_/g, ' ').toLowerCase() || "Manager"}
                     </p>
                 </div>
                 <div className="space-y-1">
-                    <span className="text-xs text-slate-400 uppercase tracking-wider block text-right">Status</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider block text-right">Status</span>
                     <div className="flex justify-end">
                         <Badge variant="active" className="bg-emerald-50 text-emerald-600 border-none px-3 py-1 flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#03C3A6]" />
                             <span className="text-xs font-medium">Active</span>
                         </Badge>
                     </div>
                 </div>
                 <div className="space-y-1">
-                    <span className="text-xs text-slate-400 uppercase tracking-wider">Full name</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">Full name</span>
                     <p className="text-base font-medium text-slate-800">{user?.firstName} {user?.lastName}</p>
                 </div>
                 <div className="space-y-1 text-right">
-                    <span className="text-xs text-slate-400 uppercase tracking-wider">Email address</span>
-                    <p className="text-base font-medium text-slate-800">{user?.email}</p>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">Email address</span>
+                    <p className="text-base font-medium text-gray-800">{user?.email}</p>
                 </div>
                 <div className="space-y-1">
-                    <span className="text-xs text-slate-400 uppercase tracking-wider">Date invited</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">Date invited</span>
                     <p className="text-base font-medium text-slate-800">2023-01-10</p>
                 </div>
                 <div className="space-y-1 text-right">
-                    <span className="text-xs text-slate-400 uppercase tracking-wider">Last login</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">Last login</span>
                     <p className="text-base font-medium text-slate-800">2023-01-10</p>
                 </div>
             </div>
 
-            <div className="p-6 bg-white border border-slate-100 rounded-2xl space-y-4 shadow-sm shadow-slate-200/50">
-                <h3 className="text-base font-semibold text-slate-900">Permissions</h3>
+            <div className="p-6 bg-white border border-gray-100 rounded-2xl space-y-4 shadow-sm shadow-gray-200/50">
+                <h3 className="text-base font-semibold text-gray-800">Permissions</h3>
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -161,7 +161,7 @@ function ActivityTab({ user }: { user?: AppUser }) {
     return (
         <div className="space-y-8">
             <div className="space-y-6">
-                <h3 className="text-base font-semibold text-slate-900">Card Limit</h3>
+                <h3 className="text-base font-semibold text-gray-800">Card Limit</h3>
                 <div className="space-y-4">
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500">Monthly Limit</span>
@@ -187,7 +187,7 @@ function ActivityTab({ user }: { user?: AppUser }) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-base font-semibold text-slate-900">Latest Transactions</h3>
+                <h3 className="text-base font-semibold text-gray-800">Latest Transactions</h3>
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
                         <div key={i} className="flex justify-between items-center p-4 bg-white border border-slate-100 rounded-2xl">
@@ -213,7 +213,7 @@ function CardTab({ user }: { user?: AppUser }) {
             
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8">
                 {/* Virtual Card */}
-                <div className="relative aspect-[1.6/1] bg-gradient-to-br from-[#0FA68E] to-[#0D9488] rounded-2xl p-6 text-white overflow-hidden shadow-xl shadow-teal-900/10">
+                <div className="relative aspect-[1.6/1] bg-gradient-to-br from-[#03C3A6] to-[#02b395] rounded-2xl p-6 text-white overflow-hidden shadow-xl shadow-[#03C3A6]/10">
                     {/* Decorative pattern */}
                     <svg className="absolute top-0 right-0 h-full w-full opacity-10 pointer-events-none" viewBox="0 0 100 100">
                         <circle cx="80" cy="20" r="40" fill="none" stroke="currentColor" strokeWidth="0.5" />

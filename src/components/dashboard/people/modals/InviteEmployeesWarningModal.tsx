@@ -48,15 +48,15 @@ export function InviteEmployeesWarningModal({
                     </svg>
                 </Button>
 
-                <div className="h-28 w-28 bg-[#F59E0B] rounded-full flex items-center justify-center mb-2 shadow-sm">
-                    <span className="text-white text-7xl font-bold">!</span>
+                <div className="h-28 w-28 bg-[#FCAC12] rounded-full flex items-center justify-center mb-2 shadow-sm">
+                    <span className="text-white text-7xl font-semibold">!</span>
                 </div>
                 
                 <div className="space-y-3 px-4">
-                    <DialogTitle className="text-2xl font-bold text-center text-[#1D2939]">
+                    <DialogTitle className="text-2xl font-semibold text-center text-gray-800">
                         Managers & Leadership
                     </DialogTitle>
-                    <DialogDescription className="text-center text-[#475467] text-base leading-relaxed">
+                    <DialogDescription className="text-center text-gray-500 text-sm leading-relaxed">
                         Inviting Admins and other leadership before inviting employees helps the system easily assign managers to each employee
                     </DialogDescription>
                 </div>
@@ -64,14 +64,14 @@ export function InviteEmployeesWarningModal({
                 <div className="flex gap-4 w-full mt-4">
                     <Button 
                         onClick={onInviteLeaders} 
-                        className="flex-1 bg-[#00BFA5] hover:bg-[#00BFA5]/90 text-white font-semibold h-12 text-base rounded-lg"
+                        className="flex-1 bg-[#03C3A6] hover:bg-[#03C3A6]/90 text-white font-medium h-12 text-sm rounded-lg border-0 shadow-none transition-all"
                     >
                         Invite Leaders
                     </Button>
                     <Button 
                         variant="outline" 
                         onClick={onContinue}
-                        className="flex-1 border-[#00BFA5] text-[#00BFA5] hover:bg-[#00BFA5]/5 hover:text-[#00BFA5] font-semibold h-12 text-base rounded-lg"
+                        className="flex-1 border-[#03C3A6] text-[#03C3A6] hover:bg-[#03C3A6]/5 hover:text-[#03C3A6] font-medium h-12 text-sm rounded-lg"
                     >
                         Continue
                     </Button>
