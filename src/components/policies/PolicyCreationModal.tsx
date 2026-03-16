@@ -87,6 +87,72 @@ function SelectDropdown({
   );
 }
 
+/* ─── Multi-Select Dropdown ───────────────────────────────── */
+
+function MultiSelectDropdown({
+  placeholder,
+  values,
+  onToggle,
+  options,
+  renderExtra,
+  isLoading = false,
+}: {
+  placeholder: string;
+  values: string[];
+  onToggle: (val: string) => void;
+  options: DropdownOption[];
+  renderExtra?: (close: () => void) => React.ReactNode;
+  isLoading?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full h-[54px] rounded-xl border border-border bg-white px-4 flex items-center justify-between text-sm cursor-pointer focus:outline-none focus:border-primary/60 hover:border-primary/40 transition-all disabled:opacity-50"
+        disabled={isLoading}
+      >
+        <span className="text-muted-foreground">
+          {isLoading ? "Loading..." : placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-border rounded-[1.25rem] shadow-xl z-50 p-2 max-h-[280px] overflow-y-auto custom-scrollbar">
+            {options.filter((opt) => !values.includes(opt.value)).length > 0
+              ? options
+                  .filter((opt) => !values.includes(opt.value))
+                  .map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onToggle(opt.value); setOpen(false); }}
+                  className="w-full text-left px-4 py-3 rounded-lg transition-all flex items-center justify-between gap-2 mb-1 last:mb-0 cursor-pointer text-foreground hover:bg-primary/5"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium tracking-tight">{opt.label}</span>
+                    {opt.subLabel && (
+                      <span className="text-xs text-muted-foreground">{opt.subLabel}</span>
+                    )}
+                  </div>
+                </button>
+              ))
+              : (
+              <div className="px-3.5 py-4 text-sm text-muted-foreground italic text-center">No options found</div>
+            )}
+            {renderExtra?.(() => setOpen(false))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── Warning Select ──────────────────────────────────────── */
 
 function WarningSelect({ value, onChange }: { value: string, onChange: (v: string) => void }) {
@@ -171,17 +237,18 @@ function NumberInput({ value, onChange }: { value: string, onChange: (v: string)
 export default function PolicyCreationModal({
   open,
   onOpenChange,
-  onSuccess, // NEW: optional success callback
+  onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (data: CreatedPolicyData) => void; // NEW
+  onSuccess?: (data: CreatedPolicyData) => void;
 }) {
   const [step, setStep] = useState(1);
   const [policyName, setPolicyName] = useState("");
 
   // Step 2 State
-  const [expenseType, setExpenseType] = useState("");
+  // ── CHANGED: expenseType (string) → expenseTypes (string[]) ──
+  const [expenseTypes, setExpenseTypes] = useState<string[]>([]);
   const [applyTo, setApplyTo] = useState("all");
   const [selectedRole, setSelectedRole] = useState("");
   const [locations, setLocations] = useState(["Global"]);
@@ -212,7 +279,6 @@ export default function PolicyCreationModal({
   const roleOptions = useMemo<DropdownOption[]>(() => {
     const roles = rolesApi.data?.data ?? [];
     return roles
-      .filter((r: any) => !r.name?.toLowerCase().includes("employee"))
       .map((r: any) => {
         const formattedName = r.name
           ? r.name.replace(/_/g, " ").charAt(0).toUpperCase() + r.name.replace(/_/g, " ").slice(1).toLowerCase()
@@ -235,8 +301,17 @@ export default function PolicyCreationModal({
       }));
   }, [directoryApi.data?.data]);
 
+  // ── CHANGED: toggle helper for multi-select ──
+  const toggleExpenseType = (val: string) => {
+    setExpenseTypes((prev) =>
+      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+    );
+  };
+
   const reset = () => {
-    setStep(1); setPolicyName(""); setExpenseType("");
+    setStep(1); setPolicyName("");
+    // ── CHANGED: reset to empty array ──
+    setExpenseTypes([]);
     setApplyTo("all"); setSelectedRole(""); setDailyLimit("");
     setLimitWarning(""); setReceiptAbove(""); setReceiptWarning("");
     setApprovers([""]);
@@ -247,15 +322,14 @@ export default function PolicyCreationModal({
 
   const handleClose = () => { onOpenChange?.(false); reset(); };
 
-  // MODIFIED: handleConfirm now calls onSuccess before closing
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 1000));
-      // NEW: fire callback with policy data so parent can update its list
       onSuccess?.({
         name: policyName,
-        category: expenseType || "General",
+        // ── CHANGED: join array for the callback ──
+        category: expenseTypes.length > 0 ? expenseTypes.join(", ") : "General",
         appliedTo: applyTo === "all" ? "Employee" : (selectedRole || "Employee"),
         dailyLimit,
         receiptAbove,
@@ -354,14 +428,16 @@ export default function PolicyCreationModal({
                   {/* ── STEP 2 content ── */}
                   {step === 2 && (
                     <div className="space-y-7">
+
+                      {/* ── CHANGED: multi-select expense dropdown + chips ── */}
                       <div className="space-y-3">
                         <label className="text-xs font-medium text-gray-500 block uppercase tracking-wider">
                           Which type of expense should this policy apply to?
                         </label>
-                        <SelectDropdown
+                        <MultiSelectDropdown
                           placeholder="Select expense"
-                          value={expenseType}
-                          onChange={setExpenseType}
+                          values={expenseTypes}
+                          onToggle={toggleExpenseType}
                           options={dummyExpenseOptions}
                           renderExtra={(close) => (
                             <>
@@ -376,12 +452,34 @@ export default function PolicyCreationModal({
                             </>
                           )}
                         />
+                        {/* Selected chips */}
+                        {expenseTypes.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {expenseTypes.map((type) => (
+                              <div
+                                key={type}
+                                className="h-8 pl-3.5 pr-2.5 rounded-full border border-border bg-white flex items-center gap-2 text-sm font-medium text-gray-700"
+                              >
+                                {type}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpenseType(type)}
+                                  className="w-4 h-4 rounded-full flex items-center justify-center bg-muted/50 hover:bg-red-50 hover:text-red-500 transition-all border border-border/50"
+                                >
+                                  <X className="w-2.5 h-2.5" strokeWidth={3} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
+                      {/* ── CHANGED: radio button style apply-to ── */}
                       <div className="space-y-3">
                         <label className="text-xs font-medium text-gray-500 block uppercase tracking-wider">
                           Who should this policy apply to?
                         </label>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {[
                             { val: "all", label: "All Employees" },
                             { val: "role", label: "Specific role" },
@@ -390,17 +488,31 @@ export default function PolicyCreationModal({
                               key={val}
                               type="button"
                               onClick={() => setApplyTo(val)}
-                              className={`w-full h-[54px] rounded-xl border px-4 text-left text-sm transition-all cursor-pointer ${
-                                applyTo === val
-                                  ? "border-[#03C3A6] bg-[#03C3A6]/[0.04] text-gray-900 font-medium shadow-sm"
-                                  : "border-border text-gray-500 hover:border-[#03C3A6]/40 font-medium"
-                              }`}
+                              className="flex items-center gap-3 cursor-pointer py-1.5 group w-fit"
                             >
-                              {label}
+                              {/* Outer ring */}
+                              <span
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                  applyTo === val
+                                    ? "border-[#03C3A6]"
+                                    : "border-gray-300 group-hover:border-[#03C3A6]/50"
+                                }`}
+                              >
+                                {/* Inner filled dot */}
+                                <span
+                                  className={`rounded-full bg-[#03C3A6] transition-all duration-150 ${
+                                    applyTo === val ? "w-2.5 h-2.5" : "w-0 h-0"
+                                  }`}
+                                />
+                              </span>
+                              <span className={`text-sm font-medium transition-colors ${applyTo === val ? "text-gray-900" : "text-gray-600"}`}>
+                                {label}
+                              </span>
                             </button>
                           ))}
                         </div>
                       </div>
+
                       {applyTo === "role" && (
                         <div className="space-y-3 mt-4">
                           <label className="text-xs font-medium text-gray-500 block uppercase tracking-wider">Role</label>
@@ -413,6 +525,7 @@ export default function PolicyCreationModal({
                           />
                         </div>
                       )}
+
                       <div className="space-y-3">
                         <label className="text-xs font-medium text-gray-500 block uppercase tracking-wider">
                           Location Filter (Optional)
@@ -559,7 +672,10 @@ export default function PolicyCreationModal({
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-bold text-[#03C3A6] uppercase tracking-widest mb-2">Expense Category</p>
-                            <p className="text-base font-semibold text-gray-800 capitalize">{expenseType || "General"}</p>
+                            {/* ── CHANGED: show all selected types ── */}
+                            <p className="text-base font-semibold text-gray-800 capitalize">
+                              {expenseTypes.length > 0 ? expenseTypes.join(", ") : "General"}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs font-bold text-[#03C3A6] uppercase tracking-widest mb-2">Location</p>
@@ -623,7 +739,8 @@ export default function PolicyCreationModal({
                         else if (step === 4) setStep(5);
                         else if (step === 5) handleConfirm();
                       }}
-                      disabled={isLoading || (step === 2 && (!expenseType || (applyTo === "role" && !selectedRole))) || (step === 4 && approvers.filter(Boolean).length === 0)}
+                      // ── CHANGED: disabled check uses expenseTypes.length ──
+                      disabled={isLoading || (step === 2 && (expenseTypes.length === 0 || (applyTo === "role" && !selectedRole))) || (step === 4 && approvers.filter(Boolean).length === 0)}
                       className="h-13 px-12 rounded-[18px] bg-[#03C3A6] hover:bg-[#03C3A6]/90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 text-primary-foreground font-medium text-sm min-w-[160px] transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-[#03C3A6]/20"
                     >
                       {isLoading ? (
