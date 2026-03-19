@@ -434,11 +434,13 @@ function RuleCard({
 function Preview({
   policyName, categories, scope, selectedRoles, roleOptions,
   selectedDepts, scopeDeptForRole, scopeRoleForDept,
+  departmentOptions,
   locations, rules, approvers,
 }: {
   policyName: string; categories: string[]; scope: "all" | "role" | "dept";
   selectedRoles: string[]; roleOptions: DropdownOption[];
   selectedDepts: string[]; scopeDeptForRole: string[]; scopeRoleForDept: string[];
+  departmentOptions: DropdownOption[];
   locations: string[]; rules: PolicyRule[]; approvers: string[];
 }) {
   // Human-readable scope sentence
@@ -446,10 +448,12 @@ function Preview({
     if (scope === "all") return "All employees, all departments";
     if (scope === "role") {
       const roles = selectedRoles.map((r) => roleOptions.find((o) => o.value === r)?.label ?? r).join(", ");
-      const dept = scopeDeptForRole.length > 0 ? scopeDeptForRole.join(", ") : "All departments";
+      const dept = scopeDeptForRole.length > 0
+        ? scopeDeptForRole.map((d) => departmentOptions.find((o) => o.value === d)?.label ?? d).join(", ")
+        : "All departments";
       return `${roles} · ${dept}`;
     }
-    const depts = selectedDepts.join(", ");
+    const depts = selectedDepts.map((d) => departmentOptions.find((o) => o.value === d)?.label ?? d).join(", ");
     const role = scopeRoleForDept.length > 0 ? scopeRoleForDept.map((r) => roleOptions.find((o) => o.value === r)?.label ?? r).join(", ") : "All employees";
     return `${depts} · ${role}`;
   })();
@@ -1048,6 +1052,7 @@ export default function PolicyCreationModal({
                     selectedDepts={selectedDepts}
                     scopeDeptForRole={scopeDeptForRole}
                     scopeRoleForDept={scopeRoleForDept}
+                    departmentOptions={departmentOptions}
                     locations={locations}
                     rules={rules}
                     approvers={approvers}
