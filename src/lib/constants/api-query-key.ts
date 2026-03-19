@@ -9,5 +9,6 @@ export const QUERY_KEYS = {
   INVITED_USERS: "invited-users",
   DIRECTORY_USERS: "directory-users",
   USER: "user",
+  EXPENSE_CATEGORIES: "expense-categories",
   DIRECTORY: "directory"
 } as const;
