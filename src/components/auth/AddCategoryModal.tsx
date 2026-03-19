@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useCreateExpenseCategoryApi } from "@/actions/companies/create-expense-category";
+import { useGetExpenseCategoriesApi } from "@/actions/companies/get-expense-categories";
 
 interface AddCategoryModalProps {
     open: boolean;
@@ -26,17 +28,24 @@ export default function AddCategoryModal({
     onSkip,
     cancelText = "Cancel",
 }: AddCategoryModalProps) {
-    const [categories, setCategories] = useState([
-        { id: 1, name: "Meals", description: "Food related expenses" },
-        { id: 2, name: "Transportation", description: "Taxi or fuel" }
-    ]);
+    const [categories, setCategories] = useState<{ id: number | string; name: string; description: string }[]>([]);
+
+    const categoriesQuery = useGetExpenseCategoriesApi({ enabled: open });
+
+    // Sync fetched categories into local state (only on first load)
+    const [hasSynced, setHasSynced] = useState(false);
+    if (categoriesQuery.data?.data && !hasSynced) {
+        setCategories(categoriesQuery.data.data);
+        setHasSynced(true);
+    }
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [hasInteracted, setHasInteracted] = useState(false);
+
+    const createCategoryMutation = useCreateExpenseCategoryApi();
 
     const openAddForm = () => {
         setName("");
@@ -46,7 +55,7 @@ export default function AddCategoryModal({
         setHasInteracted(true);
     };
 
-    const openEditForm = (cat: any) => {
+    const openEditForm = (cat: { id: number; name: string; description: string }) => {
         setName(cat.name);
         setDescription(cat.description);
         setEditingId(cat.id);
@@ -63,27 +72,35 @@ export default function AddCategoryModal({
             return;
         }
 
-        setIsLoading(true);
+        if (editingId) {
+            // For edits, just update locally (no re-POST for existing items)
+            setCategories(categories.map(c =>
+                c.id === editingId ? { ...c, name, description } : c
+            ));
+            toast.success("Category updated!");
+            setShowAddForm(false);
+            setEditingId(null);
+            return;
+        }
+
+        // POST new category to API
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            if (editingId) {
-                setCategories(categories.map(c => 
-                    c.id === editingId ? { ...c, name, description } : c
-                ));
-                toast.success("Category updated!");
-            } else {
-                setCategories([...categories, { id: Date.now(), name, description }]);
-                toast.success("Category added!");
-            }
+            await createCategoryMutation.mutateAsync({
+                categories: [{ name: name.trim(), description: description.trim() }],
+            });
+            setCategories(prev => [...prev, { id: Date.now(), name: name.trim(), description: description.trim() }]);
+            toast.success("Category added!");
             setShowAddForm(false);
         } catch (error: any) {
-            console.error(error);
-            toast.error("An error occurred");
-        } finally {
-            setIsLoading(false);
-            setEditingId(null);
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                "Failed to add category";
+            toast.error(errorMessage);
         }
     };
+
+    const isLoading = createCategoryMutation.isPending;
 
     return (
         <>
@@ -91,8 +108,8 @@ export default function AddCategoryModal({
                 if (!val) return;
                 onOpenChange(val);
             }}>
-                <DialogContent 
-                    showCloseButton={false} 
+                <DialogContent
+                    showCloseButton={false}
                     className="sm:max-w-2xl rounded-[2rem] p-0 overflow-hidden border-0 shadow-2xl bg-[#fdfdfd]"
                     onInteractOutside={(e) => e.preventDefault()}
                 >
@@ -103,7 +120,7 @@ export default function AddCategoryModal({
                                 Let's get your organization set up.
                             </p>
                         </div>
-                        
+
                         <div className="h-px bg-gray-200/60 w-full mb-8"></div>
 
                         <div className="mb-6">
@@ -120,20 +137,31 @@ export default function AddCategoryModal({
                                 <div className="w-16"></div>
                             </div>
                             <div className="bg-white">
-                                {categories.map((c, idx) => (
-                                    <div key={c.id} className={`flex px-6 py-4 items-center text-sm ${idx !== categories.length - 1 ? 'border-b border-gray-100/60' : ''}`}>
-                                        <div className="flex-1 font-medium text-gray-900">{c.name}</div>
-                                        <div className="flex-[2] text-gray-500 pl-2">{c.description}</div>
-                                        <div className="w-16 flex justify-end gap-3 text-gray-400">
-                                            <button onClick={() => openEditForm(c)} className="hover:text-gray-700 transition-colors">
-                                                <Pencil className="w-4 h-4 stroke-[1.5]" />
-                                            </button>
-                                            <button onClick={() => handleDelete(c.id)} className="text-red-400 hover:text-red-500 transition-colors">
-                                                <Trash2 className="w-4 h-4 stroke-[1.5]" />
-                                            </button>
-                                        </div>
+                                {categoriesQuery.isLoading ? (
+                                    <div className="flex items-center justify-center px-6 py-8 gap-2 text-sm text-gray-400">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Loading categories...
                                     </div>
-                                ))}
+                                ) : categories.length === 0 ? (
+                                    <div className="px-6 py-6 text-sm text-gray-400 italic text-center">
+                                        No categories added yet. Add one below.
+                                    </div>
+                                ) : (
+                                    categories.map((c, idx) => (
+                                        <div key={c.id} className={`flex px-6 py-4 items-center text-sm ${idx !== categories.length - 1 ? 'border-b border-gray-100/60' : ''}`}>
+                                            <div className="flex-1 font-medium text-gray-900">{c.name}</div>
+                                            <div className="flex-[2] text-gray-500 pl-2">{c.description}</div>
+                                            <div className="w-16 flex justify-end gap-3 text-gray-400">
+                                                <button onClick={() => openEditForm(c)} className="hover:text-gray-700 transition-colors">
+                                                    <Pencil className="w-4 h-4 stroke-[1.5]" />
+                                                </button>
+                                                <button onClick={() => handleDelete(c.id as number)} className="text-red-400 hover:text-red-500 transition-colors">
+                                                    <Trash2 className="w-4 h-4 stroke-[1.5]" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -162,15 +190,15 @@ export default function AddCategoryModal({
             </Dialog>
 
             <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-                <DialogContent 
+                <DialogContent
                     showCloseButton={false}
                     className="sm:max-w-[480px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-2xl bg-white"
                 >
                     <div className="p-8 pb-10">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{editingId ? "Edit Category" : "Add Category"}</h2>
-                            <button 
-                                onClick={() => setShowAddForm(false)} 
+                            <button
+                                onClick={() => setShowAddForm(false)}
                                 className="bg-[#f0f0f0] p-2.5 rounded-full hover:bg-gray-200 transition-colors text-gray-900"
                             >
                                 <X className="w-4 h-4 stroke-[2.5]" />
