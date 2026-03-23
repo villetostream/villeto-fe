@@ -34,8 +34,8 @@ export default function Reimbursements() {
   const user = useAuthStore((state) => state.user);
   // Users with no role OR position=EMPLOYEE only see personal expenses
   const canViewCompanyExpenses =
-    !!user?.role &&
-    (user.role as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
+    !!user?.villetoRole &&
+    (user.villetoRole as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
     (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
 
   const initialOuterTab =

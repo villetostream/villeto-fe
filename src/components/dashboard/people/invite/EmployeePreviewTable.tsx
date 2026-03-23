@@ -48,6 +48,7 @@ export interface EmployeeData {
     department_name: string;
     department_external_id: string;
     manager_id: string;
+    role_name: string;
 }
 
 interface EmployeePreviewTableProps {
@@ -159,6 +160,7 @@ export default function EmployeePreviewTable({
                                     <TableHead className="font-semibold">department_name</TableHead>
                                     <TableHead className="font-semibold">department_external_id</TableHead>
                                     <TableHead className="font-semibold">manager_id</TableHead>
+                                    <TableHead className="font-semibold">role_name</TableHead>
                                     <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -180,6 +182,7 @@ export default function EmployeePreviewTable({
                                             <TableCell>{employee.department_name || "—"}</TableCell>
                                             <TableCell>{employee.department_external_id || "—"}</TableCell>
                                             <TableCell>{employee.manager_id || "—"}</TableCell>
+                                            <TableCell>{employee.role_name || "—"}</TableCell>
                                             <TableCell>
                                                 <Button
                                                     variant="ghost"

@@ -44,8 +44,7 @@ export const useHydrateOnboardingData = () => {
             firstName: owner.user?.firstName || "",
             lastName: owner.user?.lastName || "",
             email: owner.user?.email || "",
-            role: owner.user?.role || "",
-            ownershipPercentage: owner.ownershipPercentage,
+            role: owner.user?.villetoRole?.name || owner.user?.role || "",
             phone: owner.user?.phone || undefined,
         }));
 
@@ -54,8 +53,7 @@ export const useHydrateOnboardingData = () => {
             firstName: officer.user?.firstName || "",
             lastName: officer.user?.lastName || "",
             email: officer.user?.email || "",
-            role: officer.user?.role || "",
-            phone: officer.user?.phone || undefined,
+            role: officer.user?.villetoRole?.name || officer.user?.role || "",
         }));
 
         const allProfiles = [...ownerProfiles, ...officerProfiles];

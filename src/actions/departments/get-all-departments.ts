@@ -36,8 +36,7 @@ export interface AppUser {
     company?: string | null;
     companyId?: string | null;
     department?: string | null;
-    departmentId?: string | null;
-    role?: Role
+    villetoRole?: Role
     position?: string | null;
     cardIssued?: boolean
     jobTitle?: string

@@ -21,7 +21,7 @@ export interface User {
     department?: Department,
     departmentId?: string | null,
     position: string,
-    role: Role
+    villetoRole?: Role
 }
 
 interface AuthState {
@@ -68,14 +68,22 @@ export const useAuthStore = create<AuthState>()(
             },
 
             hasPermission: (permission: string | string[]): boolean => {
-                const { userPermissions } = get();
+                const { userPermissions, user } = get();
+                const roleName = user?.villetoRole?.name?.toUpperCase() || user?.position?.toUpperCase() || "";
+                
+                // Allow bypass for super roles
+                if (["OWNER", "CONTROLLING_OFFICER", "ADMIN"].includes(roleName)) {
+                    return true;
+                }
+
                 const permissions = Array.isArray(permission) ? permission : [permission];
 
-                return permissions.every(perm =>
-                    userPermissions.some(userPerm =>
+                return permissions.every(perm => {
+                    if (!perm || perm.trim() === "") return true;
+                    return userPermissions.some(userPerm =>
                         userPerm.name.includes(perm)
-                    )
-                );
+                    );
+                });
             },
 
             hydrate: () => {
@@ -104,5 +112,5 @@ export const useHasPermission = (permission: string) => {
 };
 
 export const useUserRole = () => {
-    return useAuthStore(state => state.user?.role);
+    return useAuthStore(state => state.user?.villetoRole);
 };
