@@ -97,8 +97,8 @@ export function DashboardSidebar() {
     return location.startsWith(basePath);
   };
   const canViewCompanyExpenses =
-    !!user?.role &&
-    (user.role as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
+    !!user?.villetoRole &&
+    (user.villetoRole as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
     (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
 
   const filterItems = (items: NavItem[]): NavItem[] => {

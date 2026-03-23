@@ -62,7 +62,7 @@ export const AddBeneficialOwnerModal = ({
             reset({
                 firstName: editingPerson.firstName || "",
                 lastName: editingPerson.lastName || "",
-                role: editingPerson.role || "",
+                role: editingPerson.role || editingPerson.villetoRole?.name || "",
                 email: editingPerson.email || "",
                 ownershipPercentage: editingPerson.ownershipPercentage || undefined,
                 position: editingPerson.position || ""

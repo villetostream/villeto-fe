@@ -14,10 +14,15 @@ const withPermissions = (
     const pathName = usePathname();
 
     const userPermissions = useAuthStore(state => state.getUserPermissions());
-
+    const user = useAuthStore(state => state.user);
 
     // Helper function to check for permission matches
     const hasPermissionForRoute = (permissions: string[]) => {
+      const roleName = user?.villetoRole?.name?.toUpperCase() || user?.position?.toUpperCase() || "";
+      if (["OWNER", "CONTROLLING_OFFICER", "ADMIN"].includes(roleName)) {
+          return true;
+      }
+
       return permissions?.some((permission) =>
         userPermissions?.some((userPermission) =>
           userPermission.name.includes(permission)

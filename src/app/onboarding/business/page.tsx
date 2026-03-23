@@ -25,10 +25,32 @@ import { useUpdateOnboardingCompanyDetailsApi } from "@/actions/onboarding/updat
 import FormFieldSelect from "@/components/form fields/formFieldSelect";
 import FormFieldInput from "@/components/form fields/formFieldInput";
 import FormFieldLogoUpload from "@/components/form fields/formFieldLogoUpload";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
 import Image from "next/image";
 import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
+import SuccessModal from "@/components/modals/SuccessModal";
+import { useState } from "react";
+
+/** Map from 3-letter country code → dial prefix */
+const COUNTRY_DIAL_CODES: Record<string, string> = {
+  NGA: "+234",
+  GHN: "+233",
+  KYA: "+254",
+};
+
+/** Strip known dial-code prefixes from a phone string */
+function stripDialCode(phone: string): string {
+  const allCodes = Object.values(COUNTRY_DIAL_CODES).sort(
+    (a, b) => b.length - a.length // longest first to avoid partial matches
+  );
+  for (const code of allCodes) {
+    if (phone.startsWith(code)) {
+      return phone.slice(code.length).trimStart();
+    }
+  }
+  return phone;
+}
 
 export default function Business() {
   const router = useRouter();
@@ -36,7 +58,10 @@ export default function Business() {
     useOnboardingStore();
   useHydrateOnboardingData();
   const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
-  const loading = updateOnboarding.isPending;
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const loading = updateOnboarding.isPending || isSimulating;
 
   const form = useForm({
     resolver: zodResolver(onboardingBusinessSchema),
@@ -61,6 +86,41 @@ export default function Business() {
       businessLogo: businessSnapshot.logo || undefined,
     });
   }, [businessSnapshot, form]);
+
+  // Track whether this is the first render so we don't override a pre-filled phone
+  const isFirstCountryChange = useRef(true);
+  const watchedCountry = form.watch("countryOfRegistration");
+
+  useEffect(() => {
+    // Country cleared — strip the dial code, keep only local digits
+    if (!watchedCountry) {
+      isFirstCountryChange.current = true; // reset so next selection behaves like first
+      const current = form.getValues("contactPhone") || "";
+      const localNumber = stripDialCode(current);
+      form.setValue("contactPhone", localNumber, { shouldValidate: true });
+      return;
+    }
+
+    const dialCode = COUNTRY_DIAL_CODES[watchedCountry];
+    if (!dialCode) return;
+
+    if (isFirstCountryChange.current) {
+      // On first load: only prefix if the field is blank
+      isFirstCountryChange.current = false;
+      const current = form.getValues("contactPhone") || "";
+      if (!current) {
+        form.setValue("contactPhone", dialCode + " ", { shouldDirty: false });
+      }
+      return;
+    }
+
+    // On subsequent country changes: swap out the old prefix, keep digits
+    const current = form.getValues("contactPhone") || "";
+    const localNumber = stripDialCode(current);
+    form.setValue("contactPhone", dialCode + (localNumber ? " " + localNumber : " "), {
+      shouldValidate: true,
+    });
+  }, [watchedCountry, form]);
 
     async function onSubmit(data: z.infer<typeof onboardingBusinessSchema>) {
     try {
@@ -96,7 +156,13 @@ export default function Business() {
         logo: logoUrl, // Save logo to businessSnapshot
       });
 
-      router.push("/onboarding/leadership");
+      // Simulate extra loading time before showing modal
+      setIsSimulating(true);
+      setTimeout(() => {
+        setIsSimulating(false);
+        setShowSuccess(true);
+      }, 2000);
+
     } catch (e: unknown) {
       console.warn(e);
       const error = e as { response?: { data?: { message?: string } } };
@@ -105,6 +171,11 @@ export default function Business() {
       );
     }
   }
+
+  const handleSuccessContinue = () => {
+    setShowSuccess(false);
+    router.push("/onboarding/leadership");
+  };
 
   return (
     <div className="space-y-8 flex flex-col justify-start h-full py-4">
@@ -236,6 +307,15 @@ export default function Business() {
           </div>
         </form>
       </Form>
+
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title="Congratulations!"
+        description="Your details and documents have been successfully submitted. You will receive an email shortly concerning your progress."
+        buttonText="Continue"
+        onClick={handleSuccessContinue}
+      />
     </div>
   );
 }

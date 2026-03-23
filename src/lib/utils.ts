@@ -71,20 +71,29 @@ const ACTION_LABELS: Record<string, string> = {
 export function formatPermissionName(name: string): string {
   if (!name) return name;
 
-  // Specific overrides for clarity as requested by the user
-  const lowerName = name.toLowerCase();
-  if (lowerName === "read:role" || lowerName === "view:role") return "View Role Details";
-  if (lowerName === "read:user" || lowerName === "view:user") return "View User Details";
-
   // Handle "action:resource" pattern (e.g. "read:users" → "View Users")
   if (name.includes(":")) {
     const [action, resource] = name.split(":", 2);
     const actionLabel = ACTION_LABELS[action.toLowerCase()] ?? capitalize(action);
-    const resourceLabel = capitalize(resource.replace(/[_-]/g, " "));
+    
+    let fixedResource = resource.toLowerCase();
+    if (fixedResource === "categorie") fixedResource = "category";
+
+    const resourceLabel = capitalize(fixedResource.replace(/[_-]/g, " "));
+    
+    // If the action is "View" and resource is singular (doesn't end with 's' or 'ies')
+    if (actionLabel === "View" && !fixedResource.endsWith("s")) {
+      return `${actionLabel} ${resourceLabel} Details`;
+    }
+
     return `${actionLabel} ${resourceLabel}`;
   }
-  // Handle snake_case or kebab-case permission names
-  return name.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Handle snake_case or kebab-case permission names (also fixes group headers)
+  let fixedName = name.toLowerCase();
+  if (fixedName === "categorie") fixedName = "category";
+
+  return fixedName.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function capitalize(str: string): string {

@@ -61,7 +61,7 @@ export function DirectoryTab() {
         }
         if (filters.roleId && filters.roleId !== "all") {
             result = result.filter(u => {
-                const uRoleId = (u as any).roleId || u.role?.roleId || (u.role as any)?.id;
+                const uRoleId = (u as any).roleId || u.villetoRole?.roleId || (u.villetoRole as any)?.id;
                 return uRoleId === filters.roleId;
             });
         }

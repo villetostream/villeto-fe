@@ -67,6 +67,7 @@ export default function InviteEmployeesPage() {
                     department_name: row["department_name"] ?? "",
                     department_external_id: row["department_external_id"] ?? "",
                     manager_id: row["manager_id"] ?? "",
+                    role_name: row["role_name"] ?? "",
                 }));
 
                 if (mapped.length === 0) {
@@ -114,6 +115,7 @@ export default function InviteEmployeesPage() {
             "department_name": emp.department_name,
             "department_external_id": emp.department_external_id,
             "manager_id": emp.manager_id,
+            "role_name": emp.role_name,
         }));
 
         const csvString = Papa.unparse(dataToUnparse);
@@ -222,7 +224,7 @@ export default function InviteEmployeesPage() {
     }
 
     return (
-        <div className="p-4 max-w-7xl mx-auto overflow-hidden" style={{ maxHeight: "100%" }}>
+        <div className="p-4 max-w-7xl mx-auto overflow-y-auto" style={{ maxHeight: "100%" }}>
             <div className={`bg-white rounded-lg shadow-sm border p-4 ${step === "preview" ? "h-[calc(100vh_-_140px)]" : "min-h-[350px]"}`}>
                 {step === "upload" ? (
                     <div className="max-w-6xl mx-auto mt-2">
@@ -230,7 +232,7 @@ export default function InviteEmployeesPage() {
 
                         <h3 className="font-semibold mt-4 border-t border-gray-200 pt-4">Required CSV Columns</h3>
 
-                        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div>
                                 <h3 className="font-semibold mb-1 font-mono text-sm">employee_external_id</h3>
                                 <p className="text-xs text-gray-500">Unique ID for the employee</p>
@@ -262,6 +264,10 @@ export default function InviteEmployeesPage() {
                             <div>
                                 <h3 className="font-semibold mb-1 font-mono text-sm">manager_id</h3>
                                 <p className="text-xs text-gray-500">employee_external_id of the manager</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-1 font-mono text-sm">role_name</h3>
+                                <p className="text-xs text-gray-500">Employee role (e.g. Employee, Manager, Finance Admin)</p>
                             </div>
                         </div>
                     </div>
