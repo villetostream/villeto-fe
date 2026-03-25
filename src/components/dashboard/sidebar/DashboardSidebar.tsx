@@ -259,12 +259,12 @@ export function DashboardSidebar() {
   };
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="w-full border-b border-sidebar-border px-0! pt-4 pb-0!">
-        <div className="flex flex-col gap-2">
-          {/* Villeto Logo + Toggle */}
+      <SidebarHeader className="w-full border-b border-sidebar-border px-0! py-0! space-y-0">
+        <div className="flex flex-col">
+          {/* Villeto Logo + Toggle - Fixed height h-16 (64px) to match main header border line */}
           <div
             className={cn(
-              "flex items-center mb-1",
+              "flex items-center h-16 border-b border-sidebar-border transition-all duration-300",
               state === "expanded" ? "justify-between px-4" : "justify-center",
             )}
           >
@@ -289,13 +289,11 @@ export function DashboardSidebar() {
               <SidebarTrigger className="shrink-0 cursor-pointer" />
             )}
           </div>
-          {/* Company Selector */}
+          {/* Company Selector - placed below the primary header alignment line */}
           <div
             className={cn(
-              "flex items-center transition-all duration-300 border-t border-sidebar-border",
-              state === "expanded"
-                ? " border-t border-sidebar-border"
-                : "justify-center",
+              "flex items-center transition-all duration-300 px-3 py-1",
+              state === "expanded" ? "" : "justify-center",
             )}
           >
             {state === "expanded" ? (

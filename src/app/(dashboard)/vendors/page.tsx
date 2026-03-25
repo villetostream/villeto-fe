@@ -1,0 +1,626 @@
+"use client";
+
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatsCard } from "@/components/dashboard/landing/StatCard";
+import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  MoreHorizontal,
+  Eye,
+  ClipboardCheck,
+  Mail,
+  X,
+  ChevronDown,
+  Building2,
+  Users,
+  Clock,
+  XCircle,
+  BadgeCheck,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type VendorStatus = "active" | "under_review" | "invited" | "flagged" | "rejected" | "verified";
+
+interface Vendor {
+  id: string;
+  vendorName: string;
+  regNo: string;
+  email: string;
+  invitedOn: string;
+  status: VendorStatus;
+  lastUpdated: string;
+}
+
+// ─── Status config ────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<
+  VendorStatus,
+  { label: string; classes: string; actionLabel: string; actionIcon: React.ReactNode }
+> = {
+  active: {
+    label: "Active",
+    classes: "text-emerald-600 bg-emerald-50 border border-emerald-100",
+    actionLabel: "View Details",
+    actionIcon: <Eye className="w-4 h-4" />,
+  },
+  verified: {
+    label: "Verified",
+    classes: "text-emerald-600 bg-emerald-50 border border-emerald-100",
+    actionLabel: "View Details",
+    actionIcon: <Eye className="w-4 h-4" />,
+  },
+  under_review: {
+    label: "Under Review",
+    classes: "text-amber-500 bg-amber-50 border border-amber-100",
+    actionLabel: "Review Submission",
+    actionIcon: <ClipboardCheck className="w-4 h-4" />,
+  },
+  flagged: {
+    label: "Flagged",
+    classes: "text-orange-500 bg-orange-50 border border-orange-100",
+    actionLabel: "Review Submission",
+    actionIcon: <ClipboardCheck className="w-4 h-4" />,
+  },
+  invited: {
+    label: "Invited",
+    classes: "text-gray-500 bg-gray-100 border border-gray-200",
+    actionLabel: "View Invite",
+    actionIcon: <Mail className="w-4 h-4" />,
+  },
+  rejected: {
+    label: "Rejected",
+    classes: "text-red-500 bg-red-50 border border-red-100",
+    actionLabel: "View Details",
+    actionIcon: <Eye className="w-4 h-4" />,
+  },
+};
+
+const TAB_STATUS_MAP: Record<string, VendorStatus[] | null> = {
+  all: null,
+  verified: ["active", "verified"],
+  invited: ["invited"],
+  under_review: ["under_review"],
+  rejected: ["rejected", "flagged"],
+};
+
+const VENDOR_TYPES = ["Company", "Individual"];
+const CATEGORIES = ["Procurement", "Project", "Logistics", "Maintenance", "Others"];
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: VendorStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cfg.classes}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
+// ─── Action Menu ──────────────────────────────────────────────────────────────
+
+function ActionMenu({ vendor, onAction }: { vendor: Vendor; onAction: (v: Vendor, label: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const cfg = STATUS_CONFIG[vendor.status];
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-9 z-50 bg-white border border-border rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.10)] w-48 overflow-hidden">
+          <button
+            onClick={() => { onAction(vendor, cfg.actionLabel); setOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/40 transition-colors"
+          >
+            {cfg.actionIcon}
+            {cfg.actionLabel}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+function VendorEmptyState({ filtered = false }: { filtered?: boolean }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+      <div className="w-16 h-16 bg-muted/50 rounded-2xl flex items-center justify-center mb-5">
+        <Building2 className="w-8 h-8 text-muted-foreground/50" />
+      </div>
+      <h3 className="text-base font-semibold text-foreground mb-1.5">
+        {filtered ? "No vendors match this filter" : "No vendors onboarded yet"}
+      </h3>
+      <p className="text-sm text-muted-foreground max-w-xs">
+        {filtered
+          ? "Try switching to a different tab or clearing your search."
+          : "Use the Invite Vendor button to start onboarding your first vendor."}
+      </p>
+    </div>
+  );
+}
+
+// ─── Invite Modal ─────────────────────────────────────────────────────────────
+
+interface InviteModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function InviteVendorModal({ open, onClose }: InviteModalProps) {
+  const [vendorType, setVendorType] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [category, setCategory] = useState("");
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const typeRef = useRef<HTMLDivElement>(null);
+  const catRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setVendorType(""); setName(""); setEmail(""); setCategory("");
+      setErrors({}); setSuccess(false); setLoading(false);
+      setTypeOpen(false); setCatOpen(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) setTypeOpen(false);
+      if (catRef.current  && !catRef.current.contains(e.target as Node))  setCatOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!vendorType) e.vendorType = "Required";
+    if (!name.trim()) e.name = "Required";
+    if (!email.trim()) e.email = "Required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Invalid email";
+    if (!category) e.category = "Required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    await new Promise((r) => setTimeout(r, 800));
+    setLoading(false);
+    setSuccess(true);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[480px]">
+        {success ? (
+          /* ── Success state ── */
+          <div className="p-10 flex flex-col items-center text-center">
+            <div className="relative mb-6">
+              {/* Confetti dots */}
+              {["top-0 left-4 bg-orange-400","top-2 right-6 bg-blue-500","bottom-4 left-2 bg-primary","bottom-0 right-4 bg-amber-400"].map((cls, i) => (
+                <span key={i} className={`absolute w-2 h-2 rounded-full ${cls}`} />
+              ))}
+              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Vendor Invite Sent</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+              The vendor has received an onboarding link and can now begin verification.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          /* ── Form state ── */
+          <div className="p-8">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Invite Vendor</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Provide basic vendor information and invite them.</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-muted/40 hover:bg-muted/80 flex items-center justify-center transition-colors border border-border/50 ml-4 shrink-0"
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="w-full h-px bg-border/60 my-5" />
+
+            <div className="space-y-5">
+              {/* Vendor type */}
+              <div className="space-y-1.5" ref={typeRef}>
+                <label className="text-sm font-medium text-foreground">Vendor type</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setTypeOpen(v => !v); setCatOpen(false); }}
+                    className={`w-full h-12 px-4 rounded-xl border text-sm text-left flex items-center justify-between transition-colors ${
+                      errors.vendorType ? "border-destructive" : "border-border hover:border-border/80"
+                    } ${vendorType ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {vendorType || "Select"}
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${typeOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {typeOpen && (
+                    <div className="absolute left-0 right-0 top-13 z-50 bg-white border border-border rounded-xl shadow-lg overflow-y-auto max-h-64 mt-1">
+                      {VENDOR_TYPES.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setVendorType(t); setTypeOpen(false); setErrors(e => ({ ...e, vendorType: "" })); }}
+                          className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/40 transition-colors border-b last:border-0 border-border/50"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {errors.vendorType && <p className="text-xs text-destructive">{errors.vendorType}</p>}
+              </div>
+
+              {/* Name */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setErrors(err => ({ ...err, name: "" })); }}
+                  placeholder="Enter vendor name"
+                  className={`w-full h-12 px-4 rounded-xl border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors ${
+                    errors.name ? "border-destructive" : "border-border"
+                  }`}
+                />
+                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setErrors(err => ({ ...err, email: "" })); }}
+                  placeholder="Enter vendor email"
+                  className={`w-full h-12 px-4 rounded-xl border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors ${
+                    errors.email ? "border-destructive" : "border-border"
+                  }`}
+                />
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5" ref={catRef}>
+                <label className="text-sm font-medium text-foreground">Category</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setCatOpen(v => !v); setTypeOpen(false); }}
+                    className={`w-full h-12 px-4 rounded-xl border text-sm text-left flex items-center justify-between transition-colors ${
+                      errors.category ? "border-destructive" : "border-border hover:border-border/80"
+                    } ${category ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {category || "Select category"}
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${catOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {catOpen && (
+                    <div className="absolute left-0 right-0 z-50 bg-white border border-border rounded-xl shadow-lg overflow-y-auto max-h-64 mt-1">
+                      {CATEGORIES.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => { setCategory(c); setCatOpen(false); setErrors(e => ({ ...e, category: "" })); }}
+                          className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/40 transition-colors border-b last:border-0 border-border/50"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {errors.category && <p className="text-xs text-destructive">{errors.category}</p>}
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="mt-8 w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-primary/20"
+            >
+              {loading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                  </svg>
+                  Sending...
+                </>
+              ) : "Send invite"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Vendor Table ─────────────────────────────────────────────────────────────
+
+function VendorTable({
+  vendors,
+  isLoading,
+  onAction,
+}: {
+  vendors: Vendor[];
+  isLoading: boolean;
+  onAction: (v: Vendor, label: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return vendors;
+    const q = search.toLowerCase();
+    return vendors.filter(
+      (v) =>
+        v.vendorName.toLowerCase().includes(q) ||
+        v.email.toLowerCase().includes(q) ||
+        v.regNo.toLowerCase().includes(q),
+    );
+  }, [vendors, search]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3 mt-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 mt-4">
+      {/* Search + Filter row */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-border bg-white text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+        <button className="h-10 px-4 rounded-xl border border-border bg-white text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" />
+          Filter
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Table */}
+      {filtered.length === 0 ? (
+        <VendorEmptyState filtered={vendors.length > 0} />
+      ) : (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted/30 border-b border-border">
+                {["VENDOR NAME", "REG NO.", "EMAIL", "INVITED ON", "STATUS", "LAST UPDATED", "ACTION"].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {filtered.map((v) => (
+                <tr key={v.id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-4 font-semibold text-foreground">{v.vendorName}</td>
+                  <td className="px-4 py-4 text-muted-foreground">{v.regNo}</td>
+                  <td className="px-4 py-4 text-muted-foreground">{v.email}</td>
+                  <td className="px-4 py-4 text-muted-foreground whitespace-nowrap">{v.invitedOn}</td>
+                  <td className="px-4 py-4"><StatusBadge status={v.status} /></td>
+                  <td className="px-4 py-4 text-muted-foreground whitespace-nowrap">{v.lastUpdated}</td>
+                  <td className="px-4 py-4">
+                    <ActionMenu vendor={v} onAction={onAction} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination row */}
+          <div className="px-4 py-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground bg-muted/10">
+            <span>Showing 1–{filtered.length} of {filtered.length} entries</span>
+            <div className="flex items-center gap-1">
+              {["Previous", "1", "Next"].map((p) => (
+                <button
+                  key={p}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    p === "1"
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "hover:bg-muted/60 text-muted-foreground"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function VendorPage() {
+  const router      = useRouter();
+  const searchParams = useSearchParams();
+  const { setAction, clearAction } = useHeaderActionStore();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [vendors, setVendors]     = useState<Vendor[]>([]);
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "all");
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Simulate data load — replace with real API hook
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setVendors([]); // starts empty
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Sync tab to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", activeTab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [activeTab]);
+
+  // Header CTA
+  useEffect(() => {
+    setAction({
+      label: "Invite Vendor",
+      items: [
+        { label: "Single invite", onClick: () => setShowInviteModal(true) },
+        { label: "Bulk invite",   onClick: () => router.push("/vendors/bulk-invite-page") },
+      ],
+    });
+    return () => clearAction();
+  }, [setAction, clearAction, router]);
+
+  // Stats
+  const stats = useMemo(() => ({
+    total:       vendors.length,
+    verified:    vendors.filter((v) => v.status === "active" || v.status === "verified").length,
+    pending:     vendors.filter((v) => v.status === "under_review").length,
+    rejected:    vendors.filter((v) => v.status === "rejected" || v.status === "flagged").length,
+  }), [vendors]);
+
+  // Filter vendors by tab
+  const filteredByTab = useMemo(() => {
+    const statuses = TAB_STATUS_MAP[activeTab];
+    if (!statuses) return vendors;
+    return vendors.filter((v) => statuses.includes(v.status));
+  }, [vendors, activeTab]);
+
+  const handleAction = (vendor: Vendor, actionLabel: string) => {
+    // Navigate or open modal based on action
+    console.log("Action:", actionLabel, "on vendor:", vendor.id);
+  };
+
+  const statCards = [
+    {
+      title: "Total Vendors",
+      value: stats.total.toString(),
+      icon: <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white shrink-0 bg-[#384A57]"><Users className="w-4 h-4" /></div>,
+      subtitle: <span className="text-xs leading-[125%]">All vendors added</span>,
+    },
+    {
+      title: "Verified Vendors",
+      value: stats.verified.toString(),
+      icon: <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white shrink-0 bg-[#5A67D8]"><BadgeCheck className="w-4 h-4" /></div>,
+      subtitle: <span className="text-xs leading-[125%]">Vendors fully approved</span>,
+    },
+    {
+      title: "Verification Pending",
+      value: stats.pending.toString(),
+      icon: <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white shrink-0 bg-[#F45B69]"><Clock className="w-4 h-4" /></div>,
+      subtitle: <span className="text-xs leading-[125%]">Vendors who submitted onboarding</span>,
+    },
+    {
+      title: "Rejected Vendors",
+      value: stats.rejected.toString(),
+      icon: <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white shrink-0 bg-[#38B2AC]"><XCircle className="w-4 h-4" /></div>,
+      subtitle: <span className="text-xs leading-[125%]">Total number of vendors rejected</span>,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <InviteVendorModal open={showInviteModal} onClose={() => setShowInviteModal(false)} />
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
+        {statCards.map((s) => (
+          <StatsCard
+            key={s.title}
+            isLoading={isLoading}
+            title={s.title}
+            value={s.value}
+            icon={s.icon}
+            subtitle={s.subtitle}
+          />
+        ))}
+      </div>
+
+      {/* Tabs + Table */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-muted/50 p-1 h-auto rounded-lg">
+          <TabsTrigger value="all"          className="data-[state=active]:bg-background rounded-md px-5">All Vendors</TabsTrigger>
+          <TabsTrigger value="verified"     className="data-[state=active]:bg-background rounded-md px-5">Verified</TabsTrigger>
+          <TabsTrigger value="invited"      className="data-[state=active]:bg-background rounded-md px-5">Invited</TabsTrigger>
+          <TabsTrigger value="under_review" className="data-[state=active]:bg-background rounded-md px-5">Under Review</TabsTrigger>
+          <TabsTrigger value="rejected"     className="data-[state=active]:bg-background rounded-md px-5">Rejected</TabsTrigger>
+        </TabsList>
+
+        {["all", "verified", "invited", "under_review", "rejected"].map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <VendorTable
+              vendors={tab === activeTab ? filteredByTab : []}
+              isLoading={isLoading}
+              onAction={handleAction}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}

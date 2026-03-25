@@ -427,12 +427,13 @@ export function UserSection() {
   const isNewExpensePage            = pathname === "/expenses/new-expense";
   const isNewReportPage             = pathname === "/expenses/new-report";
   const isViewRolePage              = pathname.startsWith("/people/view-role/");
+  const isVendorBulkInvitePage      = pathname === "/vendors/bulk-invite-page";
 
   const isBackButtonPage =
     isExpenseDetailPage || isAuditTrailPage || isSplitExpensePage ||
     isPersonalExpenseDeletePage || isPersonalExpenseDetailPage || isPersonalExpenseEditPage ||
     isCompanyExpenseDetailPage || isUploadReceiptPage || isNewExpensePage || isNewReportPage ||
-    isBatchExpensePage || isViewRolePage ||
+    isBatchExpensePage || isViewRolePage || isVendorBulkInvitePage ||
     pathname === "/people/invite/leadership" ||
     pathname === "/people/invite/employees" ||
     pathname === "/people/create-role";
@@ -491,6 +492,7 @@ export function UserSection() {
       else router.push("/people");
       return;
     }
+    if (isVendorBulkInvitePage) { router.push("/vendors"); return; }
     router.push("/expenses");
   };
 
