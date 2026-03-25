@@ -91,7 +91,7 @@ export default function DashboardLayoutContent({
       <SidebarProvider defaultOpen={defaultOpen}>
         <DashboardSidebar />
         <div className="flex flex-col flex-1 h-full overflow-hidden">
-          <header className="flex items-center gap-4 px-6 py-3 border-b border-dashboard-border-shade w-full flex-shrink-0">
+          <header className="flex items-center gap-4 px-6 h-16 border-b border-dashboard-border-shade w-full flex-shrink-0">
             <SidebarTrigger className="md:hidden" />
             <UserSection />
           </header>

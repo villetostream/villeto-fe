@@ -759,7 +759,7 @@ export default function PolicyCreationModal({
                   <>
                     {/* Expense category */}
                     <div>
-                      <FieldLabel>Which type of expense should this policy apply to?</FieldLabel>
+                      <FieldLabel>Which type of expense category should this policy apply to?</FieldLabel>
                       <MultiDropdown
                         placeholder="Select expense"
                         values={categories}
@@ -807,7 +807,7 @@ export default function PolicyCreationModal({
 
                         {/* Expanded sub-fields — only shown when specific is chosen */}
                         {scope === "specific" && (
-                          <div className="ml-7 space-y-4 pt-1">
+                          <div className="ml-7 space-y-4 pt-4 px-4 pb-4 rounded-2xl bg-[#03C3A6]/[0.03] border border-[#03C3A6]/10">
 
                             {/* Department selector */}
                             <div>
