@@ -42,13 +42,14 @@ export const AddBeneficialOwnerModal = ({
     isOwner
 }: AddBeneficialOwnerModalProps) => {
     const schema = getFormSchema(mode, isOwner)
-    console.log({ schema }, { isOwner }, { mode })
+    // Derived early so it can be used in useEffect and defaultValues
+    const isBeneficialOwner = mode === "beneficial" || isOwner;
     const form = useForm({
         resolver: zodResolver(schema),
         defaultValues: {
             firstName: "",
             lastName: "",
-            role: "",
+            ...(isBeneficialOwner ? {} : { role: "" }),
             email: "",
             ownershipPercentage: undefined,
         }
@@ -56,28 +57,25 @@ export const AddBeneficialOwnerModal = ({
     const { register, handleSubmit, formState: { errors }, setValue, watch, reset, trigger, control } = form
     const [complianceChecked, setComplianceChecked] = useState(true);
     const ownershipValue = watch("ownershipPercentage", undefined);
-    console.log({ errors })
     useEffect(() => {
         if (editingPerson) {
             reset({
                 firstName: editingPerson.firstName || "",
                 lastName: editingPerson.lastName || "",
-                role: editingPerson.role || editingPerson.villetoRole?.name || "",
+                ...(isBeneficialOwner ? {} : { role: editingPerson.role || editingPerson.villetoRole?.name || "" }),
                 email: editingPerson.email || "",
                 ownershipPercentage: editingPerson.ownershipPercentage || undefined,
-                position: editingPerson.position || ""
             });
         } else {
             reset({
                 firstName: "",
                 lastName: "",
-                role: "",
+                ...(isBeneficialOwner ? {} : { role: "" }),
                 email: "",
                 ownershipPercentage: undefined,
-                position: ""
             });
         }
-    }, [editingPerson, reset, isOpen]);
+    }, [editingPerson, reset, isOpen, isBeneficialOwner]);
 
     const onSubmit = (data: z.infer<typeof schema>) => {
         if (mode === "beneficial" && (data.ownershipPercentage ?? 0) > 25) {
@@ -87,7 +85,8 @@ export const AddBeneficialOwnerModal = ({
         onAdd({
             firstName: data.firstName,
             lastName: data.lastName,
-            role: mode === "beneficial" ? data.role : data.role || data.role,
+            // Beneficial owners don't have a role field; pass empty string to satisfy the onAdd type
+            role: isBeneficialOwner ? "" : (data as any).role ?? "",
             email: data.email,
             ownershipPercentage: data.ownershipPercentage
         });
@@ -104,9 +103,7 @@ export const AddBeneficialOwnerModal = ({
     };
 
     const isEditing = !!editingPerson;
-    const isBeneficialOwner = mode === "beneficial" || isOwner;
     const maxOwnership = 25;
-    console.log({ isBeneficialOwner })
 
     return (
         <Dialog open={isOpen} onOpenChange={handleCancel}>
@@ -157,18 +154,19 @@ export const AddBeneficialOwnerModal = ({
                             />
                         </div>
 
-                        {/* Role/Position Field */}
-
+                        {/* Role/Position Field — only for Controlling Officers */}
+                        {!isBeneficialOwner && (
                         <FormFieldInput
                             control={control}
                             label={"Role"}
-                            placeholder={`Enter ${isBeneficialOwner ? 'role' : 'position'}`}
+                            placeholder="Enter position"
                             name={"role"}
                             prefixIcon={
                                 <HugeiconsIcon icon={Briefcase01Icon} className="size-4 text-muted-foreground" />
 
                             }
                         />
+                        )}
                         <>
                             {/* Email Field */}
                             <FormFieldInput

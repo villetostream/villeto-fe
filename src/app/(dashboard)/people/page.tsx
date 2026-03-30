@@ -25,7 +25,7 @@ function People() {
     const directoryApi = useGetDirectoryUsersApi();
 
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
-    const hasDirectoryData    = directoryTotalCount > 2;
+    const hasDirectoryData    = directoryTotalCount > 1;
 
     const uniqueDeptCount = useMemo(() => {
         const users: any[] = usersApi?.data?.data ?? [];
@@ -92,7 +92,10 @@ function People() {
         } else if (activeTab === "directory") {
             setAction({
                 label: "Upload Directory",
-                onClick: () => router.push("/people/invite/employees?step=upload"),
+                onClick: () => {
+                    sessionStorage.setItem("uploadDirReferrer", "directory");
+                    router.push("/people/invite/employees?step=upload");
+                }
             });
         } else {
             clearAction();

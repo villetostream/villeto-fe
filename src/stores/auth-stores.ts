@@ -4,6 +4,8 @@ import Cookies from 'js-cookie';
 import { Permission } from '@/actions/auth/auth-permissions';
 import { Role } from '@/actions/role/get-all-roles';
 import { Department } from '@/actions/departments/get-all-departments';
+import { getCurrencyConfig } from "@/lib/utils/currency";
+import { Roles } from "@/core/permissions/roles";
 
 export interface User {
     createdAt: Date,
@@ -18,6 +20,10 @@ export interface User {
     phone?: string | number,
     ownershipPercentage?: number,
     companyId?: string,
+    company?: {
+        countryOfRegistration?: string;
+        [key: string]: any;
+    },
     department?: Department,
     departmentId?: string | null,
     position: string,
@@ -36,6 +42,7 @@ interface AuthState {
     hydrate: () => void;
     userPermissions: Permission[];
     getUserPermissions: () => Permission[];
+    getCurrencySymbol: () => string;
 }
 
 
@@ -46,6 +53,11 @@ export const useAuthStore = create<AuthState>()(
             isLoading: true,
             userPermissions: [],
             accessToken: null,
+
+            getCurrencySymbol: () => {
+                const countryCode = get().user?.company?.countryOfRegistration ?? "";
+                return getCurrencyConfig(countryCode).symbol;
+            },
 
             getUserPermissions: () => {
                 const state = get();
@@ -72,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
                 const roleName = user?.villetoRole?.name?.toUpperCase() || user?.position?.toUpperCase() || "";
                 
                 // Allow bypass for super roles
-                if (["OWNER", "CONTROLLING_OFFICER", "ADMIN"].includes(roleName)) {
+                if ([Roles.ORGANIZATION_OWNER, Roles.CONTROLLING_OFFICER, "ADMIN", "OWNER"].includes(roleName as any)) {
                     return true;
                 }
 

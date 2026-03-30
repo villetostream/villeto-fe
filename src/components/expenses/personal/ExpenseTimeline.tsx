@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import React, { useEffect, useState } from "react";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
@@ -182,6 +184,8 @@ const getTimelineEntries = (
           isActive: true,
         },
       ];
+    default:
+      return [];
   }
 };
 
@@ -202,7 +206,7 @@ export function ExpenseTimeline({
         }>(API_KEYS.USER.ME);
         setUser(response.data.data);
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        logger.error("Failed to fetch user:", error);
         setUser(null);
       } finally {
         setIsLoading(false);

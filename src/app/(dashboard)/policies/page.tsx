@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
+import { useGetExpenseCategoriesApi } from "@/actions/companies/get-expense-categories";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -48,12 +49,7 @@ type ExpenseCategory = {
   policyStatus: string;
 };
 
-const expenseCategories: ExpenseCategory[] = [
-  { id: 1, category: "Employee Meals",  description: "Food related expenses",                createdBy: "Andy James",  date: "26-09-2025", policyStatus: "Pending" },
-  { id: 2, category: "Transportation",  description: "Taxi or fuel",                          createdBy: "James Idris", date: "26-09-2025", policyStatus: "Pending" },
-  { id: 3, category: "Vacation",        description: "This covers everything on vacations",   createdBy: "James Idris", date: "26-09-2025", policyStatus: "Pending" },
-  { id: 4, category: "Accommodation",   description: "This covers everything on vacations",   createdBy: "James Idris", date: "26-09-2025", policyStatus: "Pending" },
-];
+// Live data logic below
 
 const CURRENT_USER = "Israel Chen (You)";
 const IS_APPROVER  = true;
@@ -254,6 +250,18 @@ export default function PoliciesPage() {
   const [reviewPolicy, setReviewPolicy]     = useState<Policy | null>(null);
   const [search, setSearch]                 = useState("");
 
+  const expCatApi = useGetExpenseCategoriesApi();
+  const liveExpenseCategories = useMemo<ExpenseCategory[]>(() => {
+    return (expCatApi.data?.data || []).map((c: any) => ({
+      id: c.categoryId ?? c.id,
+      category: c.name,
+      description: c.description || "",
+      createdBy: "—",
+      date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—",
+      policyStatus: "Pending",
+    }));
+  }, [expCatApi.data?.data]);
+
   // Register dynamic header CTA button
   const { setAction, clearAction } = useHeaderActionStore();
 
@@ -288,12 +296,12 @@ export default function PoliciesPage() {
 
   const filteredCategories = useMemo(() => {
     const q = search.toLowerCase();
-    return expenseCategories.filter(c =>
+    return liveExpenseCategories.filter(c =>
       !q || c.category.toLowerCase().includes(q) ||
             c.description.toLowerCase().includes(q) ||
             c.createdBy.toLowerCase().includes(q)
     );
-  }, [search]);
+  }, [search, liveExpenseCategories]);
 
   /* handlers */
   const handleCreated = (data: CreatedPolicyData) => {
@@ -301,14 +309,14 @@ export default function PoliciesPage() {
       id: `p-${Date.now()}`,
       name: data.name,
       version: 1,
-      category: data.category,
-      appliedTo: data.appliedTo,
+      category: data.categories.join(", ") || "All Categories",
+      appliedTo: data.scope === "all" ? "All Users" : "Specific Users",
       createdBy: CURRENT_USER,
       date: todayStr(),
       status: "pending",
       approvers: data.approvers,
-      dailyLimit: data.dailyLimit,
-      receiptRequired: !!data.receiptAbove,
+      dailyLimit: data.rules.find(r => r.type === "spend_limit")?.amount || "0",
+      receiptRequired: !!data.rules.find(r => r.type === "receipt_requirement")?.amount,
     }, ...prev]);
     setActiveTab("policies");
   };
@@ -331,7 +339,7 @@ export default function PoliciesPage() {
     { title: "Approved Policies", value: approvedCount,            icon: ShieldCheck, bg: "#418341" },
     { title: "Drafted Policies",  value: draftedCount,             icon: FileText,    bg: "#384A57" },
     { title: "Pending Policies",  value: pendingCount,             icon: Clock,       bg: "#D97706" },
-    { title: "Expense Category",  value: expenseCategories.length, icon: Tag,         bg: "#38B2AC" },
+    { title: "Expense Category",  value: liveExpenseCategories.length, icon: Tag,         bg: "#38B2AC" },
   ];
 
   /* DataTable columns for Policy tab */

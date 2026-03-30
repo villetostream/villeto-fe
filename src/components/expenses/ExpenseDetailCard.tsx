@@ -18,6 +18,7 @@ interface ExpenseDetailCardProps {
   onApprove?: () => void;
   onReject?: () => void;
   onFlag?: () => void;
+  canApprove?: boolean;
 }
 
 export function ExpenseDetailCard({
@@ -25,6 +26,7 @@ export function ExpenseDetailCard({
   onApprove,
   onReject,
   onFlag,
+  canApprove = true,
 }: ExpenseDetailCardProps) {
   return (
     <div className="space-y-4">
@@ -97,24 +99,28 @@ export function ExpenseDetailCard({
         <p className="detail-value">{expense.description}</p>
       </div>
 
-      {/* Action Buttons - Show only when status is pending */}
+      {/* Action Buttons - Show only when status is pending AND user is authorized */}
       {/** @ts-ignore */}
       {(expense.status === "pending" || expense.status === "draft") && (
         <div className="flex gap-3 pt-4">
-          <Button
-            onClick={onApprove}
-            className="bg-primary hover:bg-primary/90 text-white flex-1"
-            size="lg"
-          >
-            Approve
-          </Button>
-          <Button
-            onClick={onReject}
-            className="bg-destructive/10 hover:bg-destructive/20 text-destructive flex-1"
-            size="lg"
-          >
-            Reject
-          </Button>
+          {canApprove && (
+            <>
+              <Button
+                onClick={onApprove}
+                className="bg-primary hover:bg-primary/90 text-white flex-1"
+                size="lg"
+              >
+                Approve
+              </Button>
+              <Button
+                onClick={onReject}
+                className="bg-destructive/10 hover:bg-destructive/20 text-destructive flex-1"
+                size="lg"
+              >
+                Reject
+              </Button>
+            </>
+          )}
           <Button
             onClick={onFlag}
             className="bg-orange-600 hover:bg-orange-700 text-white flex-1"

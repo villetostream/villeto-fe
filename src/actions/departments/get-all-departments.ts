@@ -36,10 +36,13 @@ export interface AppUser {
     company?: string | null;
     companyId?: string | null;
     department?: string | null;
+    departmentId?: string | null;
     villetoRole?: Role
+    role?: Role
     position?: string | null;
     cardIssued?: boolean
     jobTitle?: string
+    manager?: AppUser | null;
 }
 interface Response {
     data: Department[]

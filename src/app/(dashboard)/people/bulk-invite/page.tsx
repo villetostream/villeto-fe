@@ -8,6 +8,7 @@ import FormSectionHeader from "@/components/dashboard/people/FormSectionHeader";
 import { CloudUploadIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight } from "iconsax-reactjs";
+import { logger } from "@/lib/logger";
 
 export default function BulkInvite() {
     const router = useRouter();
@@ -21,7 +22,7 @@ export default function BulkInvite() {
 
     const handleSubmit = () => {
         // Handle bulk invite
-        console.log("File:", file);
+        logger.log("File:", file);
         router.push("/people");
     };
 

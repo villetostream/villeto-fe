@@ -38,7 +38,7 @@ const ReceiptScanner = () => {
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     // Handle rejected files
     if (rejectedFiles.length > 0) {
-      console.warn('Rejected files:', rejectedFiles);
+      logger.warn('Rejected files:', rejectedFiles);
       // Could add toast notification here
     }
 
@@ -105,7 +105,7 @@ const ReceiptScanner = () => {
             image: file.preview
           } as ScanResult;
         } catch (error) {
-          console.error(`Error processing ${file.name}:`, error);
+          logger.error(`Error processing ${file.name}:`, error);
           return {
             id: index,
             fileName: file.name,
@@ -128,7 +128,7 @@ const ReceiptScanner = () => {
       // Update the ref to track processed files
       lastProcessedCountRef.current = files.length;
     } catch (error) {
-      console.error('Error processing images:', error);
+      logger.error('Error processing images:', error);
       // Handle overall processing error
       setResults([]);
     } finally {

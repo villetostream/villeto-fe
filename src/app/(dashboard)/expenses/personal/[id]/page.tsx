@@ -17,6 +17,8 @@ import { ExpenseDetailSkeleton } from "@/components/expenses/ExpenseDetailSkelet
 import { useState, useEffect } from "react";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
+import { useAuthStore } from "@/stores/auth-stores";
+import { logger } from "@/lib/logger";
 
 const getStatusBadgeVariant = (status: PersonalExpenseStatus) => {
   switch (status) {
@@ -99,6 +101,7 @@ export default function PersonalExpenseDetailPage() {
   const router = useRouter();
   const reportId = params.id as string;
   const axios = useAxios();
+  const currencySymbol = useAuthStore((state) => state.getCurrencySymbol());
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -124,7 +127,7 @@ export default function PersonalExpenseDetailPage() {
         }>(API_KEYS.USER.ME);
         setUser(response.data.data);
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        logger.error("Failed to fetch user:", error);
         setUser(null);
       } finally {
         setIsLoadingUser(false);
@@ -232,7 +235,7 @@ export default function PersonalExpenseDetailPage() {
                 <span className="text-muted-foreground">{expenses.length}</span>
               </h3>
               <div className="text-base font-semibold text-foreground">
-                Total: ${totalAmount.toLocaleString("en-US", {
+                Total: {currencySymbol}{totalAmount.toLocaleString("en-US", {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 2,
                 })}
@@ -292,7 +295,7 @@ export default function PersonalExpenseDetailPage() {
                       </td>
                       <td className="p-3">
                         <span className="text-sm font-medium text-foreground">
-                          ${parseFloat(expense.amount).toLocaleString("en-US", {
+                          {currencySymbol}{parseFloat(expense.amount).toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 2,
                           })}

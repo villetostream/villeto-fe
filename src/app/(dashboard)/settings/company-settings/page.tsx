@@ -73,7 +73,7 @@ export default function CompanySettings() {
           const data = response?.data?.data || response?.data;
           setCompanyData(data);
         } catch (error) {
-          console.error("Error fetching company data:", error);
+          logger.error("Error fetching company data:", error);
         }
       }
     };
@@ -110,7 +110,7 @@ export default function CompanySettings() {
         setCompanyData(updatedData);
       }
     } catch (error: any) {
-      console.error("Error updating company logo:", error);
+      logger.error("Error updating company logo:", error);
       toast.error(
         error?.response?.data?.message || "Failed to update company logo"
       );

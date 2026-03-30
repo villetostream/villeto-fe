@@ -232,8 +232,6 @@ export default function Leadership() {
     const loading = updateOnboarding.isPending;
 
     const handleAddPerson = (person: Omit<BeneficialOwner, "id"> | Omit<Officer, "id">) => {
-        console.log({ person })
-
         if (editingPerson) {
             // Editing existing person
             const updatedProfiles = userProfiles.map(p =>
@@ -295,7 +293,6 @@ export default function Leadership() {
             toast.success("Leader details updated successfully!");
             router.push("/onboarding/financial");
         } catch (error) {
-            console.error("Error updating company details:", error);
             toast.error(error instanceof Error ? error.message : "Failed to update company details");
         }
     };

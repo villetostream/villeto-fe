@@ -104,7 +104,7 @@ export const columns: ColumnDef<Role, any>[] = [
                             <PermissionGuard requiredPermissions={["update:roles"]}>
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
-                                    onClick={() => console.log("Deactivate role:", roleId)}
+                                    onClick={() => logger.log("Deactivate role:", roleId)}
                                 >
                                     <Lock className="w-5 h-5" />
                                     <span className="font-medium">Deactivate Role</span>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, ArrowRight, Building2 } from "lucide-react";
+import { FileText, ArrowRight, Building2, Loader2 } from "lucide-react";
 import { CongratulationsModal } from "@/components/onboarding/CongratulationModal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import OnboardingTitle from "@/components/onboarding/_shared/OnboardingTitle";
@@ -16,6 +16,10 @@ import {
 import { OwnerCard } from "../leadership/page";
 import { useRouter } from "next/navigation";
 import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
+import { useState } from "react";
+import { useUpdateOnboardinApi } from "@/actions/pre-onboarding/update-onboarding";
+import { toast } from "sonner";
+import { useInviteBeneficialOwners } from "@/hooks/useInviteBeneficialOwners";
 
 export default function ReviewConfirmation() {
   const {
@@ -23,16 +27,43 @@ export default function ReviewConfirmation() {
     userProfiles,
     financialPulse,
     villetoProducts,
-    submitApplication,
-    showCongratulations,
     spendRange,
     bankConnected,
     connectedAccounts,
+    contactEmail,
   } = useOnboardingStore();
   useHydrateOnboardingData();
 
   const selectedProducts = villetoProducts.filter((p) => p.selected);
   const router = useRouter();
+
+  const [showCongratulations, setShowCongratulations] = useState(false);
+  const finalizeOnboarding = useUpdateOnboardinApi();
+  const isSubmitting = finalizeOnboarding.isPending;
+  const { inviteBeneficialOwners } = useInviteBeneficialOwners();
+
+  // Beneficial owners are those with an ownershipPercentage set
+  const beneficialOwners = userProfiles.filter(
+    (p) => p.ownershipPercentage !== undefined
+  );
+
+  const handleSubmit = async () => {
+    try {
+      // Endpoint to POST /onboardings doesn't exist yet, uncomment when ready
+      // await finalizeOnboarding.mutateAsync({ email: contactEmail });
+      
+      // Fire beneficial owner invitations after successful finalization.
+      // Non-blocking: toast.error is shown inside the hook if it fails,
+      // but CongratulationsModal still opens so the user isn't blocked.
+      await inviteBeneficialOwners(beneficialOwners);
+      setShowCongratulations(true);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ??
+          "Submission failed. Please try again."
+      );
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -242,9 +273,21 @@ export default function ReviewConfirmation() {
 
       {/* Submit Button */}
       <div className="flex justify-end pt-6">
-        <Button onClick={submitApplication} size={"md"} className="!px-12">
-          Submit
-          <ArrowRight className="w-5 h-5 ml-2" />
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          size={"md"}
+          className="!px-12"
+        >
+          {isSubmitting ? (
+            <>
+              Submitting... <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+            </>
+          ) : (
+            <>
+              Submit <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
         </Button>
       </div>
     </div>

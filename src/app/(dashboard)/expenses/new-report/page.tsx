@@ -67,13 +67,13 @@ export default function NewReportPage() {
           message: string;
           status: number;
           data: ExpenseCategory[];
-        }>(API_KEYS.EXPENSE.CATEGORIES);
+        }>(API_KEYS.EXPENSE.CATEGORIES_WITH_POLICIES);
         
         if (response.data?.data && Array.isArray(response.data.data)) {
           setCategories(response.data.data);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        logger.error("Error fetching categories:", error);
         toast.error("Failed to load expense categories");
       } finally {
         setIsLoadingCategories(false);
@@ -107,7 +107,7 @@ export default function NewReportPage() {
       setExpenses((prev) => [...prev, ...newExpenses]);
       toast.success(`${receipts.length} receipt(s) scanned successfully`);
     } catch (error) {
-      console.error("Error processing receipts:", error);
+      logger.error("Error processing receipts:", error);
       toast.error("Failed to process receipts");
     } finally {
       setIsProcessing(false);
@@ -304,7 +304,7 @@ export default function NewReportPage() {
         router.push(`/expenses?tab=${returnTab}&page=${returnPage}`);
       }, 500);
     } catch (error) {
-      console.error("Error submitting report:", error);
+      logger.error("Error submitting report:", error);
       const err = error as {
         response?: { data?: { message?: string } };
         message?: string;

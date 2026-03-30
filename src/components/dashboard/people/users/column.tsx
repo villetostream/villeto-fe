@@ -147,7 +147,7 @@ export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppU
                                 <PermissionGuard requiredPermissions={["update:users"]}>
                                     <DropdownMenuItem 
                                         className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
-                                        onClick={() => console.log("Deactivate user:", data.row.original.userId)}
+                                        onClick={() => logger.log("Deactivate user:", data.row.original.userId)}
                                     >
                                         <Lock className="w-5 h-5" />
                                         <span className="font-medium">Deactivate User</span>
@@ -157,7 +157,7 @@ export const columns = (onViewProfile: (userId: string) => void): ColumnDef<AppU
                                 <PermissionGuard requiredPermissions={["update:users"]}>
                                     <DropdownMenuItem 
                                         className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#0FA68E]"
-                                        onClick={() => console.log("Activate user:", data.row.original.userId)}
+                                        onClick={() => logger.log("Activate user:", data.row.original.userId)}
                                     >
                                         <UserCheck className="w-5 h-5" />
                                         <span className="font-medium">Activate User</span>

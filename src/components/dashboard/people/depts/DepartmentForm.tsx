@@ -20,6 +20,7 @@ import { AppUser, useGetAllDepartmentsApi } from "@/actions/departments/get-all-
 import z from "zod";
 import { useGetAllUsersApi } from "@/actions/users/get-all-users";
 import { CustomSelect } from "@/components/form fields/custom-select";
+import { toast } from "sonner";
 
 const createDepartmentSchema = z.object({
     departmentName: z.string().min(1, "Department name is required"),
@@ -116,7 +117,6 @@ const DepartmentForm = () => {
     const onSubmit = async (data: CreateDepartmentFormData) => {
         try {
             // Transform form data to match API payload
-            console.log({ selectedMembers })
             const payload: CreateDepartmentPayload = {
                 id: data.id ?? undefined,
                 departmentName: data.departmentName,
@@ -136,8 +136,7 @@ const DepartmentForm = () => {
             allDepts.refetch()
             setShowSuccessModal(true);
         } catch (error) {
-            console.error("Failed to save department:", error);
-            // Handle error (show toast, etc.)
+            toast.error("Failed to save department. Please try again.");
         }
     };
 

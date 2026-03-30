@@ -12,6 +12,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { logger } from "@/lib/logger";
 
 import FormSectionHeader from "@/components/dashboard/people/FormSectionHeader";
 import withPermissions from "@/components/permissions/permission-protected-routes";
@@ -89,7 +90,7 @@ function AddSingleUser() {
     useEffect(() => {
         if (user?.data) {
             const data = user?.data.data
-            console.log({ data })
+            logger.log({ data })
             reset({
                 firstName: data.firstName,
                 lastName: data.lastName,
@@ -107,7 +108,7 @@ function AddSingleUser() {
 
     const cardIssued = watch("cardIssued");
 
-    console.log(form.watch())
+    logger.log(form.watch())
     // Handle form submission
     const onSubmit = async (data: UserFormData) => {
         try {
@@ -127,7 +128,7 @@ function AddSingleUser() {
 
             router.push("/people");
         } catch (error) {
-            console.error("Error saving user:", error);
+            logger.error("Error saving user:", error);
             // Handle error (show toast, set form error, etc.)
         }
     };

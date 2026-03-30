@@ -17,6 +17,8 @@ interface SetPasswordModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     email: string;
+    onSuccess?: () => void;
+    preventDismiss?: boolean;
 }
 
 function getPasswordStrength(password: string): number {
@@ -50,6 +52,8 @@ export default function SetPasswordModal({
     open,
     onOpenChange,
     email,
+    onSuccess,
+    preventDismiss,
 }: SetPasswordModalProps) {
     const router = useRouter();
     const axios = useAxios();
@@ -80,19 +84,33 @@ export default function SetPasswordModal({
                 confirmPassword: confirm,
                 email
             });
-            toast.success("Password set successfully! Please log in.");
-            onOpenChange(false);
-            router.push("/login");
+            if (onSuccess) {
+                toast.success("Password set successfully!");
+                onSuccess();
+            } else {
+                toast.success("Password set successfully! Please log in.");
+                onOpenChange(false);
+                router.push("/login");
+            }
         } catch (error: any) {
-            console.error(error);
+            toast.error(
+                error?.response?.data?.message ?? "Failed to set password. Please try again."
+            );
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl">
+        <Dialog open={open} onOpenChange={(val) => {
+            if (preventDismiss && !val) return;
+            onOpenChange(val);
+        }}>
+            <DialogContent 
+                showCloseButton={false} 
+                onInteractOutside={(e) => preventDismiss && e.preventDefault()}
+                className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl"
+            >
                 <div className="p-8">
 
                     {/* Lock icon */}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuthStore } from "@/stores/auth-stores";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,12 +51,14 @@ const data = [
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
+  const getCurrencySymbol = useAuthStore((state) => state.getCurrencySymbol);
+  
   if (active && payload && payload.length) {
     return (
       <div className="bg-foreground text-background px-4 py-3 rounded-lg shadow-lg">
         <p className="font-medium mb-2">{label}</p>
         <p className="text-sm font-semibold">
-          ${payload[0].value.toLocaleString()}
+          {getCurrencySymbol()}{payload[0].value.toLocaleString()}
         </p>
       </div>
     );
@@ -64,6 +67,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const ExpenseChart = () => {
+  const getCurrencySymbol = useAuthStore((state) => state.getCurrencySymbol);
+  const currencySymbol = getCurrencySymbol();
   const [activeTab, setActiveTab] = useState<"expenseTrigger" | "cashFlow">(
     "expenseTrigger"
   );
@@ -161,7 +166,7 @@ export const ExpenseChart = () => {
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={(value) => `$${value / 1000}k`}
+              tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
             />
             <Tooltip
               content={<CustomTooltip />}
@@ -197,7 +202,7 @@ export const ExpenseChart = () => {
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={(value) => `$${value / 1000}k`}
+              tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Line

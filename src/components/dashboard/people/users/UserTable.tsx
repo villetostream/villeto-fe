@@ -5,6 +5,7 @@ import { useDataTable } from '@/components/datatable/useDataTable';
 import { useGetAllRolesApi } from '@/actions/role/get-all-roles';
 import { useGetAllUsersApi } from '@/actions/users/get-all-users';
 import { useGetAllDepartmentsApi, AppUser } from '@/actions/departments/get-all-departments';
+import { logger } from '@/lib/logger';
 
 const UsersTable = () => {
     const usersApi = useGetAllUsersApi();
@@ -17,7 +18,7 @@ const UsersTable = () => {
         <DataTable
             data={usersApi?.data?.data ?? []}
             isLoading={usersApi.isLoading || depts.isLoading || roles.isLoading}
-            columns={columns}
+            columns={columns(() => {})}
             paginationProps={{ ...tableprops.paginationProps, total: usersApi?.data?.meta.totalCount ?? 0 }}
             enableRowSelection={true}
             enableColumnVisibility={true}
@@ -63,7 +64,7 @@ const UsersTable = () => {
                         },
                     ],
                     onFilter: (filters) => {
-                        console.log("Filters:", filters);
+                        logger.log("Filters:", filters);
                     },
                 },
                 bulkActions: [],

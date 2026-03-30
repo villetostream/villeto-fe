@@ -10,7 +10,6 @@ export const emailSchema = z.object({
 export const registrationSchema = z.object({
   contactFirstName: z.string().min(1, "First name is required").max(100),
   contactLastName: z.string().min(1, "Last name is required").max(100),
-  position: z.string().min(1, "Position is required").max(200),
   accountType: z.enum(["demo", "enterprise"] as const, {
     error: "Please select an account type",
   }),
@@ -152,8 +151,8 @@ export const strictCustomHttpUrlSchema = z
     }
   });
 
-// Base schema with common fields
-const baseSchema = z.object({
+// Shared name + email fields (no role)
+const baseNameEmailSchema = z.object({
   firstName: z
     .string()
     .min(1, "Name is required")
@@ -172,11 +171,14 @@ const baseSchema = z.object({
       /^[a-zA-Z\s'-]+$/,
       "Name can only contain letters, spaces, hyphens, and apostrophes"
     ),
-
   email: z
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
+});
+
+// Officers need a role; beneficial owners do not (they receive ORGANIZATION_OWNER via admin invite)
+const baseSchema = baseNameEmailSchema.extend({
   role: z
     .string()
     .min(1, "Role is required")
@@ -184,17 +186,15 @@ const baseSchema = z.object({
     .max(50, "Role must be less than 50 characters"),
 });
 
-// Beneficial owner schema
-const beneficialOwnerSchema = baseSchema.extend({
+// Beneficial owner schema — no role field
+const beneficialOwnerSchema = baseNameEmailSchema.extend({
   ownershipPercentage: z
     .number()
     .min(0, "Ownership cannot be negative")
     .max(25, "Ownership cannot exceed 25%"),
-
-  position: z.string().optional(),
 });
 
-// Officer schema
+// Officer schema — includes role
 const officerSchema = baseSchema.extend({
   ownershipPercentage: z
     .union([

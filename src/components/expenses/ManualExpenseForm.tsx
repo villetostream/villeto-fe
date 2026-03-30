@@ -1,4 +1,6 @@
 "use client";
+
+import { logger } from "@/lib/logger";
 import { useState, useEffect, type ChangeEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -180,14 +182,14 @@ export function ManualExpenseForm({
         const response = await axios.get<CategoryApiResponse>(
           API_KEYS.EXPENSE.CATEGORIES,
         );
-        console.log(response.data);
+        logger.log(response.data);
         if (response.data?.data && Array.isArray(response.data.data)) {
           setCategories(response.data.data);
         } else {
           toast.error("Failed to load expense categories");
         }
       } catch (error: unknown) {
-        console.error("Error fetching categories:", error);
+        logger.error("Error fetching categories:", error);
         const errorMessage =
           (error as { response?: { data?: { message?: string } } })?.response
             ?.data?.message ||
@@ -205,7 +207,7 @@ export function ManualExpenseForm({
   useEffect(() => {
     const storedImages = sessionStorage.getItem("uploadedReceipts");
     if (storedImages) {
-      console.log({ storedImages });
+      logger.log({ storedImages });
       setFiles(JSON.parse(storedImages));
     }
   }, []);
@@ -407,7 +409,7 @@ export function ManualExpenseForm({
     }
 
     // Fallback: return empty string if we can't parse it
-    console.warn("Could not extract base64 from:", dataUrl.substring(0, 50));
+    logger.warn("Could not extract base64 from:", dataUrl.substring(0, 50));
     return "";
   };
 
@@ -797,13 +799,13 @@ export function ManualExpenseForm({
         }, 500);
       }
     } catch (error: unknown) {
-      console.error("Error submitting expenses:", error);
+      logger.error("Error submitting expenses:", error);
       const err = error as {
         response?: { data?: { message?: string; error?: string }; status?: number };
         message?: string;
       };
-      console.error("Error response:", err?.response?.data);
-      console.error("Error status:", err?.response?.status);
+      logger.error("Error response:", err?.response?.data);
+      logger.error("Error status:", err?.response?.status);
 
       const errorMessage =
         err?.response?.data?.message ||
@@ -1312,7 +1314,7 @@ export function ManualExpenseForm({
                             );
                           } catch (storageError) {
                             // If localStorage fails (quota exceeded), log but don't fail the request
-                            console.warn("Failed to persist to localStorage:", storageError);
+                            logger.warn("Failed to persist to localStorage:", storageError);
                           }
 
                           queryClient.invalidateQueries({
@@ -1331,7 +1333,7 @@ export function ManualExpenseForm({
                           );
                         }
                       } catch (error: unknown) {
-                        console.error("Error saving draft:", error);
+                        logger.error("Error saving draft:", error);
                         const err = error as {
                           response?: { data?: { message?: string; error?: string } };
                           message?: string;

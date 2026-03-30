@@ -4,7 +4,8 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -27,60 +28,52 @@ import { Logout } from "iconsax-reactjs";
 import { NavItem, navigationItems } from "./sidebar-constants";
 import { useAxios } from "@/hooks/useAxios";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logger } from "@/lib/logger";
 export function DashboardSidebar() {
   const location = usePathname();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-  const [businessLogo, setBusinessLogo] = useState<string | null>(null);
-  const [businessName, setBusinessName] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
+    // Auto-expand Expenses when on any /expenses route
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/expenses")) {
+      return ["Expenses"];
+    }
+    return [];
+  });
+
   const logout = useAuthStore((state) => state.logout);
   const hasPermission = useAuthStore((state) => state.hasPermission);
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const axios = useAxios();
   const { state } = useSidebar();
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      if (!user?.userId) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      let fetched = false;
+
+  const { data: companyData, isLoading: isQueryLoading } = useQuery({
+    queryKey: ["company", user?.companyId, user?.userId],
+    queryFn: async () => {
+      if (!user?.userId) return null;
       if (user.companyId) {
         try {
-          const response = await axios.get(`/companies/${user.companyId}`);
-          const companyData = response?.data?.data || response?.data;
-          if (companyData) {
-            setBusinessLogo(companyData.logoUrl ?? null);
-            setBusinessName(
-              companyData.companyName || companyData.businessName || null,
-            );
-            fetched = true;
-          }
+          const res = await axios.get(`/companies/${user.companyId}`);
+          const data = res?.data?.data || res?.data;
+          if (data) return data;
         } catch (error) {
-          console.error("Primary company fetch failed:", error);
+          logger.error("Primary company fetch failed:", error);
         }
       }
-      if (!fetched) {
-        try {
-          const userResponse = await axios.get("/users/me");
-          const userData = userResponse?.data?.data || userResponse?.data;
-          const company = userData?.company;
-          if (company) {
-            setBusinessLogo(company.logoUrl ?? null);
-            setBusinessName(
-              company.companyName || company.businessName || null,
-            );
-          }
-        } catch (userError) {
-          console.error("Fallback /users/me fetch failed:", userError);
-        }
+      try {
+        const fall = await axios.get("/users/me");
+        return fall?.data?.data?.company || fall?.data?.company || null;
+      } catch (err) {
+        logger.error("Fallback /users/me fetch failed:", err);
+        return null;
       }
-      setLoading(false);
-    };
-    fetchCompanyData();
-  }, [user?.userId, user?.companyId, axios]);
+    },
+    enabled: !!user?.userId,
+    staleTime: 1000 * 60 * 60, // 1 hour caching to persist efficiently
+  });
+
+  const businessLogo = companyData?.logoUrl ?? user?.company?.logoUrl ?? null;
+  const businessName = companyData?.companyName ?? companyData?.businessName ?? user?.company?.companyName ?? user?.company?.businessName ?? null;
+  const loading = isQueryLoading && !businessLogo && !businessName;
   const toggleMenu = (label: string) => {
     setExpandedMenus((prev) =>
       prev.includes(label)
@@ -96,10 +89,7 @@ export function DashboardSidebar() {
     }
     return location.startsWith(basePath);
   };
-  const canViewCompanyExpenses =
-    !!user?.villetoRole &&
-    (user.villetoRole as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
-    (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
+  const canViewCompanyExpenses = hasPermission(["company_expenses:read"]);
 
   const filterItems = (items: NavItem[]): NavItem[] => {
     return items
@@ -179,6 +169,7 @@ export function DashboardSidebar() {
     const hasExpandable = item.subItems && item.subItems.length > 0;
     if (hasExpandable) {
       const isOpen = expandedMenus.includes(item.label);
+      const isGroupActive = item.subItems?.some(sub => sub.href && isActive(sub.href)) || isActive(item.href);
       return (
         <SidebarMenuItem key={item.label}>
           <Collapsible
@@ -188,9 +179,8 @@ export function DashboardSidebar() {
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
                 tooltip={item.label}
-                isActive={isActive(item.href)}
+                isActive={isGroupActive}
                 className="font-normal text-sm text-[#7F7F7F] data-[active=true]:text-primary data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium"
-                onClick={() => item.href && router.push(item.href)}
               >
                 <span className="shrink-0 [&>svg]:size-5 [&>svg]:shrink-0">
                   {item.icon}
@@ -205,42 +195,73 @@ export function DashboardSidebar() {
               </SidebarMenuButton>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1 pl-8 group-data-[collapsible=icon]:hidden">
-              {item.subItems?.map((sub) => (
-                <SidebarMenuSubButton
-                  key={sub.label}
-                  asChild
-                  isActive={isActive(sub.href!)}
-                  className={cn(
-                    "text-xs",
-                    isActive(sub.href!) &&
-                      "bg-sidebar-accent/20 font-medium text-primary",
-                  )}
-                >
-                  <Link href={sub.href!} className="flex items-center justify-between w-full">
-                    <span>{sub.label}</span>
-                    {sub.badge && (
-                        <span className="ml-auto bg-[#F4F0FF] text-[#6941C6] px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap">
-                            {sub.badge}
-                        </span>
+              {item.subItems?.map((sub) => {
+                if (sub.comingSoon) {
+                  return (
+                    <span
+                      key={sub.label}
+                      className="flex items-center justify-between w-full px-2 py-1.5 text-xs opacity-50 cursor-not-allowed"
+                    >
+                      <span>{sub.label}</span>
+                      <span className="ml-auto bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[9px] font-semibold whitespace-nowrap">
+                        Coming Soon
+                      </span>
+                    </span>
+                  );
+                }
+                return (
+                  <SidebarMenuSubButton
+                    key={sub.label}
+                    asChild
+                    isActive={isActive(sub.href!)}
+                    className={cn(
+                      "text-xs",
+                      isActive(sub.href!) &&
+                        "bg-sidebar-accent/20 font-medium text-primary",
                     )}
-                    {sub.imageUrl === "user-avatar" && (
-                        (user as any)?.profilePicture ? (
-                            <img src={(user as any).profilePicture} alt="Avatar" className="ml-auto w-5 h-5 rounded-full object-cover" />
-                        ) : (
-                            <div className="ml-auto w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 capitalize">
-                                {user?.firstName?.[0] || user?.email?.[0] || "U"}
-                            </div>
-                        )
-                    )}
-                  </Link>
-                </SidebarMenuSubButton>
-              ))}
+                  >
+                    <Link href={sub.href!} className="flex items-center justify-between w-full">
+                      <span>{sub.label}</span>
+                      {sub.badge && (
+                          <span className="ml-auto bg-[#F4F0FF] text-[#6941C6] px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap">
+                              {sub.badge}
+                          </span>
+                      )}
+                      {sub.imageUrl === "user-avatar" && (
+                          (user as any)?.profilePicture ? (
+                              <img src={(user as any).profilePicture} alt="Avatar" className="ml-auto w-5 h-5 rounded-full object-cover" />
+                          ) : (
+                              <div className="ml-auto w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 capitalize">
+                                  {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                              </div>
+                          )
+                      )}
+                    </Link>
+                  </SidebarMenuSubButton>
+                );
+              })}
             </CollapsibleContent>
           </Collapsible>
         </SidebarMenuItem>
       );
     }
     if (!item.href) return null;
+    // Coming Soon items: render as span, not link
+    if (item.comingSoon) {
+      return (
+        <SidebarMenuItem key={item.label}>
+          <span
+            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm opacity-50 cursor-not-allowed rounded-md"
+          >
+            <span className="shrink-0 [&>svg]:size-5 [&>svg]:shrink-0">{item.icon}</span>
+            <span className="group-data-[collapsible=icon]:hidden flex-1">{item.label}</span>
+            <span className="ml-auto bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-semibold group-data-[collapsible=icon]:hidden whitespace-nowrap">
+              Coming Soon
+            </span>
+          </span>
+        </SidebarMenuItem>
+      );
+    }
     return (
       <SidebarMenuItem key={item.label}>
         <SidebarMenuButton

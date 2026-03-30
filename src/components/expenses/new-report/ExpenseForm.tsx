@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import FormFieldInput from "@/components/form fields/formFieldInput";
@@ -104,7 +106,7 @@ export function ExpenseForm({
       setReceiptImage(base64);
       setHasReceiptChanged(true);
     } catch (error) {
-      console.error("Error converting file:", error);
+      logger.error("Error converting file:", error);
     }
   };
 

@@ -5,10 +5,16 @@ import {
   X, Plus, ChevronDown, ChevronUp, Loader2, UserCircle, Check, Trash2,
   MapPin, Users, Building2, Tag, ShieldCheck,
 } from "lucide-react";
-import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
+import { useGetCompanyRolesApi } from "@/actions/role/get-all-roles";
+import { useGetExpenseCategoriesApi } from "@/actions/companies/get-expense-categories";
 import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
+import { useCreatePolicyApi, CreatePolicyPayload, SpendLimitRule, ReceiptRequirementRule } from "@/actions/companies/create-policy";
 import AddCategoryModal from "@/components/auth/AddCategoryModal";
+import { toast } from "sonner";
+import { useAuthStore } from "@/stores/auth-stores";
+import { getCountryName } from "@/lib/utils/countries";
+import { getCurrencyConfig } from "@/lib/utils/currency";
 
 /* ─── Types ───────────────────────────────────────────────── */
 export interface CreatedPolicyData {
@@ -31,6 +37,7 @@ export interface PolicyRule {
   type: RuleType;
   amount: string;
   enforcement: string;
+  timeframe: "daily" | "weekly" | "monthly" | "per_transaction";
 }
 
 type RuleType = "spend_limit" | "receipt_requirement";
@@ -51,7 +58,7 @@ interface DropdownOption {
 */
 
 const RULE_TYPE_LABELS: Record<RuleType, { label: string; amountLabel: string }> = {
-  spend_limit:         { label: "Spend Limit",         amountLabel: "Daily limit" },
+  spend_limit:         { label: "Spend Limit",         amountLabel: "Limit amount" },
   receipt_requirement: { label: "Receipt Requirement",  amountLabel: "Required above" },
 };
 
@@ -339,9 +346,10 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 function NumberInput({ value, onChange, placeholder = "0.00" }: {
   value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
+  const currencySymbol = useAuthStore(state => state.getCurrencySymbol());
   return (
     <div className="relative">
-      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">{currencySymbol}</span>
       <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full h-12 rounded-xl border border-border bg-white pl-7 pr-8 text-sm font-medium text-gray-800 placeholder:text-muted-foreground focus:outline-none focus:border-[#03C3A6] transition-colors tabular-nums" />
       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
@@ -390,6 +398,7 @@ function RuleCard({
   canDelete: boolean;
 }) {
   const meta = RULE_TYPE_LABELS[rule.type];
+  const isSpendLimit = rule.type === "spend_limit";
   return (
     <div className="rounded-2xl border border-border p-5 space-y-4 relative">
       <div className="flex items-center justify-between">
@@ -401,7 +410,20 @@ function RuleCard({
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      {/* Spend limit: 3 columns — Timeframe | Amount | Enforcement */}
+      {/* Receipt requirement: 2 columns — Amount | Enforcement */}
+      <div className={`grid gap-4 ${isSpendLimit ? "grid-cols-3" : "grid-cols-2"}`}>
+        {isSpendLimit && (
+          <div>
+            <FieldLabel>Timeframe</FieldLabel>
+            <SimpleDropdown
+              placeholder="Select"
+              value={rule.timeframe}
+              onChange={(v) => onChange({ ...rule, timeframe: v as PolicyRule["timeframe"] })}
+              options={TIMEFRAME_OPTIONS}
+            />
+          </div>
+        )}
         <div>
           <FieldLabel>{meta.amountLabel}</FieldLabel>
           <NumberInput value={rule.amount} onChange={(v) => onChange({ ...rule, amount: v })} />
@@ -423,17 +445,21 @@ function RuleCard({
 function Preview({
   policyName, categories, scope, selectedRoles, roleOptions,
   selectedDepts, departmentOptions,
-  locations, rules, approvers,
+  locations, rules, approvers, expenseCategoryOptions, adminOptions,
 }: {
   policyName: string; categories: string[]; scope: "all" | "specific";
   selectedRoles: string[]; roleOptions: DropdownOption[];
   selectedDepts: string[]; departmentOptions: DropdownOption[];
   locations: string[]; rules: PolicyRule[]; approvers: string[];
+  expenseCategoryOptions: DropdownOption[];
+  adminOptions: DropdownOption[];
 }) {
+  const currencySymbol = useAuthStore(state => state.getCurrencySymbol());
+
   const scopeSummary = (() => {
     if (scope === "all") return "All employees, all departments";
-    const deptNames = selectedDepts.map((d) => departmentOptions.find((o) => o.value === d)?.label ?? d);
-    const roleNames = selectedRoles.map((r) => roleOptions.find((o) => o.value === r)?.label ?? r);
+    const deptNames = selectedDepts.map((d: string) => departmentOptions.find((o: DropdownOption) => o.value === d)?.label ?? d);
+    const roleNames = selectedRoles.map((r: string) => roleOptions.find((o: DropdownOption) => o.value === r)?.label ?? r);
     const listFmt = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
     const deptPart = deptNames.length > 0 ? listFmt.format(deptNames) : "All departments";
     const rolePart = roleNames.length > 0 ? listFmt.format(roleNames) : "All employees";
@@ -448,9 +474,9 @@ function Preview({
 
         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Expense categories</p>
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {categories.map((c) => (
+          {categories.map((c: string) => (
             <span key={c} className="inline-flex items-center gap-1 h-6 px-2.5 rounded-full bg-[#03C3A6]/10 text-[#03C3A6] text-[11px] font-semibold">
-              <Tag className="w-2.5 h-2.5" /> {c}
+              <Tag className="w-2.5 h-2.5" /> {expenseCategoryOptions.find((o: DropdownOption) => o.value === c)?.label ?? c}
             </span>
           ))}
         </div>
@@ -485,7 +511,7 @@ function Preview({
               className={`grid grid-cols-3 px-4 py-3 items-center ${i < rules.length - 1 ? "border-b border-border" : ""}`}>
               <p className="text-sm font-medium text-gray-800">{RULE_TYPE_LABELS[rule.type].label}</p>
               <p className="text-sm text-gray-700 tabular-nums">
-                {rule.amount ? `$${rule.amount}` : <span className="text-gray-300">—</span>}
+                {rule.amount ? `${currencySymbol}${rule.amount}` : <span className="text-gray-300">—</span>}
               </p>
               <div>
                 {rule.enforcement ? (
@@ -513,7 +539,9 @@ function Preview({
                 <div className="w-5 h-5 rounded-full bg-[#03C3A6]/15 flex items-center justify-center">
                   <UserCircle className="w-3.5 h-3.5 text-[#03C3A6]" />
                 </div>
-                <span className="text-xs font-medium text-gray-700">{a}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {adminOptions.find(o => o.value === a)?.label ?? a}
+                </span>
               </div>
             ))}
           </div>
@@ -524,14 +552,7 @@ function Preview({
 }
 
 /* ─── Static data ─────────────────────────────────────────── */
-const EXPENSE_OPTIONS: DropdownOption[] = [
-  { value: "Meals",           label: "Meals",                  subLabel: "Food & beverage" },
-  { value: "Travel",          label: "Travel",                 subLabel: "Flights, hotels & transport" },
-  { value: "Software",        label: "Software Subscriptions", subLabel: "SaaS & cloud licences" },
-  { value: "Office Supplies", label: "Office Supplies",        subLabel: "Equipment & stationery" },
-  { value: "Training",        label: "Training & Development", subLabel: "Courses & certifications" },
-  { value: "Entertainment",   label: "Client Entertainment",   subLabel: "Client-facing meals & events" },
-];
+// EXPENSE_OPTIONS is now dynamically built from API — see expenseCategoryOptions below
 
 const WARNING_OPTIONS: DropdownOption[] = [
   { value: "Hard block",   label: "Hard block",   subLabel: "Transaction is declined" },
@@ -543,11 +564,19 @@ const ADDABLE_RULE_TYPES: DropdownOption[] = [
   { value: "receipt_requirement", label: "Receipt Requirement", subLabel: "Require receipts above a threshold" },
 ];
 
+const TIMEFRAME_OPTIONS: DropdownOption[] = [
+  { value: "daily",           label: "Daily",           subLabel: "Resets every day" },
+  { value: "weekly",          label: "Weekly",          subLabel: "Resets every week" },
+  { value: "monthly",         label: "Monthly",         subLabel: "Resets every month" },
+  { value: "per_transaction", label: "Per Transaction", subLabel: "Applied to each transaction" },
+];
+
 const mkRule = (type: RuleType = "spend_limit"): PolicyRule => ({
   id: Math.random().toString(36).slice(2),
   type,
   amount: "",
   enforcement: "",
+  timeframe: "daily",
 });
 
 /* ═══════════════════════════════════════════════════════════
@@ -571,7 +600,10 @@ export default function PolicyCreationModal({
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [categories,    setCategories]    = useState<string[]>([]);
-  const [locations,     setLocations]     = useState<string[]>(["Global"]);
+  
+  const userCountry = useAuthStore(state => state.user?.company?.countryOfRegistration ?? "");
+  const [locations,     setLocations]     = useState<string[]>([getCountryName(userCountry)]);
+  
   const [addingLoc,     setAddingLoc]     = useState(false);
   const [newLoc,        setNewLoc]        = useState("");
   const [isAddCatOpen,  setIsAddCatOpen]  = useState(false);
@@ -586,26 +618,41 @@ export default function PolicyCreationModal({
 
   // Step 4 — Approvers
   const [approvers, setApprovers] = useState([""]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const rolesApi       = useGetAllRolesApi({ enabled: open });
-  const directoryApi   = useGetDirectoryUsersApi({ enabled: open });
-  const departmentsApi = useGetAllDepartmentsApi({ enabled: open });
+  const rolesApi         = useGetCompanyRolesApi({ enabled: open });
+  const directoryApi     = useGetDirectoryUsersApi({ enabled: open });
+  const departmentsApi   = useGetAllDepartmentsApi({ enabled: open });
+  const expCatApi        = useGetExpenseCategoriesApi({ enabled: open });
+
+  const createPolicyMutation = useCreatePolicyApi();
+  const isLoading = createPolicyMutation.isPending;
+
+  const expenseCategoryOptions = useMemo<DropdownOption[]>(() =>
+    (expCatApi.data?.data ?? []).map((c: any) => ({
+      label: c.name,
+      value: c.categoryId ?? c.id ?? c.name,
+      subLabel: c.description || undefined,
+    })), [expCatApi.data?.data]);
 
   const roleOptions = useMemo<DropdownOption[]>(() =>
     (rolesApi.data?.data ?? []).map((r: any) => {
       const n = (r.name ?? "").replace(/_/g, " ");
-      return { label: n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(), value: r.name };
+      return { label: n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(), value: r.roleId };
     }), [rolesApi.data?.data]);
+
+  const currentUserId = useAuthStore(state => state.user?.userId);
 
   const adminOptions = useMemo<DropdownOption[]>(() =>
     (directoryApi.data?.data ?? [])
-      .filter((u: any) => !u.villetoRole?.name?.toLowerCase().includes("employee"))
+      .filter((u: any) =>
+        !u.villetoRole?.name?.toLowerCase().includes("employee") &&
+        u.userId !== currentUserId    // exclude self — a user cannot be their own approver
+      )
       .map((u: any) => ({
         label: `${u.firstName} ${u.lastName}`,
-        value: `${u.firstName} ${u.lastName} (${u.villetoRole?.name || "Admin"})`,
+        value: u.userId ?? u.id,
         subLabel: u.villetoRole?.name || "Administrator",
-      })), [directoryApi.data?.data]);
+      })), [directoryApi.data?.data, currentUserId]);
 
   const departmentOptions = useMemo<DropdownOption[]>(() =>
     (departmentsApi.data?.data ?? []).map((d: any) => ({
@@ -648,7 +695,7 @@ export default function PolicyCreationModal({
   const reset = () => {
     setStep(1); setPolicyName(""); setScope("all");
     setSelectedRoles([]); setSelectedDepts([]);
-    setCategories([]); setLocations(["Global"]); setAddingLoc(false); setNewLoc("");
+    setCategories([]); setLocations([getCountryName(userCountry)]); setAddingLoc(false); setNewLoc("");
     setRules([mkRule("spend_limit"), mkRule("receipt_requirement")]);
     setApprovers([""]);
   };
@@ -660,19 +707,69 @@ export default function PolicyCreationModal({
     else handleConfirm();
   };
 
-  const handleSaveDraft = () => { handleClose(); };
+  const buildPayload = (status: "active" | "draft"): CreatePolicyPayload => {
+    const currencyCode = getCurrencyConfig(userCountry).code;
+    return {
+      name: policyName,
+      description: policyName,
+      expenseCategoryIds: categories,                       // array — one policy, multiple categories
+      scope: scope === "all"
+        ? { type: "all_employees" }
+        : { type: "specific", departmentIds: selectedDepts, roleIds: selectedRoles },
+      locations,
+      rules: rules
+        .filter(r => r.amount && r.enforcement)             // only send completed rules
+        .map(r => {
+          const enforcement = r.enforcement === "Hard block" ? "hard_block" : "soft_warning";
+          if (r.type === "spend_limit") return {
+            type: "spend_limit" as const,
+            timeframe: r.timeframe,
+            amount: parseFloat(r.amount),
+            currency: currencyCode,
+            enforcement,
+          };
+          return {
+            type: "receipt_requirement" as const,
+            requiredAboveAmount: parseFloat(r.amount),
+            currency: currencyCode,
+            enforcement,
+          };
+        }),
+      approvers: approvers
+        .filter(Boolean)
+        .map((userId, index) => ({ userId, order: index + 1 })),
+      status,
+    };
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      // TODO: draft endpoint not yet confirmed — saving with status "draft"
+      const payload = buildPayload("draft");
+      await createPolicyMutation.mutateAsync(payload);
+      toast.success("Policy saved as draft.");
+      handleClose();
+    } catch {
+      // If draft endpoint is not available, just close without pretending to save
+      handleClose();
+    }
+  };
 
   const handleConfirm = async () => {
-    setIsLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 900));
+      const payload = buildPayload("active");
+      await createPolicyMutation.mutateAsync(payload);
+
       onSuccess?.({
         name: policyName, categories, scope,
         selectedRoles, selectedDepts,
         locations, rules, approvers: approvers.filter(Boolean),
       });
       handleClose();
-    } finally { setIsLoading(false); }
+      toast.success("Policy created successfully!");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to create policy");
+    }
   };
 
   const scopeValid =
@@ -761,10 +858,11 @@ export default function PolicyCreationModal({
                     <div>
                       <FieldLabel>Which type of expense category should this policy apply to?</FieldLabel>
                       <MultiDropdown
-                        placeholder="Select expense"
+                        placeholder="Select expense category"
                         values={categories}
                         onToggle={togCat}
-                        options={EXPENSE_OPTIONS}
+                        options={expenseCategoryOptions}
+                        isLoading={expCatApi.isLoading}
                         searchable
                         footer={
                           <button type="button" onClick={() => setIsAddCatOpen(true)}
@@ -776,7 +874,7 @@ export default function PolicyCreationModal({
                       {categories.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2.5">
                           {categories.map((c) => (
-                            <Chip key={c} label={EXPENSE_OPTIONS.find((o) => o.value === c)?.label ?? c}
+                            <Chip key={c} label={expenseCategoryOptions.find((o) => o.value === c)?.label ?? c}
                               onRemove={() => togCat(c)} />
                           ))}
                         </div>
@@ -1000,6 +1098,8 @@ export default function PolicyCreationModal({
                     locations={locations}
                     rules={rules}
                     approvers={approvers}
+                    expenseCategoryOptions={expenseCategoryOptions}
+                    adminOptions={adminOptions}
                   />
                 )}
               </div>

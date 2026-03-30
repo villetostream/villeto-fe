@@ -52,3 +52,33 @@ export const useGetAllRolesApi = (
         ...options,
     });
 };
+
+export const useGetCompanyRolesApi = (
+    options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
+): UseQueryResult<Response, Error> => {
+    const axiosInstance = useAxios();
+    return useQuery<Response, Error>({
+        queryKey: [QUERY_KEYS.ROLES, "company"],
+        queryFn: async () => {
+            const response = await axiosInstance.get(API_KEYS.ROLE.ROLES_COMPANY);
+            return response.data;
+        },
+        staleTime: 0,
+        ...options,
+    });
+};
+
+export const useGetVilletoRolesApi = (
+    options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
+): UseQueryResult<Response, Error> => {
+    const axiosInstance = useAxios();
+    return useQuery<Response, Error>({
+        queryKey: [QUERY_KEYS.ROLES, "villeto"],
+        queryFn: async () => {
+            const response = await axiosInstance.get(API_KEYS.ROLE.ROLES_VILLETO);
+            return response.data;
+        },
+        staleTime: 0,
+        ...options,
+    });
+};

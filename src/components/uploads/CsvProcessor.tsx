@@ -140,7 +140,7 @@ const CSVProcessor = () => {
                 return;
             }
 
-            console.log('Parsed Result:', { result });
+            logger.log('Parsed Result:', { result });
 
             // Use the raw data from PapaParse without filtering
             const rawData = result.data;
@@ -173,7 +173,7 @@ const CSVProcessor = () => {
                 return dataRow;
             });
 
-            console.log('Processed Data:', processedData);
+            logger.log('Processed Data:', processedData);
 
             // Generate columns - ALWAYS use meta.fields if available
             const generatedColumns: ColumnDef<any>[] = [];
@@ -268,7 +268,7 @@ const CSVProcessor = () => {
                     size: 150,
                 });
             });
-            console.log({ generatedColumns })
+            logger.log({ generatedColumns })
 
             // Set the data and columns
             setCsvData(processedData);
@@ -297,7 +297,7 @@ const CSVProcessor = () => {
             setError(summaryMessage);
 
         } catch (error) {
-            console.error('Error processing CSV:', error);
+            logger.error('Error processing CSV:', error);
             setError('Failed to process CSV file. Please check the file format and try again.');
         } finally {
             setIsProcessing(false);

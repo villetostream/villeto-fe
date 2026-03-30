@@ -32,7 +32,6 @@ export default function GetStarted() {
         defaultValues: {
             contactFirstName: onboarding.preOnboarding?.contactFirstName ?? "",
             contactLastName: onboarding.preOnboarding?.contactLastName ?? "",
-            position: onboarding.preOnboarding?.position ?? "",
             accountType: onboarding.preOnboarding?.accountType ?? undefined,
             contactEmail: onboarding.contactEmail
         },
@@ -42,7 +41,6 @@ export default function GetStarted() {
             form.reset({
                 contactFirstName: onboarding.preOnboarding.contactFirstName || "",
                 contactLastName: onboarding.preOnboarding.contactLastName || "",
-                position: onboarding.preOnboarding.position || "",
                 accountType: onboarding.preOnboarding.accountType || undefined,
                 contactEmail: onboarding.contactEmail || "",
             });
@@ -51,10 +49,7 @@ export default function GetStarted() {
 
     const onSubmit = async (data: FormData) => {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { position, ...payload } = data;
-            // @ts-ignore - position is excluded from payload
-            const response = await startOnboarding.mutateAsync(payload);
+            const response = await startOnboarding.mutateAsync(data);
             onboarding.setPreOnboarding(data);
             onboarding.setOnboardingId(response.data.onboardingId as string);
             onboarding.setIsExistingUser(false);
@@ -109,13 +104,6 @@ export default function GetStarted() {
                                 placeholder="Enter last name"
                             />
                         </div>
-
-                        <FormFieldInput
-                            control={form.control}
-                            name="position"
-                            label="Position*"
-                            placeholder="Enter your position"
-                        />
 
                         <FormField
                             control={form.control}

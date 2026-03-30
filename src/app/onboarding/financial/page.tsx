@@ -1,7 +1,8 @@
 "use client"
 import { Loader2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { spendingRanges, SpendingSlider } from "@/components/onboarding/financial/SpendingSlider";
+import { SpendingSlider } from "@/components/onboarding/financial/SpendingSlider";
+import { getCurrencyConfig } from "@/lib/utils/currency";
 import { BankConnection } from "@/components/onboarding/financial/BankConnection";
 import { ConnectBankModal } from "@/components/onboarding/financial/ConnectBankModal";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
@@ -13,7 +14,7 @@ import { useUpdateOnboardingFinancialPulseApi } from "@/actions/onboarding/updat
 import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
 
 export default function FinancialPulse() {
-    const { bankConnected, connectedAccounts, spendRange } = useOnboardingStore();
+    const { bankConnected, connectedAccounts, spendRange, businessSnapshot } = useOnboardingStore();
     useHydrateOnboardingData();
 
     const router = useRouter()
@@ -21,11 +22,10 @@ export default function FinancialPulse() {
     const loading = updateFinancial.isPending;
     const canContinue = bankConnected || connectedAccounts.length > 0;
 
-    console.log({ spendRange })
-
     const handleSubmit = async () => {
         try {
-            const selectedRange = spendingRanges.find(r => r.label === spendRange);
+            const config = getCurrencyConfig(businessSnapshot?.countryOfRegistration ?? "");
+            const selectedRange = config.spendingRanges.find(r => r.label === spendRange);
             const payload = {
                 spendLimit: {
                     lower: selectedRange?.lower ?? 0,

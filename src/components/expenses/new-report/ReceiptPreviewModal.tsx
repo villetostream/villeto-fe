@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -42,7 +44,7 @@ export function ReceiptPreviewModal({
       const base64 = await fileToBase64(file);
       onChangeReceipt(base64);
     } catch (error) {
-      console.error("Error converting file:", error);
+      logger.error("Error converting file:", error);
     } finally {
       setIsChanging(false);
     }

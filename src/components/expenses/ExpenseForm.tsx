@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { Label } from "../ui/label";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 import FormFieldInput from "../form fields/formFieldInput";
 import FormFieldSelect from "../form fields/formFieldSelect";
 import FormFieldTextArea from "../form fields/formFieldTextArea";
@@ -169,7 +170,7 @@ export function ExpenseForm() {
   useEffect(() => {
     const storedImages = sessionStorage.getItem("uploadedReceipts");
     if (storedImages) {
-      console.log({ storedImages });
+      logger.log({ storedImages });
       setFiles(JSON.parse(storedImages));
     }
   }, []);
@@ -468,8 +469,8 @@ export function ExpenseForm() {
       return;
     }
 
-    console.log("Expenses submitted:", data.expenses);
-    console.log("Uploaded files:", uploadedFiles);
+    logger.log("Expenses submitted:", data.expenses);
+    logger.log("Uploaded files:", uploadedFiles);
 
     persistToPersonalExpenses(data, "pending");
     toast.success(
