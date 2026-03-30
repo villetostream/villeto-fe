@@ -1,7 +1,6 @@
 "use client";
 
 import { DashboardSidebar } from "@/components/dashboard/sidebar/DashboardSidebar";
-import { PageLoader } from "@/components/PageLoader/PageLoader";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UserSection } from "@/components/user/user-section";
 import { useEffect, useState } from "react";
@@ -52,12 +51,6 @@ export default function DashboardLayoutContent({
         const { role, company, companyId, ...userData } = responseData || {};
 
         if (userData) {
-          // Check if password change is required BEFORE updating the store
-          if (userData.shouldChangePassword) {
-            router.replace("/reset-password");
-            return; // Stop execution here to prevent updating store
-          }
-
           // Ensure companyId is included in user data
           const userWithCompany = {
             ...user,
@@ -72,8 +65,7 @@ export default function DashboardLayoutContent({
           setUserPermissions(role.permissions);
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
-        // Optionally handle error (e.g., logout, show error)
+        // Silently handle — user session may still be valid
       }
     })();
   }, [isLoading]);

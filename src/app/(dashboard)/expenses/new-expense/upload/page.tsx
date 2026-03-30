@@ -69,7 +69,7 @@ export default function UploadReceipt() {
         );
         setFiles(restoredFiles);
       } catch (error) {
-        console.error("Error restoring file metadata:", error);
+        logger.error("Error restoring file metadata:", error);
         // If restoration fails, clear and start fresh
         sessionStorage.removeItem("uploadedReceipts");
         sessionStorage.removeItem("uploadedFileMetadata");
@@ -150,7 +150,7 @@ export default function UploadReceipt() {
               JSON.stringify(updatedReceipts),
             );
           } catch (error) {
-            console.error("Error updating receipts:", error);
+            logger.error("Error updating receipts:", error);
           }
         }
       }
@@ -191,7 +191,7 @@ export default function UploadReceipt() {
             );
           }
         } catch (error) {
-          console.error("Error parsing stored receipts:", error);
+          logger.error("Error parsing stored receipts:", error);
           // Fall through to process files normally
         }
       }
@@ -236,7 +236,7 @@ export default function UploadReceipt() {
 
       router.push(`/expenses/new-expense?${params.toString()}`);
     } catch (error) {
-      console.error("OCR Error:", error);
+      logger.error("OCR Error:", error);
     } finally {
       setIsProcessing(false);
     }

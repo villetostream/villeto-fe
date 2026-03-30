@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import EmployeeInviteFileUpload from "@/components/dashboard/people/invite/EmployeeInviteFileUpload";
 import EmployeePreviewTable, { EmployeeData } from "@/components/dashboard/people/invite/EmployeePreviewTable";
@@ -11,9 +11,26 @@ import { useBulkImportApi } from "@/actions/users/bulk-import";
 import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Upload04Icon } from "@hugeicons/core-free-icons";
 
 type Step = "directory" | "upload" | "preview";
 
+/**
+ * Reads the upload referrer from sessionStorage.
+ * - "leadership"      → came from the leadership page's "upload user to directory" link
+ * - "empty-directory" → came from the empty-directory "Populate Directory" button
+ * - "directory"       → came from the Directory tab header "Upload Directory" button
+ * - null / anything else → default behaviour
+ */
+function getReferrer(): string | null {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("uploadDirReferrer");
+}
+
+function clearReferrer() {
+    if (typeof window !== "undefined") sessionStorage.removeItem("uploadDirReferrer");
+}
 
 export default function InviteEmployeesPage() {
     const router = useRouter();
@@ -26,6 +43,13 @@ export default function InviteEmployeesPage() {
     // True immediately after a successful bulk-import upload so we skip the
     // stale directoryTotalCount check and always show the directory picker.
     const [justUploaded, setJustUploaded] = useState(false);
+
+    // Capture the referrer dynamically upon client mount to avoid SSR hydration mismatch
+    const [referrer, setReferrer] = useState<string | null>(null);
+
+    useEffect(() => {
+        setReferrer(getReferrer());
+    }, []);
 
     // Sync URL step param → React state so browser back/forward updates the view
     useEffect(() => {
@@ -45,7 +69,8 @@ export default function InviteEmployeesPage() {
     const usersApi = useGetDirectoryUsersApi();
 
     const directoryTotalCount = usersApi?.data?.meta?.totalCount ?? 0;
-    const hasDirectoryData = directoryTotalCount > 2;
+    // Empty if <= 1 (threshold updated from > 2)
+    const hasDirectoryData = directoryTotalCount > 1;
 
     // Parse CSV locally without calling any API
     const handleFileSelect = useCallback((file: File) => {
@@ -123,14 +148,31 @@ export default function InviteEmployeesPage() {
         return new File([blob], rawFile.name || "directory.csv", { type: "text/csv" });
     };
 
-    // POST to API then navigate
+    // POST to API then navigate based on where the user came from
     const handleSaveToDirectory = async () => {
         const fileToUpload = generateCsvFile();
         if (!fileToUpload) return;
         try {
             await bulkImportMutation.mutateAsync(fileToUpload);
             toast.success("Directory saved successfully!");
-            router.push("/people?tab=directory");
+
+            const currentReferrer = referrer;
+            clearReferrer();
+
+            if (currentReferrer === "leadership") {
+                // Came from leadership page's "upload user to directory" link
+                router.push("/people/invite/leadership");
+            } else if (referrer === "empty-directory") {
+                // Came from the empty-directory "Populate Directory" button
+                // Refresh the directory data and go back to directory selection
+                setJustUploaded(true);
+                await usersApi.refetch();
+                setStep("directory");
+                router.replace("/people/invite/employees");
+            } else {
+                // Default: came from the Directory tab header "Upload Directory"
+                router.push("/people?tab=directory");
+            }
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Failed to save directory. Please try again.");
         }
@@ -152,6 +194,13 @@ export default function InviteEmployeesPage() {
             toast.error(error?.response?.data?.message || "Failed to save directory. Please try again.");
         }
     };
+
+    // Determine if preview should show save-only mode
+    // (no "Save and Invite Users" button — only "Save to Directory")
+    const isSaveOnlyMode =
+        referrer === "leadership" ||
+        referrer === "empty-directory" ||
+        referrer === "directory";
 
     // Directory step
     if (step === "directory") {
@@ -186,12 +235,13 @@ export default function InviteEmployeesPage() {
             );
         }
 
+        // Empty directory state — "Populate Directory" CTA
         return (
             <div className="p-4 max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg border">
                     <div className="flex items-center justify-between p-6 pb-2">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">Organization Directory</h2>
+                            <h2 className="text-xl font-semibold text-gray-900">Invite Employees from Directory</h2>
                             <p className="text-sm text-muted-foreground mt-0.5">
                                 Select people to invite to Villeto as users.
                             </p>
@@ -209,13 +259,17 @@ export default function InviteEmployeesPage() {
                             You haven&apos;t uploaded your directory yet. Do that and invite your employees from it.
                         </p>
                         <button
-                            onClick={() => setStep("upload")}
+                            onClick={() => {
+                                // Track that we came from the empty-directory state
+                                sessionStorage.setItem("uploadDirReferrer", "empty-directory");
+                                setReferrer("empty-directory");
+                                setStep("upload");
+                                router.replace("/people/invite/employees?step=upload");
+                            }}
                             className="inline-flex items-center gap-2 bg-[#00BFA5] hover:bg-[#00BFA5]/90 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            Upload Directory
+                            <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                            Populate Directory
                         </button>
                     </div>
                 </div>
@@ -280,6 +334,7 @@ export default function InviteEmployeesPage() {
                         onSaveToDirectory={handleSaveToDirectory}
                         onSaveAndInviteAll={handleSaveAndInviteAll}
                         isSaving={bulkImportMutation.isPending}
+                        saveOnlyMode={isSaveOnlyMode}
                     />
                 )}
             </div>

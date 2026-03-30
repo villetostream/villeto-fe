@@ -41,7 +41,7 @@ const MembersDropdown = ({
 
     // Memoized filtered members based on search query
     const filteredMembers = useMemo(() => {
-        console.log(allUsers?.data?.data)
+        logger.log(allUsers?.data?.data)
         if (!allUsers?.data?.data) return [];
 
         const users = allUsers.data.data;

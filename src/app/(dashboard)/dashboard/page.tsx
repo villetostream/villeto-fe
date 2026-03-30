@@ -15,6 +15,7 @@ import { StatusUp, WalletMoney, LampOn } from "iconsax-reactjs";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const currencySymbol = useAuthStore((state) => state.getCurrencySymbol());
   const userName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "there";
 
   return (
@@ -65,8 +66,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-1.5">
             <StatsCard
               title="Total Spend"
-              value="$0.00"
-              subtitle={<span className="text-muted-foreground">This month you spent <span className="text-success">$0.00</span> </span>}
+              value={`${currencySymbol}0.00`}
+              subtitle={<span className="text-muted-foreground">This month you spent <span className="text-success">{currencySymbol}0.00</span> </span>}
               trend="up"
               icon={
                 <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#38B2AC]">
@@ -92,7 +93,7 @@ export default function DashboardPage() {
             />
             <StatsCard
               title="Total Accounts Payable"
-              value="$0.00"
+              value={`${currencySymbol}0.00`}
               subtitle={<>You have 0 accounts to pay</>}
               icon={
                 <div className="p-2 mr-3 flex items-center justify-center rounded-full text-white bg-[#F45B69]">

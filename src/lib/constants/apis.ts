@@ -21,6 +21,8 @@ export const API_KEYS = {
   },
   ROLE: {
     ROLES: "roles/",
+    ROLES_COMPANY: "roles?type=company",
+    ROLES_VILLETO: "roles?type=villeto",
     ROLE_DETAIL: (roleId: string) => `roles/${roleId}` as const,
   },
   USER: {
@@ -41,6 +43,8 @@ export const API_KEYS = {
   },
   EXPENSE: {
     CATEGORIES: "companies/expense/categories",
+    CATEGORIES_WITH_POLICIES: "companies/expense/categories?withPolicies=true",
+    POLICIES: "companies/expense/policies",
     REPORTS: "reports/manual",
     PERSONAL_EXPENSES: "reports",
     COMPANY_REPORTS: "companies/expense/reports",

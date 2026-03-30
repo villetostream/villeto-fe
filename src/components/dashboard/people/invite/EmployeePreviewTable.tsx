@@ -59,6 +59,7 @@ interface EmployeePreviewTableProps {
     onSaveToDirectory: () => void;
     onSaveAndInviteAll: () => void;
     isSaving?: boolean;
+    saveOnlyMode?: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -77,6 +78,7 @@ export default function EmployeePreviewTable({
     onSaveToDirectory,
     onSaveAndInviteAll,
     isSaving = false,
+    saveOnlyMode = false,
 }: EmployeePreviewTableProps) {
     const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({
         open: false,
@@ -347,20 +349,22 @@ export default function EmployeePreviewTable({
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-2 flex-shrink-0">
                     <Button
-                        variant="outline"
-                        className="border-primary text-primary hover:bg-primary/5 hover:text-primary min-w-[160px]"
+                        variant={saveOnlyMode ? "default" : "outline"}
+                        className={saveOnlyMode ? "bg-primary hover:bg-primary/90 text-white min-w-[160px]" : "border-primary text-primary hover:bg-primary/5 hover:text-primary min-w-[160px]"}
                         onClick={onSaveToDirectory}
                         disabled={isSaving || data.length === 0}
                     >
                         {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save to Directory"}
                     </Button>
-                    <Button
-                        className="bg-primary hover:bg-primary/90 min-w-[160px]"
-                        onClick={onSaveAndInviteAll}
-                        disabled={isSaving || data.length === 0}
-                    >
-                        {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save and Invite User(s)"}
-                    </Button>
+                    {!saveOnlyMode && (
+                        <Button
+                            className="bg-primary hover:bg-primary/90 min-w-[160px]"
+                            onClick={onSaveAndInviteAll}
+                            disabled={isSaving || data.length === 0}
+                        >
+                            {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : "Save and Invite User(s)"}
+                        </Button>
+                    )}
                 </div>
             </div>
 

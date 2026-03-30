@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,7 +52,7 @@ export function ReceiptUploadSection({
       );
       onReceiptsUpload(processedFiles);
     } catch (error) {
-      console.error("Error processing files:", error);
+      logger.error("Error processing files:", error);
     } finally {
       setIsUploading(false);
     }

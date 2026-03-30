@@ -1,4 +1,6 @@
 "use client";
+
+import { logger } from "@/lib/logger";
 import { FileType } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -55,14 +57,14 @@ export default function FileUpload({
 
   useEffect(() => {
     if (originalUpload) {
-      console.log(typeof originalUpload);
-      console.log({ originalUpload });
+      logger.log(typeof originalUpload);
+      logger.log({ originalUpload });
 
       // Directly set the base64 string as the preview URL
       setPreviewUrl(originalUpload);
       const mime = getMimeFromBase64(originalUpload)
       const filetype = extractFileType(mime!)
-      console.log({ mime }, { filetype })
+      logger.log({ mime }, { filetype })
       setFile(new File([originalUpload], `receipt.${filetype}`, {
         type: mime!
       }))
@@ -79,13 +81,13 @@ export default function FileUpload({
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setError(null);
-      console.log
+      logger.log
       if (!acceptedFiles || acceptedFiles.length === 0) {
         return;
       }
 
       const f = acceptedFiles[0];
-      console.log(f.size, { maxSize })
+      logger.log(f.size, { maxSize })
       if (f.size > maxSize) {
         setError(`File too large. Maximum ${Math.round(maxSize / 1024 / 1024)} MB.`);
         setState("failed");
@@ -141,7 +143,7 @@ export default function FileUpload({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  console.log({ previewUrl })
+  logger.log({ previewUrl })
   return (
     <div className="w-full h-full">
       {/* <div className="mb-3 flex items-center justify-between">

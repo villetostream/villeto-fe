@@ -18,6 +18,8 @@ import { useState, useEffect } from "react";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { CheckCircle } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-stores";
+import { logger } from "@/lib/logger";
 
 const getStatusBadgeVariant = (status: PersonalExpenseStatus) => {
   switch (status) {
@@ -111,6 +113,7 @@ export default function CompanyExpenseDetailPage() {
   const router = useRouter();
   const reportId = params.id as string;
   const axios = useAxios();
+  const currencySymbol = useAuthStore((state) => state.getCurrencySymbol());
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -143,7 +146,7 @@ export default function CompanyExpenseDetailPage() {
         }>(API_KEYS.USER.ME);
         setUser(response.data.data);
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        logger.error("Failed to fetch user:", error);
         setUser(null);
       } finally {
         setIsLoadingUser(false);
@@ -225,7 +228,7 @@ export default function CompanyExpenseDetailPage() {
       // Navigate back to company expenses tab after successful approval
       router.push("/expenses?tab=company-expenses");
     } catch (error) {
-      console.error("Failed to approve:", error);
+      logger.error("Failed to approve:", error);
     } finally {
       setIsApproving(false);
     }
@@ -241,7 +244,7 @@ export default function CompanyExpenseDetailPage() {
       // Navigate back to company expenses tab after successful rejection
       router.push("/expenses?tab=company-expenses");
     } catch (error) {
-      console.error("Failed to reject:", error);
+      logger.error("Failed to reject:", error);
     } finally {
       setIsRejecting(false);
     }
@@ -286,7 +289,7 @@ export default function CompanyExpenseDetailPage() {
             <span className="text-muted-foreground">{expenses.length}</span>
           </h3>
           <div className="text-base font-semibold text-foreground">
-            Total: ${totalAmount.toLocaleString("en-US", {
+            Total: {currencySymbol}{totalAmount.toLocaleString("en-US", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 2,
             })}
@@ -349,7 +352,7 @@ export default function CompanyExpenseDetailPage() {
                   </td>
                   <td className="p-3">
                     <span className="text-sm font-medium text-foreground">
-                      ${parseFloat(expense.amount).toLocaleString("en-US", {
+                      {currencySymbol}{parseFloat(expense.amount).toLocaleString("en-US", {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 2,
                       })}

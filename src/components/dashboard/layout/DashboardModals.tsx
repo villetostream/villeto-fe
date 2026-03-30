@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-stores";
-import ChangePasswordModal from "@/components/auth/ChangePasswordModal";
+import SetPasswordModal from "@/components/invitation/SetPasswordModal";
 import AddCategoryModal from "@/components/auth/AddCategoryModal";
 
 export default function DashboardModals() {
@@ -14,8 +14,11 @@ export default function DashboardModals() {
 
     useEffect(() => {
         if (!hasChecked && user) {
-            // Only trigger if conditions are met
-            if (user.loginCount === 1 && user.position === "CONTROLLING_OFFICER") {
+            // Trigger for any first-time user (loginCount === 1) or users flagged to change password.
+            // Previously this was gated on CONTROLLING_OFFICER only — fixed to cover all invited roles.
+            const isFirstLogin = user.loginCount === 1;
+            const mustChangePassword = (user as any).shouldChangePassword === true;
+            if (isFirstLogin || mustChangePassword) {
                 setShowPasswordModal(true);
             }
             // Mark as checked so we don't re-trigger during this session
@@ -36,11 +39,12 @@ export default function DashboardModals() {
 
     return (
         <>
-            <ChangePasswordModal 
+            <SetPasswordModal 
                 open={showPasswordModal} 
                 onOpenChange={setShowPasswordModal}
                 email={user.email}
-                onSuccess={handlePasswordSuccess} 
+                onSuccess={handlePasswordSuccess}
+                preventDismiss={true}
             />
             <AddCategoryModal
                 open={showCategoryModal}

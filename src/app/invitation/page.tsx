@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -77,7 +79,7 @@ export default function InvitationPage() {
             );
             setShowPasswordModal(true);
         } catch (error: any) {
-            console.error(error);
+            logger.error(error);
             toast.error("Invalid invitation code. Please check and try again.");
         } finally {
             setIsLoading(false);

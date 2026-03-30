@@ -24,7 +24,6 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         if (onClick) {
             onClick()
         }
-        console.log("i passed here")
         onClose()
     }
 

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // components/booking/FlightBooking.tsx
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -30,7 +31,7 @@ const FlightBooking = ({ trigger, isOpen, open, toggle }: ExpenseFormProps) => {
         setIsSubmitting(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log("Hotel booking data:", data);
+        logger.log("Hotel booking data:", data);
         // Handle hotel booking logic here
         setIsSubmitting(false);
     };

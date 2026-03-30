@@ -37,3 +37,18 @@ export const useGetExpenseCategoriesApi = (
         ...options,
     });
 };
+
+export const useGetExpenseCategoriesWithPoliciesApi = (
+    options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
+): UseQueryResult<Response, Error> => {
+    const axiosInstance = useAxios();
+    return useQuery<Response, Error>({
+        queryKey: [QUERY_KEYS.EXPENSE_CATEGORIES, "with-policies"],
+        queryFn: async () => {
+            const response = await axiosInstance.get(API_KEYS.EXPENSE.CATEGORIES_WITH_POLICIES);
+            return response.data;
+        },
+        staleTime: 0,
+        ...options,
+    });
+};

@@ -22,7 +22,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAxios } from "@/hooks/useAxios";
 import { useAuthStore } from "@/stores/auth-stores";
@@ -82,7 +82,7 @@ const PAGE_SIZE_OPTIONS = [
 ];
 
 export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageProps) {
-  const usersApi = useGetAllUsersApi();
+  const usersApi = useGetDirectoryUsersApi();
   const router = useRouter();
   const axios = useAxios();
   const user = useAuthStore((state) => state.user);
@@ -272,7 +272,7 @@ export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageP
     <div className="flex flex-col h-full space-y-4 overflow-y-n">
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Organization Directory</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Invite Employees from Directory</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Select people to invite to {businessName} as users.{" "}
             <span className="text-[#00BFA5] font-medium">

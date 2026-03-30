@@ -22,6 +22,7 @@ interface FormFieldLogoUploadProps<T extends Record<string, any>> {
   description?: string;
   maxSize?: number;
   accept?: Record<string, string[]>;
+  variant?: "default" | "button";
 }
 
 interface LogoUploadContentProps {
@@ -236,9 +237,9 @@ const FormFieldLogoUpload = <T extends Record<string, any>>({
                   {field.value ? (
                     <img
                       src={
-                        field.value instanceof File
-                          ? URL.createObjectURL(field.value)
-                          : field.value
+                        (field.value as any) instanceof File
+                          ? URL.createObjectURL(field.value as any)
+                          : field.value as string
                       }
                       alt="Logo"
                       className="w-full h-full object-contain"

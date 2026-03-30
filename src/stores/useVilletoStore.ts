@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { getCookie, setCookie, clearOnboardingCookies } from '@/lib/cookies';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import z from 'zod';
 import { registrationSchema } from '@/lib/schemas/schemas';
+import { clearOnboardingCookies } from '@/lib/cookies'; // Kept in case we need to clear legacy
 
 export interface UserProfile {
     id: string;
@@ -53,14 +54,13 @@ export interface OnboardingState {
     financialPulse: FinancialPulse;
     villetoProducts: VilletoProduct[];
     contactEmail: string
-    preOnboarding?: z.infer<typeof registrationSchema> | null
+    preOnboarding?: z.infer<typeof registrationSchema> | null;
     isExistingUser: boolean;
     stoppedAtStep: number | null;
 }
 
 interface VilletoState {
     currentStep: number;
-
     showCongratulations: boolean;
     onboardingId: string;
     contactEmail: string;
@@ -78,7 +78,7 @@ interface VilletoState {
     toggleProduct: (productId: string) => void;
     submitApplication: () => void;
     closeCongratulations: () => void;
-    setMonthlySpend: (spend: number) => void;
+    setMonthlySpend: (spend: number, rangeLabel?: string) => void;
     setSpendRange: (range: string) => void;
     setBankConnected: (connected: boolean) => void;
     setBankProcessing: (processing: boolean) => void;
@@ -121,155 +121,82 @@ const initialState: OnboardingState = {
     ],
 };
 
-// Load initial state from cookies
-const loadFromCookies = (): Partial<OnboardingState> => {
-    if (typeof document === "undefined") return {};
-    const businessSnapshot = getCookie('onboarding_business');
-    const leadershipData = getCookie('onboarding_leadership');
-    const financialData = getCookie('onboarding_financial');
-    const productsData = getCookie('onboarding_products');
-    const preOnboarding = getCookie("preOnboarding");
-    const contactEmail = getCookie("contactEmail");
-    const onboardingId = getCookie("onboarding_id");
-    const isExistingUser = getCookie("isExistingUser");
-    const stoppedAtStep = getCookie("stoppedAtStep");
+export const useOnboardingStore = create<VilletoState & OnboardingState>()(
+    persist(
+        (set, get) => ({
+            currentStep: 5, // Starting at Choose Products for demo
+            ...initialState,
+            showCongratulations: false,
 
-    return {
-        // businessSnapshot cookie structure: { businessSnapshot: { businessName, logo, ... } }
-        ...(businessSnapshot && { 
-            businessSnapshot: businessSnapshot.businessSnapshot || businessSnapshot 
+            setCurrentStep: (step) => set({ currentStep: step }),
+            setIsExistingUser: (value) => set({ isExistingUser: value }),
+            setStoppedAtStep: (step) => set({ stoppedAtStep: step }),
+            setOnboardingId: (id) => set({ onboardingId: id }),
+            setContactEmail: (email) => set({ contactEmail: email }),
+            setPreOnboarding: (data) => set({ preOnboarding: data }),
+
+            setMonthlySpend: (spend: number, rangeLabel?: string) => 
+                set((state) => ({ 
+                    monthlySpend: spend, 
+                    spendRange: rangeLabel ?? state.spendRange 
+                })),
+
+            setSpendRange: (range: string) => set({ spendRange: range }),
+
+            setBankConnected: (connected: boolean) => set({ bankConnected: connected }),
+
+            setBankProcessing: (processing: boolean) => set({ bankProcessing: processing }),
+
+            addConnectedAccount: (account: ConnectedAccount) =>
+                set((state) => ({
+                    connectedAccounts: [...state.connectedAccounts, account]
+                })),
+
+            removeConnectedAccount: (id: string) =>
+                set((state) => ({
+                    connectedAccounts: state.connectedAccounts.filter(acc => acc.id !== id)
+                })),
+
+            setShowConnectModal: (show: boolean) => set({ showConnectModal: show }),
+
+            updateBusinessSnapshot: (data) =>
+                set((state) => ({
+                    businessSnapshot: { ...state.businessSnapshot, ...data },
+                })),
+
+            updateUserProfiles: (profiles) =>
+                set({ userProfiles: profiles }),
+
+            updateFinancialPulse: (data) =>
+                set((state) => ({
+                    financialPulse: { ...state.financialPulse, ...data },
+                })),
+
+            toggleProduct: (productId) =>
+                set((state) => ({
+                    villetoProducts: state.villetoProducts.map((product) =>
+                        product.id === productId
+                            ? { ...product, selected: !product.selected }
+                            : product
+                    ),
+                })),
+
+            submitApplication: () => {
+                set({ showCongratulations: true });
+                // Optional: clear legacy cookies just in case
+                clearOnboardingCookies();
+            },
+
+            closeCongratulations: () => set({ showCongratulations: false }),
+            
+            reset: () => { 
+                clearOnboardingCookies(); 
+                set(initialState);
+            }
         }),
-        ...(leadershipData && { userProfiles: leadershipData.userProfiles }),
-        ...(financialData && {
-            monthlySpend: financialData.monthlySpend,
-            spendRange: financialData.spendRange,
-            bankConnected: financialData.bankConnected,
-            bankProcessing: financialData.bankProcessing,
-            connectedAccounts: financialData.connectedAccounts,
-            // showConnectModal: financialData.showConnectModal, // Don't persist modal state
-            financialPulse: financialData.financialPulse || initialState.financialPulse
-        }),
-        ...(productsData && { villetoProducts: productsData.villetoProducts }),
-        ...(preOnboarding && { preOnboarding: preOnboarding }),
-        ...(contactEmail && { contactEmail: typeof contactEmail === 'string' ? contactEmail : contactEmail?.contactEmail }),
-        ...(contactEmail && { contactEmail: typeof contactEmail === 'string' ? contactEmail : contactEmail?.contactEmail }),
-        ...(onboardingId && { onboardingId: typeof onboardingId === 'string' ? onboardingId : onboardingId?.onboardingId }),
-        ...(isExistingUser && { isExistingUser: isExistingUser === 'true' }),
-        ...(stoppedAtStep && { stoppedAtStep: Number(stoppedAtStep) })
-
-    };
-};
-
-export const useOnboardingStore = create<VilletoState & OnboardingState>((set, get) => ({
-    currentStep: 5, // Starting at Choose Products for demo
-    ...initialState,
-    ...loadFromCookies(),
-    showCongratulations: false,
-
-
-    setCurrentStep: (step) => set({ currentStep: step }),
-    setIsExistingUser: (value) => {
-        set({ isExistingUser: value });
-        setCookie('isExistingUser', String(value));
-    },
-    setStoppedAtStep: (step) => {
-        set({ stoppedAtStep: step });
-        setCookie('stoppedAtStep', String(step));
-    },
-    setOnboardingId: (step) => {
-        set({ onboardingId: step }); const state = get();
-        setCookie('onboarding_id', {
-            onboardingId: state.onboardingId,
-        });
-    },
-    setContactEmail: (step) => {
-        set({ contactEmail: step }); const state = get();
-        setCookie('contactEmail', {
-            contactEmail: state.contactEmail,
-        });
-    },
-    setPreOnboarding: (step) => {
-        set({ preOnboarding: step });
-        const state = get();
-        setCookie('preOnboarding', {
-            preOnboarding: state.preOnboarding,
-        });
-    },
-
-    setMonthlySpend: (spend: number) => {
-        const ranges = ['<$10k', '$10k-$50k', '$50k-$200k', '$200k+'];
-        set({ monthlySpend: spend, spendRange: ranges[spend] });
-        const state = get();
-        setCookie('onboarding_financial', {
-            monthlySpend: state.monthlySpend,
-            spendRange: state.spendRange,
-            bankConnected: state.bankConnected,
-            bankProcessing: state.bankProcessing,
-            connectedAccounts: state.connectedAccounts,
-            showConnectModal: state.showConnectModal,
-            financialPulse: state.financialPulse,
-        });
-    },
-
-    setSpendRange: (range: string) => set({ spendRange: range }),
-
-    setBankConnected: (connected: boolean) => set({ bankConnected: connected }),
-
-    setBankProcessing: (processing: boolean) => set({ bankProcessing: processing }),
-
-    addConnectedAccount: (account: ConnectedAccount) =>
-        set((state) => ({
-            connectedAccounts: [...state.connectedAccounts, account]
-        })),
-
-    removeConnectedAccount: (id: string) =>
-        set((state) => ({
-            connectedAccounts: state.connectedAccounts.filter(acc => acc.id !== id)
-        })),
-
-    setShowConnectModal: (show: boolean) => set({ showConnectModal: show }),
-
-    updateBusinessSnapshot: (data) => {
-        set((state) => ({
-            businessSnapshot: { ...state.businessSnapshot, ...data },
-        }));
-        const state = get();
-        setCookie('onboarding_business', {
-            businessSnapshot: state.businessSnapshot,
-        });
-    },
-
-    updateUserProfiles: (profiles) => {
-        set({ userProfiles: profiles });
-        setCookie('onboarding_leadership', {
-            userProfiles: profiles,
-        });
-    },
-
-    updateFinancialPulse: (data) =>
-        set((state) => ({
-            financialPulse: { ...state.financialPulse, ...data },
-        })),
-
-    toggleProduct: (productId) => {
-        set((state) => ({
-            villetoProducts: state.villetoProducts.map((product) =>
-                product.id === productId
-                    ? { ...product, selected: !product.selected }
-                    : product
-            ),
-        }));
-        const state = get();
-        setCookie('onboarding_products', {
-            villetoProducts: state.villetoProducts,
-        });
-    },
-
-    submitApplication: () => {
-        set({ showCongratulations: true });
-        clearOnboardingCookies();
-    },
-
-    closeCongratulations: () => set({ showCongratulations: false }),
-    reset: () => { clearOnboardingCookies(); set(initialState) }
-}));
+        {
+            name: 'onboarding-storage',
+            storage: createJSONStorage(() => sessionStorage),
+        }
+    )
+);

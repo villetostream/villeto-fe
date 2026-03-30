@@ -32,11 +32,8 @@ export default function Reimbursements() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  // Users with no role OR position=EMPLOYEE only see personal expenses
-  const canViewCompanyExpenses =
-    !!user?.villetoRole &&
-    (user.villetoRole as any)?.name?.toUpperCase() !== "EMPLOYEE" &&
-    (user as any)?.position?.toUpperCase() !== "EMPLOYEE";
+  const hasPermission = useAuthStore((state) => state.hasPermission);
+  const canViewCompanyExpenses = hasPermission("company_expenses:read");
 
   const initialOuterTab =
     searchParams.get("tab") === "personal-expenses"

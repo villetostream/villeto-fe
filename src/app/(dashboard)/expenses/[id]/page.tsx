@@ -10,8 +10,12 @@ import { FlagExpenseModal } from "@/components/expenses/FlagExpenseModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { logger } from "@/lib/logger";
+import { useAuthStore } from "@/stores/auth-stores";
+import { canApproveReport } from "@/core/permissions/expensePermissions";
 
 const Page = () => {
+  const { user, hasPermission } = useAuthStore();
   const params = useParams();
   const expenseId = Number(params.id);
   const [currentStatus, setCurrentStatus] = useState<
@@ -93,13 +97,20 @@ const Page = () => {
     .toUpperCase()
     .slice(0, 2);
 
+  // Calculate granular approval rights
+  const isAuthorizedToApprove = canApproveReport(
+    user,
+    hasPermission,
+    expenseData.departmentManagerId // Assumes backend populates this, or similar field
+  );
+
   const handleApprove = (note: string) => {
     setCurrentStatus("approved");
     setApprovalOpen(false);
     // Save to localStorage to persist across page navigations
     localStorage.setItem(`expense-status-${expenseId}`, "approved");
     // Here you would normally call an API to save the approval
-    console.log("Approved with note:", note);
+    logger.log("Approved with note:", note);
   };
 
   const handleReject = (reason: string) => {
@@ -108,8 +119,7 @@ const Page = () => {
     // Save to localStorage to persist across page navigations
     localStorage.setItem(`expense-status-${expenseId}`, "rejected");
     // Here you would normally call an API to save the rejection
-    console.log("Rejected with reason:", reason);
-    console.log("Rejected with reason:", reason);
+    logger.log("Rejected with reason:", reason);
   };
 
   const handleFlag = (reason: string) => {
@@ -119,7 +129,7 @@ const Page = () => {
     // I will assume for UI purposes it stays pending but we log it. 
     // Or I can add "flagged" to status map if I update the map type. 
     // For now, I'll just log it.
-    console.log("Flagged with reason:", reason);
+    logger.log("Flagged with reason:", reason);
     setFlagOpen(false);
     // Ideally we would update status to "flagged" if supported.
   };
@@ -191,6 +201,7 @@ const Page = () => {
               onApprove={() => setApprovalOpen(true)}
               onReject={() => setRejectionOpen(true)}
               onFlag={() => setFlagOpen(true)}
+              canApprove={isAuthorizedToApprove}
             />
           </div>
 

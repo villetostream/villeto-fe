@@ -51,7 +51,7 @@ const RoleTable = () => {
             isLoading={depts.isLoading}
             columns={columns}
             paginationProps={{ ...tableprops.paginationProps, total: filteredRoles.length }}
-            enableRowSelection={true}
+            enableRowSelection={false}
             enableColumnVisibility={true}
             selectedDataIds={tableprops.selectedDataIds}
             setSelectedDataIds={tableprops.setSelectedDataIds}

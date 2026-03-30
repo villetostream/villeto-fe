@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // Cookie expiration: 3 days in milliseconds
 const COOKIE_EXPIRATION_MS = 3 * 24 * 60 * 60 * 1000;
@@ -34,7 +35,7 @@ export function setCookie(name: string, value: any, options: CookieOptions = {})
 
     document.cookie = cookieString;
   } catch (error) {
-    console.error('Failed to set cookie:', error);
+    logger.error('Failed to set cookie:', error);
   }
 }
 
@@ -63,7 +64,7 @@ export function getCookie<T = any>(name: string): T | null {
     }
     return null;
   } catch (error) {
-    console.error('Failed to get cookie:', error);
+    logger.error('Failed to get cookie:', error);
     // If parsing fails, remove the corrupted cookie
     removeCookie(name);
     return null;

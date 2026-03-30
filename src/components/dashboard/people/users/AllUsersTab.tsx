@@ -118,7 +118,7 @@ export function AllUsersTab() {
                 isLoading={usersApi.isLoading || depts.isLoading || roles.isLoading}
                 columns={columns(handleViewProfile)}
                 paginationProps={{ ...tableprops.paginationProps, total: filteredUsers.length }}
-                enableRowSelection={true}
+                enableRowSelection={false}
                 enableColumnVisibility={true}
                 selectedDataIds={tableprops.selectedDataIds}
                 setSelectedDataIds={tableprops.setSelectedDataIds}

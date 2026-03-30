@@ -1,15 +1,25 @@
+import { useEffect } from "react";
 import { useOnboardingStore } from "@/stores/useVilletoStore";
 import { cn } from "@/lib/utils";
-
-export const spendingRanges = [
-    { value: 0, label: "<$10k", lower: 0, upper: 10000 },
-    { value: 1, label: "$10k-$50k", lower: 10000, upper: 50000 },
-    { value: 2, label: "$50k-$200k", lower: 50000, upper: 200000 },
-    { value: 3, label: "$200k+", lower: 200000, upper: null }, // null or Infinity
-];
+import { getCurrencyConfig } from "@/lib/utils/currency";
 
 export const SpendingSlider = () => {
-    const { monthlySpend, spendRange, setMonthlySpend } = useOnboardingStore();
+    const { monthlySpend, setMonthlySpend, businessSnapshot } = useOnboardingStore();
+    const config = getCurrencyConfig(businessSnapshot.countryOfRegistration);
+    const spendingRanges = config.spendingRanges;
+
+    // Derive the displayed label from the current position + country config.
+    // This ensures the correct currency label shows immediately when country changes,
+    // without waiting for the slider to be moved.
+    const displayLabel = spendingRanges[monthlySpend]?.label ?? spendingRanges[0].label;
+
+    // Sync the store's spendRange whenever country or position changes so
+    // downstream consumers (financial page, review page) always have the
+    // correct currency label.
+    useEffect(() => {
+        setMonthlySpend(monthlySpend, spendingRanges[monthlySpend]?.label);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [businessSnapshot.countryOfRegistration]);
 
     return (
         <div className="space-y-6">
@@ -21,7 +31,7 @@ export const SpendingSlider = () => {
                     </h3>
                 </div>
                 <div className="text-primary text-lg font-bold leading-[100%] tracking-[0%]">
-                    {spendRange}
+                    {displayLabel}
                 </div>
             </div>
 
@@ -47,7 +57,7 @@ export const SpendingSlider = () => {
                     {spendingRanges.map((range) => (
                         <button
                             key={range.value}
-                            onClick={() => setMonthlySpend(range.value)}
+                            onClick={() => setMonthlySpend(range.value, range.label)}
                             className={cn(
                                 "transition-colors duration-200",
                                 monthlySpend === range.value ? "text-primary font-medium" : "hover:text-primary/80"
@@ -65,10 +75,10 @@ export const SpendingSlider = () => {
                     max={3}
                     step={1}
                     value={monthlySpend}
-                    onChange={(e) => setMonthlySpend(parseInt(e.target.value))}
+                    onChange={(e) => setMonthlySpend(parseInt(e.target.value), spendingRanges[parseInt(e.target.value)]?.label)}
                     className="absolute w-full h-8 -top-3 opacity-0 cursor-pointer z-10"
                 />
             </div>
         </div>
     );
-};
+};

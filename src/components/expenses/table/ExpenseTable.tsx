@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import React, { useState, useEffect } from "react";
 import { useDataTable } from "@/components/datatable/useDataTable";
 import { DataTable } from "@/components/datatable";
@@ -116,7 +117,7 @@ const ExpenseTable = ({
     <DataTable
       initialColumnVisibility={{ actions: false }}
       data={filteredData}
-      columns={(columnsOverride ?? columns) as any}
+      columns={(columnsOverride ?? []) as any}
       paginationProps={tableprops.paginationProps}
       enableRowSelection={true}
       enableColumnVisibility={true}
@@ -167,7 +168,7 @@ const ExpenseTable = ({
           {
             label: "Approve Selected",
             onClick: () => {
-              console.log(
+              logger.log(
                 "Approving selected items:",
                 Array.from(tableprops.selectedDataIds)
               );
@@ -176,7 +177,7 @@ const ExpenseTable = ({
           {
             label: "Decline Selected",
             onClick: () => {
-              console.log(
+              logger.log(
                 "Declining selected items:",
                 Array.from(tableprops.selectedDataIds)
               );

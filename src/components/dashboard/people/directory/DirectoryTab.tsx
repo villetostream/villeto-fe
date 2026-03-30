@@ -7,7 +7,7 @@ import { FolderX } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Upload04Icon } from "@hugeicons/core-free-icons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
+import { useGetAllUsersApi } from "@/actions/users/get-all-users";
 import { AppUser } from "@/actions/departments/get-all-departments";
 import { DataTable } from "@/components/datatable";
 import { useDataTable } from "@/components/datatable/useDataTable";
@@ -19,7 +19,7 @@ import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
 const getRowId = (row: AppUser) => row.userId;
 
 export function DirectoryTab() {
-    const usersApi = useGetDirectoryUsersApi();
+    const usersApi = useGetAllUsersApi();
     const depts = useGetAllDepartmentsApi();
     const roles = useGetAllRolesApi();
     const router = useRouter();
@@ -136,7 +136,7 @@ export function DirectoryTab() {
                 isLoading={isLoading}
                 columns={directoryColumns}
                 paginationProps={{ ...tableProps.paginationProps, total: filteredUsers.length }}
-                enableRowSelection={true}
+                enableRowSelection={false}
                 enableColumnVisibility={true}
                 selectedDataIds={tableProps.selectedDataIds}
                 setSelectedDataIds={tableProps.setSelectedDataIds}

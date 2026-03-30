@@ -6,6 +6,7 @@ import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logger } from "@/lib/logger";
 import {
   MoreHorizontal,
   Eye,
@@ -553,7 +554,7 @@ export default function VendorPage() {
 
   const handleAction = (vendor: Vendor, actionLabel: string) => {
     // Navigate or open modal based on action
-    console.log("Action:", actionLabel, "on vendor:", vendor.id);
+    logger.log("Action:", actionLabel, "on vendor:", vendor.id);
   };
 
   const statCards = [

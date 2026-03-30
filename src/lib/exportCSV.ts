@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // function flattenObject(ob: any, prefix = "", result: any = {}): any {
 //     for (const key in ob) {
 //       if (Object.prototype.hasOwnProperty.call(ob, key)) {
@@ -115,7 +116,7 @@ export default function exportToCSV(
   type: string,
   filename?: string
 ) {
-  console.log("ln118data", data)
+  logger.log("ln118data", data)
   // Determine final filename based on type if not provided
   const finalFileName =
     filename || (type === "workOrder" ? "work order.csv" : `${type}.csv`);
@@ -123,11 +124,11 @@ export default function exportToCSV(
   let csvContent = "";
   // Ensure data is an array
   const dataArray = Array.isArray(data) ? data : [data];
-  console.log("dataArray", dataArray)
+  logger.log("dataArray", dataArray)
 
   // Flatten each item in the data array
   const flatData = dataArray.map((item) => flattenObject(item));
-  console.log("flatData", flatData);
+  logger.log("flatData", flatData);
 
   // Collect all unique headers
   const headersSet = new Set<string>();

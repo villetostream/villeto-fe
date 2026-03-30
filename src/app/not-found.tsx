@@ -12,7 +12,7 @@ const NotFound = () => {
     const [isHovering, setIsHovering] = useState(false);
 
     useEffect(() => {
-        console.error(
+        logger.error(
             "404 Error: User attempted to access non-existent route:",
             location
         );

@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants/styles";
 import { cn } from "@/lib/utils";
 import { Plus, Minus } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { FadeIn } from "./shared/AnimatedLanding";
 
 const faqs = [
@@ -44,7 +44,7 @@ const faqs = [
 ];
 
 export default function FAQSection() {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -55,7 +55,7 @@ export default function FAQSection() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,

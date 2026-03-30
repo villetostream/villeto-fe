@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
+import { logger } from "@/lib/logger";
 
 interface ExpenseCategory {
   categoryId: string;
@@ -127,7 +128,7 @@ export default function EditReportPage() {
         setInitialData(JSON.stringify(mappedExpenses));
 
       } catch (error) {
-        console.error("Error loading report:", error);
+        logger.error("Error loading report:", error);
         toast.error("Failed to load report details");
         router.push("/expenses");
       } finally {
@@ -171,7 +172,7 @@ export default function EditReportPage() {
       setIsDirty(true); // Explicitly mark dirty on addition
       toast.success(`${receipts.length} receipt(s) scanned successfully`);
     } catch (error) {
-      console.error("Error processing receipts:", error);
+      logger.error("Error processing receipts:", error);
       toast.error("Failed to process receipts");
     } finally {
       setIsProcessing(false);
@@ -259,7 +260,7 @@ export default function EditReportPage() {
           queryClient.invalidateQueries({ queryKey: [API_KEYS.EXPENSE.PERSONAL_EXPENSES] });
           router.push("/expenses?tab=personal-expenses");
       } catch (error) {
-          console.error("Error deleting report:", error);
+          logger.error("Error deleting report:", error);
           toast.error("Failed to delete report");
       } finally {
           setIsDeletingReport(false);
@@ -372,7 +373,7 @@ export default function EditReportPage() {
       }, 500);
 
     } catch (error) {
-      console.error("Error updating report:", error);
+      logger.error("Error updating report:", error);
       toast.error("Failed to update report");
       // Reset loading states on error
       setIsSavingDraft(false);

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_KEYS } from "@/lib/constants/apis";
@@ -227,7 +228,7 @@ export const useSubmitExpense = () => {
       router.push("/expenses?tab=personal-expenses");
     },
     onError: (error: any) => {
-      console.error("Error submitting expenses:", error);
+      logger.error("Error submitting expenses:", error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -262,7 +263,7 @@ export const useSaveExpenseAsDraft = () => {
       router.push("/expenses?tab=personal-expenses");
     },
     onError: (error: any) => {
-      console.error("Error saving draft:", error);
+      logger.error("Error saving draft:", error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -317,7 +318,7 @@ export const useUpdateCompanyExpenseStatus = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating expense status:", error);
+      logger.error("Error updating expense status:", error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||

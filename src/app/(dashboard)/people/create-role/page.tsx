@@ -103,11 +103,21 @@ function CreateRolePage() {
             toast.success(`Role ${isEditMode ? "updated" : "created"}!`);
             setShowSuccessModal(true);
         } catch (error) {
-            console.error("Error submitting role:", error);
+            logger.error("Error submitting role:", error);
         }
     };
 
     const isLoading = createRoleMutation.isPending || updateRoleMutation.isPending;
+
+    const handleCancel = () => {
+        const returnPath = sessionStorage.getItem("rolesReturnPath");
+        if (returnPath) {
+            sessionStorage.removeItem("rolesReturnPath");
+            router.push(returnPath);
+        } else {
+            router.push("/people?tab=roles");
+        }
+    };
 
     const handleSuccessClose = async () => {
         setShowSuccessModal(false);
@@ -116,7 +126,7 @@ function CreateRolePage() {
             roleData.refetch()
         ]);
         reset({});
-        router.push("/people?tab=roles");
+        handleCancel();
     };
 
     return (
@@ -228,7 +238,7 @@ function CreateRolePage() {
                                 type="button"
                                 variant="outline"
                                 className="px-8 h-12 rounded-xl text-slate-700 border-slate-200 hover:bg-slate-50"
-                                onClick={() => router.push("/people?tab=roles")}
+                                onClick={handleCancel}
                                 disabled={isLoading}
                             >
                                 Cancel

@@ -48,7 +48,6 @@ export default function LoginPage() {
             setUserPermissions(response.data.user?.villetoRole?.permissions ?? []);
             router.push('/dashboard');
         } catch (err: any) {
-            console.error(err);
             setError(((err as AxiosError).response?.data as any)?.message as string ?? "Invalid email or password");
         }
     };

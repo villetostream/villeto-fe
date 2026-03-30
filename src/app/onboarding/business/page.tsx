@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, Upload, X, Briefcase, Globe, Phone, Link as LinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -29,14 +31,13 @@ import { useEffect, useRef } from "react";
 import { onboardingBusinessSchema } from "@/lib/schemas/schemas";
 import Image from "next/image";
 import { useHydrateOnboardingData } from "@/hooks/useHydrateOnboardingData";
-import SuccessModal from "@/components/modals/SuccessModal";
-import { useState } from "react";
 
 /** Map from 3-letter country code → dial prefix */
 const COUNTRY_DIAL_CODES: Record<string, string> = {
   NGA: "+234",
-  GHN: "+233",
-  KYA: "+254",
+  GHA: "+233",
+  KEN: "+254",
+  ZAF: "+27",
 };
 
 /** Strip known dial-code prefixes from a phone string */
@@ -58,10 +59,8 @@ export default function Business() {
     useOnboardingStore();
   useHydrateOnboardingData();
   const updateOnboarding = useUpdateOnboardingCompanyDetailsApi();
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  
-  const loading = updateOnboarding.isPending || isSimulating;
+
+  const loading = updateOnboarding.isPending;
 
   const form = useForm({
     resolver: zodResolver(onboardingBusinessSchema),
@@ -156,26 +155,16 @@ export default function Business() {
         logo: logoUrl, // Save logo to businessSnapshot
       });
 
-      // Simulate extra loading time before showing modal
-      setIsSimulating(true);
-      setTimeout(() => {
-        setIsSimulating(false);
-        setShowSuccess(true);
-      }, 2000);
+      router.push("/onboarding/leadership");
 
     } catch (e: unknown) {
-      console.warn(e);
+      logger.warn(e);
       const error = e as { response?: { data?: { message?: string } } };
       toast.error(
         error.response?.data?.message || "Failed to update company details"
       );
     }
   }
-
-  const handleSuccessContinue = () => {
-    setShowSuccess(false);
-    router.push("/onboarding/leadership");
-  };
 
   return (
     <div className="space-y-8 flex flex-col justify-start h-full py-4">
@@ -232,9 +221,10 @@ export default function Business() {
             name="countryOfRegistration"
             label="Country of Registration"
             values={[
-              { label: "Kenya", value: "KYA" },
-              { label: "Ghana", value: "GHN" },
               { label: "Nigeria", value: "NGA" },
+              { label: "Ghana", value: "GHA" },
+              { label: "Kenya", value: "KEN" },
+              { label: "South Africa", value: "ZAF" },
             ]}
             placeholder="Select Country"
             prefixIcon={<Globe className="h-5 w-5 text-gray-400" />}
@@ -307,15 +297,6 @@ export default function Business() {
           </div>
         </form>
       </Form>
-
-      <SuccessModal
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        title="Congratulations!"
-        description="Your details and documents have been successfully submitted. You will receive an email shortly concerning your progress."
-        buttonText="Continue"
-        onClick={handleSuccessContinue}
-      />
     </div>
   );
 }

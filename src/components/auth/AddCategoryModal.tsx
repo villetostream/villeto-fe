@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Plus, Pencil, Trash2, X } from "lucide-react";
 import {
     Dialog,
@@ -34,10 +34,17 @@ export default function AddCategoryModal({
 
     // Sync fetched categories into local state (only on first load)
     const [hasSynced, setHasSynced] = useState(false);
-    if (categoriesQuery.data?.data && !hasSynced) {
-        setCategories(categoriesQuery.data.data);
-        setHasSynced(true);
-    }
+    useEffect(() => {
+        if (categoriesQuery.data?.data && !hasSynced) {
+            const mappedCategories = categoriesQuery.data.data.map((c: any) => ({
+                id: c.categoryId ?? c.id,
+                name: c.name,
+                description: c.description || "",
+            }));
+            setCategories(mappedCategories);
+            setHasSynced(true);
+        }
+    }, [categoriesQuery.data?.data, hasSynced]);
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [name, setName] = useState("");
@@ -110,33 +117,33 @@ export default function AddCategoryModal({
             }}>
                 <DialogContent
                     showCloseButton={false}
-                    className="sm:max-w-2xl rounded-[2rem] p-0 overflow-hidden border-0 shadow-2xl bg-[#fdfdfd]"
+                    className="sm:max-w-2xl rounded-[2rem] p-0 overflow-hidden border-0 shadow-2xl bg-[#fdfdfd] max-h-[calc(100vh-150px)] flex flex-col"
                     onInteractOutside={(e) => e.preventDefault()}
                 >
-                    <div className="p-10 pl-12 pr-12">
-                        <div className="mb-5 mt-2">
+                <div className="p-10 pl-12 pr-12 flex flex-col flex-1 overflow-hidden">
+                        <div className="mb-5 mt-2 shrink-0">
                             <h2 className="text-2xl font-semibold text-gray-800 mb-1.5 break-words tracking-tight">Almost done</h2>
                             <p className="text-gray-500 text-[13px]">
                                 Let's get your organization set up.
                             </p>
                         </div>
 
-                        <div className="h-px bg-gray-200/60 w-full mb-8"></div>
+                        <div className="h-px bg-gray-200/60 w-full mb-8 shrink-0"></div>
 
-                        <div className="mb-6">
+                        <div className="mb-6 shrink-0">
                             <h3 className="text-lg font-semibold text-gray-800 mb-2">Configure Expense Categories</h3>
                             <p className="text-gray-500 text-[13px]">
                                 Expense categories define the types of expenses employees can submit.
                             </p>
                         </div>
 
-                        <div className="border border-gray-200/80 rounded-[1.25rem] mb-6 overflow-hidden">
-                            <div className="flex px-6 py-4 bg-[#FAFAFA] border-b border-gray-100/60 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <div className="border border-gray-200/80 rounded-[1.25rem] mb-6 overflow-hidden flex flex-col flex-1 min-h-[100px]">
+                            <div className="flex px-6 py-4 bg-[#FAFAFA] border-b border-gray-100/60 text-xs font-semibold text-gray-500 uppercase tracking-wider shrink-0">
                                 <div className="flex-1">Category</div>
                                 <div className="flex-[2] pl-2">Description</div>
                                 <div className="w-16"></div>
                             </div>
-                            <div className="bg-white">
+                            <div className="bg-white overflow-y-auto flex-1">
                                 {categoriesQuery.isLoading ? (
                                     <div className="flex items-center justify-center px-6 py-8 gap-2 text-sm text-gray-400">
                                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -165,11 +172,11 @@ export default function AddCategoryModal({
                             </div>
                         </div>
 
-                        <button onClick={openAddForm} className="text-[#03C3A6] hover:text-[#03C3A6]/80 font-medium flex items-center gap-1.5 text-sm transition-colors mb-8">
+                        <button onClick={openAddForm} className="text-[#03C3A6] hover:text-[#03C3A6]/80 font-medium flex items-center gap-1.5 text-sm transition-colors mb-4 shrink-0">
                             <Plus className="w-[18px] h-[18px] stroke-[2]" /> Add Category
                         </button>
 
-                        <div className="flex justify-center sm:justify-end gap-4 mt-10">
+                        <div className="flex justify-center sm:justify-end gap-4 mt-auto pt-4 shrink-0">
                             <Button
                                 variant="outline"
                                 onClick={onSkip}

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
+import { useGetVilletoRolesApi } from "@/actions/role/get-all-roles";
 import { EditInvitedUserModal } from "@/components/dashboard/people/modals/EditInvitedUserModal";
 import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { AppUser } from "@/actions/departments/get-all-departments";
@@ -47,7 +47,7 @@ interface FormValues {
 export default function InviteLeadershipPage() {
     const router = useRouter();
     const axios = useAxios();
-    const rolesApi = useGetAllRolesApi();
+    const rolesApi = useGetVilletoRolesApi();
     const directoryApi = useGetDirectoryUsersApi();
 
     // Memoize to keep array reference stable and avoid infinite useEffect loops
@@ -218,21 +218,23 @@ export default function InviteLeadershipPage() {
     const canAddUser = !!selectedDirUser && !isEmailNotFound && !!selectedRole;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto flex gap-6">
-            {/* Left Side - Form */}
-            <div className="w-full lg:w-1/2">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Leadership &amp; Admin Invite</h1>
-                    <p className="text-gray-500 mt-1">
-                        These are for managers, finance admin, Organization owner and auditors.
-                    </p>
-                    <Link href="#" className="text-sm text-[#00BFA5] hover:underline block mt-1">
-                        View Permissions
-                    </Link>
-                </div>
+        <div className="p-6 max-w-7xl mx-auto flex flex-col">
+            {/* Header - Moved outside to align left/right containers */}
+            <div className="mb-6 w-full lg:w-1/2">
+                <h1 className="text-2xl font-bold text-gray-900">Leadership &amp; Admin Invite</h1>
+                <p className="text-gray-500 mt-1">
+                    These are for managers, finance admin, Organization owner and auditors.
+                </p>
+                <Link href="#" className="text-sm text-[#00BFA5] hover:underline block mt-1">
+                    View Permissions
+                </Link>
+            </div>
 
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                    <h2 className="text-lg font-semibold mb-6">User Information</h2>
+            <div className="flex gap-6 items-start">
+                {/* Left Side - Form */}
+                <div className="w-full lg:w-1/2">
+                    <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <h2 className="text-lg font-semibold mb-6">User Information</h2>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         {/* Email with autocomplete */}
@@ -300,8 +302,11 @@ export default function InviteLeadershipPage() {
                                             Please{" "}
                                             <button
                                                 type="button"
-                                                onClick={() => router.push("/people/invite/employees?step=upload")}
-                                                className="underline font-medium"
+                                                onClick={() => {
+                                                    sessionStorage.setItem("uploadDirReferrer", "leadership");
+                                                    router.push("/people/invite/employees?step=upload");
+                                                }}
+                                                className="underline font-medium cursor-pointer"
                                             >
                                                 upload this user to the directory
                                             </button>{" "}
@@ -346,6 +351,7 @@ export default function InviteLeadershipPage() {
                                     <Select
                                         onValueChange={(val) => {
                                             if (val === "__create_custom") {
+                                                sessionStorage.setItem("rolesReturnPath", "/people/invite/leadership");
                                                 router.push("/people/create-role");
                                             } else {
                                                 field.onChange(val);
@@ -585,6 +591,8 @@ export default function InviteLeadershipPage() {
                         </Button>
                     </div>
                 </div>
+            </div>
+
             </div>
 
             <EditInvitedUserModal

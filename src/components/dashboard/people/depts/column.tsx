@@ -10,6 +10,7 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { MoreHorizontal, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
+import { logger } from "@/lib/logger";
 
 const columnHelper = createColumnHelper<Department>();
 
@@ -64,7 +65,7 @@ export const columns: ColumnDef<Department, any>[] = [
                             <PermissionGuard requiredPermissions={["read:departments"]}>
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
-                                    onClick={() => console.log("View department:", data.row.original.departmentId)}
+                                    onClick={() => logger.log("View department:", data.row.original.departmentId)}
                                 >
                                     <Eye className="w-5 h-5" />
                                     <span className="font-medium">View Department</span>
@@ -76,7 +77,7 @@ export const columns: ColumnDef<Department, any>[] = [
                             <PermissionGuard requiredPermissions={["update:departments"]}>
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
-                                    onClick={() => console.log("Deactivate department:", data.row.original.departmentId)}
+                                    onClick={() => logger.log("Deactivate department:", data.row.original.departmentId)}
                                 >
                                     <Lock className="w-5 h-5" />
                                     <span className="font-medium">Deactivate Department</span>

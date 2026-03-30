@@ -38,9 +38,12 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
 
       // Helper function to extract pure base64 string from data URL
       const extractBase64 = (dataUrl: string): string => {
-        // Remove data:image/...;base64, prefix if present
-        const base64Match = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
-        return base64Match ? base64Match[1] : dataUrl;
+        if (dataUrl.includes('base64,')) {
+          return dataUrl.split('base64,')[1];
+        } else if (dataUrl.includes(',')) {
+          return dataUrl.split(',')[1];
+        }
+        return dataUrl;
       };
 
       // Convert logo File to Base64 only if user uploaded a new file.
@@ -51,9 +54,8 @@ export const useUpdateOnboardingCompanyDetailsApi = (): UseMutationResult<
         logoBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            const result = reader.result as string;
-            const pureBase64 = extractBase64(result);
-            resolve(pureBase64);
+             const result = reader.result as string;
+             resolve(extractBase64(result));
           };
           reader.onerror = reject;
           reader.readAsDataURL(latestPayload.businessLogo as File);
