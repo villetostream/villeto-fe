@@ -10,25 +10,28 @@ export default function DashboardModals() {
     
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [hasChecked, setHasChecked] = useState(false);
 
     useEffect(() => {
-        if (!hasChecked && user) {
-            // Trigger for any first-time user (loginCount === 1) or users flagged to change password.
-            // Previously this was gated on CONTROLLING_OFFICER only — fixed to cover all invited roles.
-            const isFirstLogin = user.loginCount === 1;
+        if (user) {
+            // Trigger for any first-time user (loginCount <= 1) or users flagged to change password.
+            // Using <= 1 specifically catches systems where fresh accounts start at 0 before first session logs.
+            const isFirstLogin = typeof user.loginCount === 'number' && user.loginCount <= 1;
             const mustChangePassword = (user as any).shouldChangePassword === true;
+            
             if (isFirstLogin || mustChangePassword) {
                 setShowPasswordModal(true);
             }
-            // Mark as checked so we don't re-trigger during this session
-            setHasChecked(true);
         }
-    }, [user, hasChecked]);
+    }, [user?.loginCount, (user as any)?.shouldChangePassword]);
 
     const handlePasswordSuccess = () => {
         setShowPasswordModal(false);
         setShowCategoryModal(true);
+        
+        // Optimistically update the store so the modal doesn't immediately pop back open
+        useAuthStore.setState((state) => ({
+            user: state.user ? { ...state.user, loginCount: 2, shouldChangePassword: false } : null
+        }));
     };
 
     const handleCategoryCompletion = () => {

@@ -250,15 +250,16 @@ export function DashboardSidebar() {
     if (item.comingSoon) {
       return (
         <SidebarMenuItem key={item.label}>
-          <span
-            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm opacity-50 cursor-not-allowed rounded-md"
+          <SidebarMenuButton
+            tooltip={item.label}
+            className="opacity-50 cursor-not-allowed hover:bg-transparent hover:text-[#7F7F7F]"
           >
             <span className="shrink-0 [&>svg]:size-5 [&>svg]:shrink-0">{item.icon}</span>
             <span className="group-data-[collapsible=icon]:hidden flex-1">{item.label}</span>
             <span className="ml-auto bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-semibold group-data-[collapsible=icon]:hidden whitespace-nowrap">
               Coming Soon
             </span>
-          </span>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       );
     }
@@ -344,7 +345,7 @@ export function DashboardSidebar() {
           {filteredNavigationItems.map((item) => renderMenuItem(item))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter className="border-t border-sidebar-border px-3 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
