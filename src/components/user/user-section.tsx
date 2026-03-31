@@ -14,6 +14,8 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import { Upload04Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Dialog, DialogContent } from "../ui/dialog";
 import Notification from "../ui/notification";
 import {
@@ -540,33 +542,83 @@ export function UserSection() {
 
         {/* Dynamic CTA button registered by the current page */}
         {headerAction && (
-          headerAction.items ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap">
-                  <PlusCircle className="w-4 h-4" strokeWidth={2} />
-                  {headerAction.label}
-                  <ChevronDown className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            {/* Optional Secondary Action */}
+            {headerAction.secondaryAction && (
+              headerAction.secondaryAction.items ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="h-10 px-5 rounded-full border border-primary text-primary bg-transparent hover:bg-primary/5 text-sm font-semibold flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap">
+                      {headerAction.secondaryAction.iconName === "upload" ? (
+                        <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                      ) : (
+                        <PlusCircle className="w-4 h-4" strokeWidth={2} />
+                      )}
+                      {headerAction.secondaryAction.label}
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    {headerAction.secondaryAction.items.map((item, i) => (
+                      <DropdownMenuItem key={i} className="cursor-pointer py-2.5 flex items-center gap-2" onClick={item.onClick}>
+                        <PlusCircle className="h-4 w-4 text-primary shrink-0" />
+                        <span>{item.label}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <button
+                  onClick={headerAction.secondaryAction.onClick}
+                  className="h-10 px-5 rounded-full border border-primary text-primary bg-transparent hover:bg-primary/5 text-sm font-semibold flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  {headerAction.secondaryAction.iconName === "upload" ? (
+                    <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                  ) : (
+                    <PlusCircle className="w-4 h-4" strokeWidth={2} />
+                  )}
+                  {headerAction.secondaryAction.label}
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60">
-                {headerAction.items.map((item, i) => (
-                  <DropdownMenuItem key={i} className="cursor-pointer py-2.5 flex items-center gap-2" onClick={item.onClick}>
-                    <PlusCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>{item.label}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <button
-              onClick={headerAction.onClick}
-              className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
-            >
-              <PlusCircle className="w-4 h-4" strokeWidth={2} />
-              {headerAction.label}
-            </button>
-          )
+              )
+            )}
+
+            {/* Primary Action */}
+            {headerAction.items ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap">
+                    {headerAction.iconName === "upload" ? (
+                      <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                    ) : (
+                      <PlusCircle className="w-4 h-4" strokeWidth={2} />
+                    )}
+                    {headerAction.label}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  {headerAction.items.map((item, i) => (
+                    <DropdownMenuItem key={i} className="cursor-pointer py-2.5 flex items-center gap-2" onClick={item.onClick}>
+                      <PlusCircle className="h-4 w-4 text-primary shrink-0" />
+                      <span>{item.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <button
+                onClick={headerAction.onClick}
+                className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+              >
+                {headerAction.iconName === "upload" ? (
+                  <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                ) : (
+                  <PlusCircle className="w-4 h-4" strokeWidth={2} />
+                )}
+                {headerAction.label}
+              </button>
+            )}
+          </div>
         )}
       </div>
 

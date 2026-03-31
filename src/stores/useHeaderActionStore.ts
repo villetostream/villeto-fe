@@ -11,6 +11,15 @@ export interface HeaderAction {
   onClick?: () => void;
   /** Dropdown button — provide items array instead */
   items?: HeaderActionItem[];
+  /** Optional icon name to override the default plus circle */
+  iconName?: "plus" | "upload";
+  /** Optional secondary action button shown alongside */
+  secondaryAction?: {
+    label: string;
+    onClick?: () => void;
+    items?: HeaderActionItem[];
+    iconName?: "plus" | "upload";
+  };
 }
 
 interface HeaderActionStore {
