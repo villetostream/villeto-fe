@@ -92,9 +92,24 @@ function People() {
         } else if (activeTab === "directory") {
             setAction({
                 label: "Upload Directory",
+                iconName: "upload",
                 onClick: () => {
                     sessionStorage.setItem("uploadDirReferrer", "directory");
                     router.push("/people/invite/employees?step=upload");
+                },
+                secondaryAction: {
+                    label: "Invite users",
+                    iconName: "plus",
+                    items: [
+                        {
+                            label: "Invite Employees",
+                            onClick: () => setIsInviteModalOpen(true),
+                        },
+                        {
+                            label: "Invite Leadership & Admin",
+                            onClick: () => router.push("/people/invite/leadership"),
+                        },
+                    ],
                 }
             });
         } else {
