@@ -5,6 +5,12 @@ import { Eye, Trash2, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+export interface PolicyViolation {
+  type: "soft_warning" | "hard_block";
+  message: string;
+  ruleType: string;
+}
+
 export interface ExpenseItem {
   id: string;
   name: string;
@@ -15,6 +21,8 @@ export interface ExpenseItem {
   description?: string;
   transactionDate?: Date;
   fileName?: string;
+  policyViolation?: PolicyViolation | null;
+  justification?: string;
 }
 
 interface ExpensePreviewListProps {
@@ -43,9 +51,7 @@ export function ExpensePreviewList({
   };
 
   const handleSaveEdit = (id: string) => {
-    if (editValue.trim()) {
-      onEditName(id, editValue.trim());
-    }
+    if (editValue.trim()) onEditName(id, editValue.trim());
     setEditingId(null);
     setEditValue("");
   };
@@ -56,169 +62,91 @@ export function ExpensePreviewList({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
-    if (e.key === "Enter") {
-      handleSaveEdit(id);
-    } else if (e.key === "Escape") {
-      handleCancelEdit();
-    }
+    if (e.key === "Enter") handleSaveEdit(id);
+    else if (e.key === "Escape") handleCancelEdit();
   };
 
   return (
-    <div className="border border-border rounded-lg bg-white">
+    <div className="border border-border rounded-lg bg-white h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h3 className="text-base font-semibold text-foreground">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <h3 className="text-sm font-semibold text-foreground">
           Preview Items{" "}
-          <span className="text-muted-foreground">{expenses.length}</span>
+          <span className="text-muted-foreground font-normal">{expenses.length}</span>
         </h3>
-        <div className="text-base font-semibold text-foreground">
+        <span className="text-sm font-semibold text-foreground">
           Total: ${total.toFixed(2)}
-        </div>
+        </span>
       </div>
 
-      {/* Table or Empty State */}
       {expenses.length === 0 ? (
-        <div className="p-12 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="mb-3">
+            <svg className="w-10 h-10 text-muted-foreground/30 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
           </div>
-          <h4 className="text-lg font-semibold text-foreground mb-2">
-            No expenses added yet
-          </h4>
-          <p className="text-sm text-muted-foreground">
-            Use the entry form to start adding items to this expense report.
-          </p>
+          <p className="text-sm font-medium text-foreground mb-1">No expenses added yet</p>
+          <p className="text-xs text-muted-foreground">Use the entry form to start adding items to this expense report.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto flex-1">
           <table className="w-full">
-            <thead className="bg-muted/30">
+            <thead className="bg-muted/20">
               <tr>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">
-                  Expenses Details
-                </th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">
-                  Category
-                </th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">
-                  Amount
-                </th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">
-                  Receipt
-                </th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">
-                  {/* Actions column */}
-                </th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Expenses Name</th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Category</th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Merchant</th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Amount</th>
+                <th className="px-2 py-2.5 w-8" />
+                <th className="px-2 py-2.5 w-8" />
               </tr>
             </thead>
             <tbody>
               {expenses.map((expense) => (
-                <tr key={expense.id} className="border-t border-border">
-                  {/* Expense Name */}
-                  <td className="p-3">
+                <tr key={expense.id} className="border-t border-border hover:bg-muted/10 transition-colors">
+                  <td className="px-3 py-2.5">
                     {editingId === expense.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, expense.id)}
-                          className="h-8 text-sm"
-                          autoFocus
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => handleSaveEdit(expense.id)}
-                        >
-                          <Check className="h-4 w-4 text-green-600" />
+                      <div className="flex items-center gap-1">
+                        <Input value={editValue} onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, expense.id)} className="h-7 text-xs" autoFocus />
+                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => handleSaveEdit(expense.id)}>
+                          <Check className="h-3 w-3 text-green-600" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={handleCancelEdit}
-                        >
-                          <X className="h-4 w-4 text-red-600" />
+                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={handleCancelEdit}>
+                          <X className="h-3 w-3 text-red-600" />
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">
-                          {expense.name}
-                        </span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6"
-                          onClick={() =>
-                            handleStartEdit(expense.id, expense.name)
-                          }
-                        >
-                          <Pencil className="h-3 w-3 text-muted-foreground" />
+                      <div className="flex items-center gap-1.5 group">
+                        <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{expense.name}</span>
+                        <Button size="icon" variant="ghost"
+                          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          onClick={() => handleStartEdit(expense.id, expense.name)}>
+                          <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
                         </Button>
                       </div>
                     )}
                   </td>
-
-                  {/* Category */}
-                  <td className="p-3">
-                    <span className="text-sm text-muted-foreground">
-                      {expense.category}
-                    </span>
+                  <td className="px-3 py-2.5">
+                    <span className="text-xs text-muted-foreground">{expense.category || "—"}</span>
                   </td>
-
-                  {/* Amount */}
-                  <td className="p-3">
-                    <span className="text-sm font-medium text-foreground">
-                      ${expense.amount.toFixed(2)}
-                    </span>
+                  <td className="px-3 py-2.5">
+                    <span className="text-xs text-muted-foreground">{expense.merchantName || "—"}</span>
                   </td>
-
-                  {/* Receipt */}
-                  <td className="p-3">
-                    <button
-                      onClick={() => onViewReceipt(expense.id)}
-                      className="text-sm text-primary hover:underline font-medium"
-                    >
-                      View
-                    </button>
+                  <td className="px-3 py-2.5">
+                    <span className="text-xs font-medium text-foreground">${expense.amount.toFixed(2)}</span>
                   </td>
-
-                  {/* Actions */}
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => onViewDetails(expense.id)}
-                      >
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => onDelete(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
+                  <td className="px-1.5 py-2.5">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onViewDetails(expense.id)}>
+                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </td>
+                  <td className="px-1.5 py-2.5">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDelete(expense.id)}>
+                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                    </Button>
                   </td>
                 </tr>
               ))}

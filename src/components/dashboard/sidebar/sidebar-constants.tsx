@@ -158,7 +158,6 @@ export const navigationItems: NavItem[] = [
         label: "Company Settings",
         href: "/settings/company-settings",
         permission: ["company:read"],
-        comingSoon: true,
       },
       {
         label: "Entities",

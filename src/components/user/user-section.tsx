@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Bell,
@@ -373,7 +373,11 @@ function DateRangePicker({ fromDate, toDate, onApply, onClear }: DateRangePicker
 
 // ─── Section label ────────────────────────────────────────────────────────────
 
-function getCurrentSectionLabel(pathname: string): string {
+function getCurrentSectionLabel(pathname: string, tab?: string | null): string {
+  if (pathname.startsWith("/settings/personal-settings") && tab === "company-profile") {
+    return "Company Settings";
+  }
+
   const exactMatch = navigationItems.find((item) => {
     if (item.href === "/dashboard") return pathname === "/dashboard";
     return item.href === pathname;
@@ -399,6 +403,7 @@ function getCurrentSectionLabel(pathname: string): string {
 
 export function UserSection() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router   = useRouter();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -412,7 +417,10 @@ export function UserSection() {
     clearAction();
   }, [pathname, resetDates, clearAction]);
 
-  const currentSectionLabel = useMemo(() => getCurrentSectionLabel(pathname), [pathname]);
+  const currentSectionLabel = useMemo(() => {
+    const tab = searchParams.get("tab");
+    return getCurrentSectionLabel(pathname, tab);
+  }, [pathname, searchParams]);
 
   // Page detection
   const isExpenseDetailPage         = pathname.match(/^\/expenses\/\d+$/);

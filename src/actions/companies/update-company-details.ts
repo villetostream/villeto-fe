@@ -38,7 +38,8 @@ export const useUpdateCompanyDetailsApi = (): UseMutationResult<
   return useMutation<Response, Error, CompanyUpdatePayload>({
     retry: false,
     mutationFn: async (payload: CompanyUpdatePayload) => {
-      if (!user?.companyId) {
+      const companyId = user?.companyId || user?.company?.companyId || user?.company?.id;
+      if (!companyId) {
         throw new Error("Company ID is required");
       }
 
@@ -90,7 +91,7 @@ export const useUpdateCompanyDetailsApi = (): UseMutationResult<
       }
 
       const res = await axiosInstance.patch(
-        API_KEYS.COMPANY.COMPANY_DETAILS(user.companyId),
+        API_KEYS.COMPANY.COMPANY_DETAILS(companyId),
         apiPayload,
         {
           headers: {

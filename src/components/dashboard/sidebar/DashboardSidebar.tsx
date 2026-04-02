@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -29,8 +29,10 @@ import { NavItem, navigationItems } from "./sidebar-constants";
 import { useAxios } from "@/hooks/useAxios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { logger } from "@/lib/logger";
+
 export function DashboardSidebar() {
   const location = usePathname();
+  const searchParams = useSearchParams();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
     // Auto-expand Expenses when on any /expenses route
     if (typeof window !== "undefined" && window.location.pathname.startsWith("/expenses")) {
@@ -74,6 +76,7 @@ export function DashboardSidebar() {
   const businessLogo = companyData?.logoUrl ?? user?.company?.logoUrl ?? null;
   const businessName = companyData?.companyName ?? companyData?.businessName ?? user?.company?.companyName ?? user?.company?.businessName ?? null;
   const loading = isQueryLoading && !businessLogo && !businessName;
+
   const toggleMenu = (label: string) => {
     setExpandedMenus((prev) =>
       prev.includes(label)
@@ -81,14 +84,27 @@ export function DashboardSidebar() {
         : [...prev, label],
     );
   };
+
   const isActive = (href: string) => {
     // Strip query parameters for active state matching
     const basePath = href.split("?")[0];
     if (basePath === "/dashboard") {
       return location === basePath;
     }
+
+    if (location === "/settings/personal-settings") {
+      const activeTab = searchParams.get("tab");
+      if (basePath === "/settings/company-settings") {
+        return activeTab === "company-profile";
+      }
+      if (basePath === "/settings/personal-settings") {
+        return activeTab === "my-profile" || !activeTab;
+      }
+    }
+
     return location.startsWith(basePath);
   };
+
   const canViewCompanyExpenses = hasPermission(["company_expenses:read"]);
 
   const filterItems = (items: NavItem[]): NavItem[] => {
