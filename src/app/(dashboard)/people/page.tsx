@@ -25,7 +25,7 @@ function People() {
     const directoryApi = useGetDirectoryUsersApi();
 
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
-    const hasDirectoryData    = directoryTotalCount > 1;
+    const hasDirectoryData    = directoryTotalCount > 0;
 
     const uniqueDeptCount = useMemo(() => {
         const users: any[] = usersApi?.data?.data ?? [];

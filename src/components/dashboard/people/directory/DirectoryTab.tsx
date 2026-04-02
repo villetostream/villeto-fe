@@ -7,7 +7,7 @@ import { FolderX } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Upload04Icon } from "@hugeicons/core-free-icons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetAllUsersApi } from "@/actions/users/get-all-users";
+import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { AppUser } from "@/actions/departments/get-all-departments";
 import { DataTable } from "@/components/datatable";
 import { useDataTable } from "@/components/datatable/useDataTable";
@@ -19,7 +19,7 @@ import { useGetAllRolesApi } from "@/actions/role/get-all-roles";
 const getRowId = (row: AppUser) => row.userId;
 
 export function DirectoryTab() {
-    const usersApi = useGetAllUsersApi();
+    const usersApi = useGetDirectoryUsersApi();
     const depts = useGetAllDepartmentsApi();
     const roles = useGetAllRolesApi();
     const router = useRouter();
