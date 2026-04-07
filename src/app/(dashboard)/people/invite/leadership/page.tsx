@@ -49,6 +49,7 @@ export default function InviteLeadershipPage() {
     const axios = useAxios();
     const rolesApi = useGetVilletoRolesApi();
     const directoryApi = useGetDirectoryUsersApi();
+    const [isUserAlreadyInvited, setIsUserAlreadyInvited] = useState(false);
 
     // Memoize to keep array reference stable and avoid infinite useEffect loops
     const directoryUsers: AppUser[] = useMemo(
@@ -111,6 +112,7 @@ export default function InviteLeadershipPage() {
         setEmailQuery(user.email);
         setSelectedDirUser(user);
         setIsEmailNotFound(false);
+        setIsUserAlreadyInvited(user.status === "Active" || user.loginCount > 0);
         setShowSuggestions(false);
         setSuggestions([]);
     };
@@ -126,9 +128,11 @@ export default function InviteLeadershipPage() {
             if (exact) {
                 setSelectedDirUser(exact);
                 setIsEmailNotFound(false);
+                setIsUserAlreadyInvited(exact.status === "Active" || exact.loginCount > 0);
             } else if (!selectedDirUser || selectedDirUser.email.toLowerCase() !== emailQuery.toLowerCase()) {
                 setSelectedDirUser(null);
                 setIsEmailNotFound(true);
+                setIsUserAlreadyInvited(false);
             }
         }, 150);
     };
@@ -137,6 +141,7 @@ export default function InviteLeadershipPage() {
         setEmailQuery("");
         setSelectedDirUser(null);
         setIsEmailNotFound(false);
+        setIsUserAlreadyInvited(false);
         setSuggestions([]);
         reset({ role: "", issueCard: false, ownershipPercentage: 0 });
     };
@@ -215,7 +220,7 @@ export default function InviteLeadershipPage() {
         }
     };
 
-    const canAddUser = !!selectedDirUser && !isEmailNotFound && !!selectedRole;
+    const canAddUser = !!selectedDirUser && !isEmailNotFound && !isUserAlreadyInvited && !!selectedRole;
 
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col">
@@ -252,6 +257,7 @@ export default function InviteLeadershipPage() {
                                         setEmailQuery(e.target.value);
                                         setSelectedDirUser(null);
                                         setIsEmailNotFound(false);
+                                        setIsUserAlreadyInvited(false);
                                     }}
                                     onBlur={handleEmailBlur}
                                     onFocus={() => {
@@ -260,6 +266,8 @@ export default function InviteLeadershipPage() {
                                     className={
                                         isEmailNotFound
                                             ? "border-red-400 focus:border-red-400"
+                                            : isUserAlreadyInvited
+                                            ? "border-blue-400 focus:border-blue-400"
                                             : selectedDirUser
                                             ? "border-green-400 focus:border-green-400"
                                             : ""
@@ -268,30 +276,47 @@ export default function InviteLeadershipPage() {
                                 {/* Suggestions dropdown */}
                                 {showSuggestions && suggestions.length > 0 && (
                                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                        {suggestions.map((suggestion) => (
-                                            <button
-                                                key={suggestion.userId}
-                                                type="button"
-                                                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors border-b last:border-0"
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault(); // prevent blur from firing first
-                                                    handleSelectSuggestion(suggestion);
-                                                }}
-                                            >
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {suggestion.firstName} {suggestion.lastName}
-                                                </p>
-                                                <p className="text-xs text-gray-500">{suggestion.email}</p>
-                                            </button>
-                                        ))}
+                                        {suggestions.map((suggestion) => {
+                                            const isInvited = suggestion.status === "Active" || suggestion.loginCount > 0;
+                                            return (
+                                                <button
+                                                    key={suggestion.userId}
+                                                    type="button"
+                                                    className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors border-b last:border-0 ${isInvited ? 'opacity-50' : ''}`}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault(); // prevent blur from firing first
+                                                        handleSelectSuggestion(suggestion);
+                                                    }}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            {suggestion.firstName} {suggestion.lastName}
+                                                        </p>
+                                                        {isInvited && <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Already Invited</span>}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500">{suggestion.email}</p>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
                             {/* Status indicators */}
-                            {selectedDirUser && (
+                            {selectedDirUser && !isUserAlreadyInvited && (
                                 <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                                     <CheckCircle2 className="h-3.5 w-3.5" /> Found in directory
                                 </p>
+                            )}
+                            {isUserAlreadyInvited && (
+                                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg mt-1">
+                                    <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-medium text-blue-700">User already active</p>
+                                        <p className="text-xs text-blue-600 mt-0.5">
+                                            This user has already been invited to Villeto and cannot be invited again.
+                                        </p>
+                                    </div>
+                                </div>
                             )}
                             {isEmailNotFound && (
                                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mt-1">

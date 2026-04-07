@@ -8,6 +8,7 @@ export const QUERY_KEYS = {
   USERS: "users",
   INVITED_USERS: "invited-users",
   DIRECTORY_USERS: "directory-users",
+  UNINVITED_USERS: "uninvited-users",
   USER: "user",
   EXPENSE_CATEGORIES: "expense-categories",
   DIRECTORY: "directory"

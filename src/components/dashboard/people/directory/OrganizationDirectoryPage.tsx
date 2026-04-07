@@ -22,7 +22,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
+import { useGetUninvitedUsersApi } from "@/actions/users/get-all-users";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAxios } from "@/hooks/useAxios";
 import { useAuthStore } from "@/stores/auth-stores";
@@ -82,7 +82,7 @@ const PAGE_SIZE_OPTIONS = [
 ];
 
 export function OrganizationDirectoryPage({ onBack }: OrganizationDirectoryPageProps) {
-  const usersApi = useGetDirectoryUsersApi();
+  const usersApi = useGetUninvitedUsersApi();
   const router = useRouter();
   const axios = useAxios();
   const user = useAuthStore((state) => state.user);
