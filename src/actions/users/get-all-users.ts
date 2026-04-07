@@ -77,3 +77,20 @@ export const useGetDirectoryUsersApi = (
         ...options,
     });
 };
+
+/** Fetches users where invited=false — used by Invite forms */
+export const useGetUninvitedUsersApi = (
+    options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
+): UseQueryResult<Response, Error> => {
+    const axiosInstance = useAxios();
+
+    return useQuery<Response, Error>({
+        queryKey: [QUERY_KEYS.UNINVITED_USERS],
+        queryFn: async () => {
+            const response = await axiosInstance.get(API_KEYS.USER.UNINVITED_USERS);
+            return response.data;
+        },
+        staleTime: 0,
+        ...options,
+    });
+};
