@@ -1,37 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/auth-stores";
 import SetPasswordModal from "@/components/invitation/SetPasswordModal";
 import AddCategoryModal from "@/components/auth/AddCategoryModal";
 
 export default function DashboardModals() {
     const user = useAuthStore((state) => state.user);
+    const shouldChangePassword = (user as { shouldChangePassword?: boolean } | null)?.shouldChangePassword === true;
     
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [hasCompletedFlow, setHasCompletedFlow] = useState(false);
+
+    const flowGuardKey = useMemo(
+        () => (user?.userId ? `dashboard-modals-flow-complete:${user.userId}` : null),
+        [user?.userId]
+    );
+
+    const isCompanyFounder = user?.position === "CONTROLLING_OFFICER" &&
+        user?.createdAt === user?.company?.createdAt;
+    const isFirstLogin = typeof user?.loginCount === "number" && user.loginCount < 1;
+    const mustChangePassword = shouldChangePassword;
+    const shouldShowCategoryAfterPassword = Boolean(isCompanyFounder && isFirstLogin);
 
     useEffect(() => {
-        if (user) {
-            // Identify the company founder: they are a CONTROLLING_OFFICER whose creation 
-            // time exactly matches the company's creation time.
-            const isCompanyFounder = user.position === "CONTROLLING_OFFICER" && 
-                user.createdAt === user.company?.createdAt;
+        if (!flowGuardKey) return;
+        const done = sessionStorage.getItem(flowGuardKey) === "1";
+        if (done) setHasCompletedFlow(true);
+    }, [flowGuardKey]);
 
-            // Trigger for first-time founder logins (loginCount < 1) or users flagged to change password.
-            // Using < 1 specifically catches systems where fresh accounts start at 0 before first session logs.
-            const isFirstLogin = typeof user.loginCount === 'number' && user.loginCount < 1;
-            const mustChangePassword = (user as any).shouldChangePassword === true;
-            
-            if ((isFirstLogin && isCompanyFounder) || mustChangePassword) {
-                setShowPasswordModal(true);
-            }
+    useEffect(() => {
+        if (hasCompletedFlow) return;
+        if (user && ((isFirstLogin && isCompanyFounder) || mustChangePassword)) {
+            setShowPasswordModal(true);
         }
-    }, [user?.loginCount, (user as any)?.shouldChangePassword, user?.position, user?.createdAt, user?.company?.createdAt]);
+    }, [user, isFirstLogin, isCompanyFounder, mustChangePassword, hasCompletedFlow]);
+
+    const markFlowComplete = () => {
+        setHasCompletedFlow(true);
+        setShowPasswordModal(false);
+        setShowCategoryModal(false);
+        if (flowGuardKey) sessionStorage.setItem(flowGuardKey, "1");
+    };
 
     const handlePasswordSuccess = () => {
         setShowPasswordModal(false);
-        setShowCategoryModal(true);
+        if (shouldShowCategoryAfterPassword) {
+            setShowCategoryModal(true);
+        } else {
+            markFlowComplete();
+        }
         
         // Optimistically update the store so the modal doesn't immediately pop back open
         useAuthStore.setState((state) => ({
@@ -40,7 +59,7 @@ export default function DashboardModals() {
     };
 
     const handleCategoryCompletion = () => {
-        setShowCategoryModal(false);
+        markFlowComplete();
     };
 
     if (!user) return null;
@@ -53,6 +72,7 @@ export default function DashboardModals() {
                 email={user.email}
                 onSuccess={handlePasswordSuccess}
                 preventDismiss={true}
+                requireOldPassword={true}
             />
             <AddCategoryModal
                 open={showCategoryModal}

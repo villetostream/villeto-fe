@@ -558,7 +558,13 @@ function CompanyProfileTab() {
     if (!pendingLogoFile) return;
     setIsSavingLogo(true);
     try {
-      await updateCompany.mutateAsync({ logo: pendingLogoFile });
+      const formData = new FormData();
+      formData.append("file", pendingLogoFile, pendingLogoFile.name);
+      await axios.post(API_KEYS.COMPANY.LOGO, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       toast.success("Company logo updated successfully");
       setPendingLogoFile(null);
       if (user?.companyId) {
