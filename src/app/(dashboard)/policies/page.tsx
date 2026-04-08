@@ -20,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
 import { useGetExpenseCategoriesApi } from "@/actions/companies/get-expense-categories";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
+import { toast } from "sonner";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -41,12 +44,24 @@ interface Policy {
 }
 
 type ExpenseCategory = {
-  id: number;
+  id: string;
   category: string;
   description: string;
   createdBy: string;
   date: string;
-  policyStatus: string;
+  isPolicyAttached: boolean;
+};
+
+type ExpenseCategoryDetails = {
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  isPolicyAttached: boolean;
+  policies: unknown[];
+  createdBy: string | null;
 };
 
 // Live data logic below
@@ -76,7 +91,7 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ─── Expense Category Action Menu ───────────────────────────────────────────── */
 
-function ActionMenu({ onCreatePolicy }: { onCreatePolicy: () => void }) {
+function ActionMenu({ onView, onCreatePolicy }: { onView: () => void; onCreatePolicy: () => void }) {
   return (
     <div className="flex justify-end">
       <DropdownMenu>
@@ -86,6 +101,9 @@ function ActionMenu({ onCreatePolicy }: { onCreatePolicy: () => void }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[210px] bg-white rounded-[20px] border border-border shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-1.5 overflow-hidden">
+          <DropdownMenuItem onClick={onView} className="flex items-center gap-4 px-5 py-3.5 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors border-b border-border/50 cursor-pointer">
+            <Eye className="w-[17px] h-[17px] text-muted-foreground shrink-0" strokeWidth={1.5} /> View Details
+          </DropdownMenuItem>
           <DropdownMenuItem className="flex items-center gap-4 px-5 py-3.5 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors border-b border-border/50 cursor-pointer">
             <Pencil className="w-[17px] h-[17px] text-muted-foreground shrink-0" strokeWidth={1.5} /> Edit
           </DropdownMenuItem>
@@ -97,6 +115,97 @@ function ActionMenu({ onCreatePolicy }: { onCreatePolicy: () => void }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    </div>
+  );
+}
+
+function ExpenseCategoryDetailsModal({
+  category,
+  isLoading,
+  onClose,
+}: {
+  category: ExpenseCategoryDetails | null;
+  isLoading: boolean;
+  onClose: () => void;
+}) {
+  if (!category && !isLoading) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[560px] overflow-hidden">
+        <div className="p-10">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold text-foreground">Category Details</h2>
+            <button onClick={onClose} className="w-10 h-10 rounded-full bg-muted/40 hover:bg-muted/80 flex items-center justify-center transition-all border border-border/50">
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+          <div className="h-px bg-border w-full my-6 opacity-60" />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground gap-2">
+              <RefreshCcw className="w-4 h-4 animate-spin" />
+              Loading category details...
+            </div>
+          ) : category ? (
+            <div className="rounded-[1.5rem] border border-border/60 bg-muted/10 p-7 space-y-6">
+              <div className="grid grid-cols-2 gap-y-6">
+                <div>
+                  <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1.5">Category Name</p>
+                  <p className="text-base font-semibold text-foreground">{category.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1.5">Policy Status</p>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      category.isPolicyAttached
+                        ? "bg-success/10 text-success"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {category.isPolicyAttached ? "Policy Attached" : "No Policy"}
+                  </span>
+                </div>
+              </div>
+              <div className="h-px bg-border/60" />
+              <div>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1.5">Description</p>
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {category.description ?? <span className="italic text-muted-foreground">No description provided</span>}
+                </p>
+              </div>
+              <div className="h-px bg-border/60" />
+              <div className="grid grid-cols-2 gap-y-6">
+                <div>
+                  <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1.5">Created By</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {category.createdBy ?? <span className="italic text-muted-foreground">—</span>}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1.5">Created On</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {category.createdAt ? new Date(category.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—"}
+                  </p>
+                </div>
+              </div>
+              {category.policies && category.policies.length > 0 && (
+                <>
+                  <div className="h-px bg-border/60" />
+                  <div>
+                    <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Attached Policies</p>
+                    <div className="flex flex-wrap gap-2">
+                      {category.policies.map((pol: any, i: number) => (
+                        <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full border border-primary/10 text-sm font-medium text-foreground">
+                          <Shield className="w-4 h-4 text-primary opacity-60" />{pol.name ?? `Policy ${i + 1}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
@@ -242,12 +351,15 @@ function ReviewPolicyModal({ policy, onClose, onApprove, onReject }: {
 /* ─── Page ───────────────────────────────────────────────────────────────────── */
 
 export default function PoliciesPage() {
+  const axios = useAxios();
   const [activeTab, setActiveTab]           = useState<"policies" | "expense" | "archived">("policies");
   const [isCreatePolicyOpen, setIsCreatePolicyOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen]   = useState(false);
   const [policies, setPolicies]             = useState<Policy[]>([]);
   const [detailPolicy, setDetailPolicy]     = useState<Policy | null>(null);
   const [reviewPolicy, setReviewPolicy]     = useState<Policy | null>(null);
+  const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<ExpenseCategoryDetails | null>(null);
+  const [isCategoryDetailsLoading, setIsCategoryDetailsLoading] = useState(false);
   const [search, setSearch]                 = useState("");
 
   const expCatApi = useGetExpenseCategoriesApi();
@@ -256,9 +368,9 @@ export default function PoliciesPage() {
       id: c.categoryId ?? c.id,
       category: c.name,
       description: c.description || "",
-      createdBy: "—",
+      createdBy: c.createdBy ?? "—",
       date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—",
-      policyStatus: "Pending",
+      isPolicyAttached: Boolean(c.isPolicyAttached),
     }));
   }, [expCatApi.data?.data]);
 
@@ -302,6 +414,20 @@ export default function PoliciesPage() {
             c.createdBy.toLowerCase().includes(q)
     );
   }, [search, liveExpenseCategories]);
+
+  const handleViewCategory = async (categoryId: string) => {
+    setIsCategoryDetailsLoading(true);
+    setSelectedCategoryDetails(null);
+    try {
+      const response = await axios.get(`${API_KEYS.EXPENSE.CATEGORIES}/${categoryId}`);
+      const payload = response?.data?.data ?? response?.data;
+      setSelectedCategoryDetails(payload as ExpenseCategoryDetails);
+    } catch {
+      toast.error("Failed to load expense category details");
+    } finally {
+      setIsCategoryDetailsLoading(false);
+    }
+  };
 
   /* handlers */
   const handleCreated = (data: CreatedPolicyData) => {
@@ -460,12 +586,16 @@ export default function PoliciesPage() {
     {
       accessorKey: "category",
       header: "Category",
-      cell: ({ row }) => <span className="font-bold text-foreground">{row.original.category}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-foreground">
+          {row.original.category}
+        </span>
+      ),
     },
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original.description}</span>,
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.description || "—"}</span>,
     },
     {
       accessorKey: "createdBy",
@@ -478,24 +608,33 @@ export default function PoliciesPage() {
       cell: ({ row }) => <span className="text-foreground/75 tabular-nums">{row.original.date}</span>,
     },
     {
-      accessorKey: "policyStatus",
+      accessorKey: "isPolicyAttached",
       header: "Policy",
       cell: ({ row }) => (
-        <span className="inline-flex items-center px-4 py-1 rounded-full text-xs font-semibold bg-pending/10 text-pending">
-          {row.original.policyStatus}
+        <span
+          className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-semibold ${
+            row.original.isPolicyAttached
+              ? "bg-success/10 text-success"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {row.original.isPolicyAttached ? "Policy Attached" : "No Policy"}
         </span>
       ),
     },
     {
       id: "actions",
       header: () => <div className="text-right w-full">Action</div>,
-      cell: () => (
+      cell: ({ row }) => (
         <div className="text-right">
-          <ActionMenu onCreatePolicy={() => setIsCreatePolicyOpen(true)} />
+          <ActionMenu
+            onView={() => handleViewCategory(row.original.id)}
+            onCreatePolicy={() => setIsCreatePolicyOpen(true)}
+          />
         </div>
       ),
     },
-  ], []);
+  ], [handleViewCategory]);
 
   return (
     <div className="bg-background min-h-screen p-6 space-y-6">
@@ -590,8 +729,13 @@ export default function PoliciesPage() {
 
         {/* ════ EXPENSE CATEGORY TAB ════ */}
         {activeTab === "expense" && (
-          <div className="flex-1 border-t border-border overflow-hidden flex flex-col">
-            <DataTable data={filteredCategories} columns={columns} height="auto" />
+        <div className="flex-1 border-t border-border overflow-hidden flex flex-col">
+            <DataTable
+              data={filteredCategories}
+              columns={columns}
+              height="auto"
+              onRowClick={(row) => handleViewCategory(row.id)}
+            />
           </div>
         )}
 
@@ -614,6 +758,14 @@ export default function PoliciesPage() {
         onOpenChange={setIsAddCategoryOpen}
         onSkip={() => setIsAddCategoryOpen(false)}
         onSuccess={() => setIsAddCategoryOpen(false)}
+        showOnboardingIntro={false}
+      />
+      <ExpenseCategoryDetailsModal
+        category={selectedCategoryDetails}
+        isLoading={isCategoryDetailsLoading}
+        onClose={() => {
+          setSelectedCategoryDetails(null);
+        }}
       />
       <PolicyDetailsModal
         policy={detailPolicy}

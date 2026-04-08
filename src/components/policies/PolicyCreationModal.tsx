@@ -707,28 +707,28 @@ export default function PolicyCreationModal({
     else handleConfirm();
   };
 
-  const buildPayload = (status: "active" | "draft"): CreatePolicyPayload => {
+  const buildPayload = (): CreatePolicyPayload => {
     const currencyCode = getCurrencyConfig(userCountry).code;
     const primaryLocation = locations.find((location) => location.trim().length > 0);
+    const location = primaryLocation?.trim();
     return {
       name: policyName,
       description: policyName,
       expenseCategories: categories,
       scope: scope === "all"
-        ? { type: "all_employees" }
+        ? { type: "all" }
         : {
             type: "specific",
             departments: selectedDepts,
             userRoles: selectedRoles,
-            location: primaryLocation,
+            ...(location ? { location } : {}),
           },
       rules: rules
         .filter(r => r.amount && r.enforcement)             // only send completed rules
         .map(r => {
-          const enforcementAction = r.enforcement === "Hard block" ? "hard_block" : "soft_warning";
+          const enforcementAction = r.enforcement === "Hard block" ? "block" : "warning";
           if (r.type === "spend_limit") return {
             type: "spend_limit" as const,
-            timeframe: r.timeframe,
             amount: parseFloat(r.amount),
             currency: currencyCode,
             enforcementAction,
@@ -742,16 +742,13 @@ export default function PolicyCreationModal({
         }),
       approvers: approvers
         .filter(Boolean),
-      status,
     };
   };
 
   const handleSaveDraft = async () => {
     try {
       // TODO: draft endpoint not yet confirmed — saving with status "draft"
-      const payload = buildPayload("draft");
-      await createPolicyMutation.mutateAsync(payload);
-      toast.success("Policy saved as draft.");
+      toast.info("Draft saving is not available for this endpoint yet.");
       handleClose();
     } catch {
       // If draft endpoint is not available, just close without pretending to save
@@ -761,7 +758,7 @@ export default function PolicyCreationModal({
 
   const handleConfirm = async () => {
     try {
-      const payload = buildPayload("active");
+      const payload = buildPayload();
       await createPolicyMutation.mutateAsync(payload);
 
       onSuccess?.({
@@ -1137,7 +1134,8 @@ export default function PolicyCreationModal({
       </div>
 
       <AddCategoryModal open={isAddCatOpen} onOpenChange={setIsAddCatOpen}
-        onSkip={() => setIsAddCatOpen(false)} onSuccess={() => setIsAddCatOpen(false)} />
+        onSkip={() => setIsAddCatOpen(false)} onSuccess={() => setIsAddCatOpen(false)}
+        showOnboardingIntro={false} />
     </>
   );
 }
