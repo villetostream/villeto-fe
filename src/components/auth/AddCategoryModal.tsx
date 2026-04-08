@@ -19,6 +19,7 @@ interface AddCategoryModalProps {
     onSuccess: () => void;
     onSkip: () => void;
     cancelText?: string;
+    showOnboardingIntro?: boolean;
 }
 
 export default function AddCategoryModal({
@@ -27,6 +28,7 @@ export default function AddCategoryModal({
     onSuccess,
     onSkip,
     cancelText = "Cancel",
+    showOnboardingIntro = true,
 }: AddCategoryModalProps) {
     const [categories, setCategories] = useState<{ id: number | string; name: string; description: string }[]>([]);
 
@@ -122,10 +124,21 @@ export default function AddCategoryModal({
                 >
                 <div className="p-10 pl-12 pr-12 flex flex-col flex-1 overflow-hidden">
                         <div className="mb-5 mt-2 shrink-0">
-                            <h2 className="text-2xl font-semibold text-gray-800 mb-1.5 break-words tracking-tight">Almost done</h2>
-                            <p className="text-gray-500 text-[13px]">
-                                Let's get your organization set up.
-                            </p>
+                            {showOnboardingIntro ? (
+                                <>
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-1.5 break-words tracking-tight">Almost done</h2>
+                                    <p className="text-gray-500 text-[13px]">
+                                        Let&apos;s get your organization set up.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-1.5 break-words tracking-tight">Expense categories</h2>
+                                    <p className="text-gray-500 text-[13px]">
+                                        Manage available categories used for policy creation and submissions.
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         <div className="h-px bg-gray-200/60 w-full mb-8 shrink-0"></div>

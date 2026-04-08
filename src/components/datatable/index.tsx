@@ -93,6 +93,7 @@ export type DataTableProps<Data extends object, Value = unknown> = {
   onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
   onRowSelectionChange?: (selection: RowSelectionState) => void;
   onColumnVisibilityChange?: (visibility: VisibilityState) => void;
+  onRowClick?: (row: Data) => void;
 };
 
 function DataTable<Data extends object, Value = unknown>(
@@ -126,6 +127,7 @@ function DataTable<Data extends object, Value = unknown>(
     onColumnFiltersChange,
     onRowSelectionChange,
     onColumnVisibilityChange,
+    onRowClick,
   } = props;
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
@@ -354,10 +356,9 @@ function DataTable<Data extends object, Value = unknown>(
                   <TableRow
                     key={row.id}
                     className={
-                      expensesClickMode ? "cursor-pointer hover:bg-gray-50" : undefined
+                      expensesClickMode || onRowClick ? "cursor-pointer hover:bg-gray-50" : undefined
                     }
                     onClick={(e) => {
-                      if (!expensesClickMode) return;
                       const target = e.target as HTMLElement;
                       // Ignore clicks on interactive elements
                       if (
@@ -367,6 +368,12 @@ function DataTable<Data extends object, Value = unknown>(
                       ) {
                         return;
                       }
+                      // Generic row click handler
+                      if (onRowClick) {
+                        onRowClick(row.original);
+                        return;
+                      }
+                      if (!expensesClickMode) return;
                       const original: any = row.original as any;
                       // For personal expenses, use reportId (UUID); for company expenses, use id (numeric)
                       const id = expensesClickMode === "personal" ? original?.reportId : original?.reportId;

@@ -4,11 +4,10 @@ import { API_KEYS } from "@/lib/constants/apis";
 
 /* ─── Rule Types ──────────────────────────────────────────────────────── */
 
-type RuleEnforcement = "hard_block" | "soft_warning";
+type RuleEnforcement = "block" | "warning";
 
 export interface SpendLimitRule {
   type: "spend_limit";
-  timeframe: "daily" | "weekly" | "monthly" | "per_transaction";
   amount: number;          // numeric — parseFloat before sending
   currency: string;        // ISO 4217: "NGN" | "GHS" | "KES" | "ZAR"
   enforcementAction: RuleEnforcement;
@@ -27,7 +26,7 @@ export type PolicyRule = SpendLimitRule | ReceiptRequirementRule;
 /* ─── Scope Types ─────────────────────────────────────────────────────── */
 
 export interface PolicyScopeAll {
-  type: "all_employees";
+  type: "all";
 }
 
 export interface PolicyScopeSpecific {
@@ -48,7 +47,6 @@ export interface CreatePolicyPayload {
   scope: PolicyScope;
   rules: PolicyRule[];
   approvers: string[];
-  status: "active" | "draft";
   effectiveFrom?: string;           // ISO 8601
   effectiveTo?: string;             // ISO 8601
 }
