@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import AuthCard from "@/components/auth/AuthCard";
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LockKeyIcon, LockPasswordFreeIcons } from "@hugeicons/core-free-icons";
+import { LockKeyIcon } from "@hugeicons/core-free-icons";
+import { useAxios } from "@/hooks/useAxios";
+import { API_KEYS } from "@/lib/constants/apis";
 
 interface ForgotPasswordForm {
     email: string;
@@ -22,13 +24,14 @@ const ForgotPassword = () => {
         formState: { errors, isSubmitting },
     } = useForm<ForgotPasswordForm>();
     const router = useRouter();
+    const axios = useAxios();
 
     const onSubmit = async (data: ForgotPasswordForm) => {
-        // Simulate API call
-        setTimeout(() => {
+        await axios.post(API_KEYS.AUTH.PASSWORD_RESET_INITIATE, {
+            email: data.email,
+        });
             toast.success("OTP code sent to your email");
-            router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-        }, 1000);
+            router.push(`/forgot-password/reset?email=${encodeURIComponent(data.email)}`);
     };
 
     const handleRememberPassword = () => {

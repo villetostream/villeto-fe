@@ -19,6 +19,7 @@ interface SetPasswordModalProps {
     email: string;
     onSuccess?: () => void;
     preventDismiss?: boolean;
+    requireOldPassword?: boolean;
 }
 
 function getPasswordStrength(password: string): number {
@@ -54,12 +55,15 @@ export default function SetPasswordModal({
     email,
     onSuccess,
     preventDismiss,
+    requireOldPassword = false,
 }: SetPasswordModalProps) {
     const router = useRouter();
     const axios = useAxios();
 
+    const [oldPassword, setOldPassword] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
+    const [showOldPassword, setShowOldPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -69,32 +73,47 @@ export default function SetPasswordModal({
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
     const passwordsMatch = password === confirm && password.length > 0;
-    const isValid = hasMinLength && hasNumber && hasUpper && hasLower && passwordsMatch;
+    const isValid =
+        hasMinLength &&
+        hasNumber &&
+        hasUpper &&
+        hasLower &&
+        passwordsMatch &&
+        (!requireOldPassword || oldPassword.trim().length > 0);
 
     const strength = getPasswordStrength(password);
-    // 0-1 = weak (red), 2-3 = medium (yellow), 4 = strong (green)
-    const strengthColors = ["bg-gray-200", "bg-red-400", "bg-yellow-400", "bg-green-400", "bg-green-500"];
-
     const handleSubmit = async () => {
         if (!isValid) return;
         setIsLoading(true);
         try {
-            await axios.post(API_KEYS.USER.PASSWORD_SET, {
-                password,
-                confirmPassword: confirm,
-                email
-            });
+            if (requireOldPassword) {
+                await axios.patch(API_KEYS.AUTH.PASSWORD_UPDATE, {
+                    oldPassword,
+                    newPassword: password,
+                    confirmPassword: confirm,
+                });
+            } else {
+                await axios.post(API_KEYS.USER.PASSWORD_SET, {
+                    password,
+                    confirmPassword: confirm,
+                    email,
+                });
+            }
             if (onSuccess) {
-                toast.success("Password set successfully!");
+                toast.success(requireOldPassword ? "Password updated successfully!" : "Password set successfully!");
                 onSuccess();
             } else {
                 toast.success("Password set successfully! Please log in.");
                 onOpenChange(false);
                 router.push("/login");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
             toast.error(
-                error?.response?.data?.message ?? "Failed to set password. Please try again."
+                message ??
+                (requireOldPassword
+                    ? "Failed to update password. Please try again."
+                    : "Failed to set password. Please try again.")
             );
         } finally {
             setIsLoading(false);
@@ -128,17 +147,46 @@ export default function SetPasswordModal({
                             {email}
                         </span>
 
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">Set Password</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                            {requireOldPassword ? "Update Password" : "Set Password"}
+                        </h2>
                         <p className="text-sm text-gray-500 text-center">
-                            Set your password to enhance account security.
+                            {requireOldPassword
+                                ? "Enter your old password, then choose a stronger new password."
+                                : "Set your password to enhance account security."}
                         </p>
                     </div>
 
-                    {/* Create Password */}
+                    {requireOldPassword && (
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+                                Old Password<span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <Input
+                                    type={showOldPassword ? "text" : "password"}
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="pr-10 h-11 border-gray-200 focus:border-primary"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowOldPassword((v) => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showOldPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* New password */}
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-1.5">
                             <label className="text-sm font-medium text-gray-800">
-                                Create a Password<span className="text-red-500">*</span>
+                                {requireOldPassword ? "New Password" : "Create a Password"}
+                                <span className="text-red-500">*</span>
                             </label>
                             <div className="flex items-center gap-1">
                                 <span className="text-xs text-gray-400 mr-1">Security level</span>
@@ -223,7 +271,10 @@ export default function SetPasswordModal({
                         }`}
                     >
                         {isLoading ? (
-                            <>Setting password... <Loader2 className="ml-2 h-5 w-5 animate-spin" /></>
+                            <>
+                                {requireOldPassword ? "Updating password..." : "Setting password..."}
+                                <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                            </>
                         ) : (
                             <>Continue <ArrowRight className="ml-2 h-5 w-5" /></>
                         )}

@@ -11,14 +11,14 @@ export interface SpendLimitRule {
   timeframe: "daily" | "weekly" | "monthly" | "per_transaction";
   amount: number;          // numeric — parseFloat before sending
   currency: string;        // ISO 4217: "NGN" | "GHS" | "KES" | "ZAR"
-  enforcement: RuleEnforcement;
+  enforcementAction: RuleEnforcement;
 }
 
 export interface ReceiptRequirementRule {
   type: "receipt_requirement";
   requiredAboveAmount: number;
   currency: string;
-  enforcement: RuleEnforcement;
+  enforcementAction: RuleEnforcement;
 }
 
 // Union — extend with new rule types as they are built
@@ -32,29 +32,22 @@ export interface PolicyScopeAll {
 
 export interface PolicyScopeSpecific {
   type: "specific";
-  departmentIds: string[];
-  roleIds: string[];
+  departments: string[];
+  userRoles: string[];
+  location?: string;
 }
 
 export type PolicyScope = PolicyScopeAll | PolicyScopeSpecific;
-
-/* ─── Approver ────────────────────────────────────────────────────────── */
-
-export interface PolicyApprover {
-  userId: string;
-  order?: number;   // optional sequential ordering for multi-approver chains
-}
 
 /* ─── Main Payload ────────────────────────────────────────────────────── */
 
 export interface CreatePolicyPayload {
   name: string;
   description?: string;
-  expenseCategoryIds: string[];     // array — one policy, multiple categories
+  expenseCategories: string[];
   scope: PolicyScope;
-  locations: string[];
   rules: PolicyRule[];
-  approvers: PolicyApprover[];
+  approvers: string[];
   status: "active" | "draft";
   effectiveFrom?: string;           // ISO 8601
   effectiveTo?: string;             // ISO 8601

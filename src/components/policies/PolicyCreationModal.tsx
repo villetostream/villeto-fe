@@ -9,7 +9,7 @@ import { useGetCompanyRolesApi } from "@/actions/role/get-all-roles";
 import { useGetExpenseCategoriesApi } from "@/actions/companies/get-expense-categories";
 import { useGetDirectoryUsersApi } from "@/actions/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/actions/departments/get-all-departments";
-import { useCreatePolicyApi, CreatePolicyPayload, SpendLimitRule, ReceiptRequirementRule } from "@/actions/companies/create-policy";
+import { useCreatePolicyApi, CreatePolicyPayload } from "@/actions/companies/create-policy";
 import AddCategoryModal from "@/components/auth/AddCategoryModal";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth-stores";
@@ -709,35 +709,39 @@ export default function PolicyCreationModal({
 
   const buildPayload = (status: "active" | "draft"): CreatePolicyPayload => {
     const currencyCode = getCurrencyConfig(userCountry).code;
+    const primaryLocation = locations.find((location) => location.trim().length > 0);
     return {
       name: policyName,
       description: policyName,
-      expenseCategoryIds: categories,                       // array — one policy, multiple categories
+      expenseCategories: categories,
       scope: scope === "all"
         ? { type: "all_employees" }
-        : { type: "specific", departmentIds: selectedDepts, roleIds: selectedRoles },
-      locations,
+        : {
+            type: "specific",
+            departments: selectedDepts,
+            userRoles: selectedRoles,
+            location: primaryLocation,
+          },
       rules: rules
         .filter(r => r.amount && r.enforcement)             // only send completed rules
         .map(r => {
-          const enforcement = r.enforcement === "Hard block" ? "hard_block" : "soft_warning";
+          const enforcementAction = r.enforcement === "Hard block" ? "hard_block" : "soft_warning";
           if (r.type === "spend_limit") return {
             type: "spend_limit" as const,
             timeframe: r.timeframe,
             amount: parseFloat(r.amount),
             currency: currencyCode,
-            enforcement,
+            enforcementAction,
           };
           return {
             type: "receipt_requirement" as const,
             requiredAboveAmount: parseFloat(r.amount),
             currency: currencyCode,
-            enforcement,
+            enforcementAction,
           };
         }),
       approvers: approvers
-        .filter(Boolean)
-        .map((userId, index) => ({ userId, order: index + 1 })),
+        .filter(Boolean),
       status,
     };
   };
