@@ -342,10 +342,10 @@ function PODetailPage() {
   const [shortCloseItem, setShortCloseItem] = useState<any>(null);
   const [overrideUnlocked, setOverrideUnlocked] = useState(false);
 
-  const { data, isPending, isFetching, isError } = usePurchaseOrder(id);
+  const { data, isPending: isQueryPending, isFetching, isError } = usePurchaseOrder(id);
   // Use isFetching (not just isLoading) so we block rendering while React Query
   // silently refreshes stale cached data — this prevents the old-status flash.
-  const isPageLoading = isPending || isFetching;
+  const isPageLoading = isQueryPending || isFetching;
   const po = data?.data;
 
   const submitMut   = useSubmitPurchaseOrderForApproval(id);
