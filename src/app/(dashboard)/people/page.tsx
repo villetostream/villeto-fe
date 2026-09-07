@@ -9,7 +9,7 @@ import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryT
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
-import { useGetAllUsersApi, useGetDirectoryUsersApi } from "@/queries/users/get-all-users";
+import { useGetAllUsersApi, useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/queries/role/get-all-roles";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
@@ -26,7 +26,9 @@ function People() {
     const canReadRoles      = can('role', 'read') || can('role', 'manage');
     const canReadDirectory  = can('user', 'read') || can('user', 'manage');
 
-    const usersApi     = useGetAllUsersApi({ enabled: canReadUsers });
+    const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1 } });
+    const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1, status: "Active" } });
+    
     // useGetAllDepartmentsApi and useGetAllRolesApi are called here at page level
     // so their cache is warm before UserProfileModal opens (which gates them on isOpen).
     const deptsApi     = useGetAllDepartmentsApi({ enabled: canReadDepts });
@@ -36,35 +38,11 @@ function People() {
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
     const hasDirectoryData    = directoryTotalCount > 0;
 
-    const uniqueDeptCount = useMemo(() => {
-        const users: unknown[] = usersApi?.data?.data ?? [];
-        const depts = new Set<string>();
-        users.forEach((rawUser) => {
-            const u = asRecord(rawUser);
-            let deptName = "";
-            const department = u.department;
-            if (!department) return;
-            if (typeof department === "string") {
-                deptName = department;
-            } else if (isRecord(department)) {
-                deptName = pickString(department, "departmentName", "name");
-            }
-            if (deptName) depts.add(deptName);
-        });
-        return depts.size;
-    }, [usersApi?.data?.data]);
-
-    const activeUserCount = useMemo(() => {
-        const users: unknown[] = usersApi?.data?.data ?? [];
-        return users.filter((rawUser) => {
-            const u = rawUser as Record<string, unknown>;
-            return (u.status as string)?.toLowerCase() === "active";
-        }).length;
-    }, [usersApi?.data?.data]);
+    const uniqueDeptCount = deptsApi?.data?.meta?.totalCount || "0";
 
     const statCards = [
-        { icon: Users,     label: "Total Users",   value: usersApi?.data?.meta?.totalCount || "0", description: "Total registered users",   bgColor: "#384A57" },
-        { icon: UserCheck, label: "Active Users",  value: activeUserCount,                          description: "Currently active members",  bgColor: "#0FA68E" },
+        { icon: Users,     label: "Total Users",   value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users",   bgColor: "#384A57" },
+        { icon: UserCheck, label: "Active Users",  value: activeInvitedUsersApi?.data?.meta?.totalCount || "0",                          description: "Currently active members",  bgColor: "#0FA68E" },
         { icon: Building2, label: "Departments",   value: uniqueDeptCount,                          description: "View Departments",           bgColor: "#5A67D8" },
         { icon: UserCog,   label: "Roles",         value: rolesApi?.data?.meta?.totalCount || "0",  description: "View Roles",                 bgColor: "#418341" },
     ];
@@ -167,8 +145,8 @@ function People() {
                             title={stat.label}
                             value={stat.value}
                             isLoading={
-                                stat.label === "Total Users"  ? usersApi.isLoading :
-                                stat.label === "Departments"  ? usersApi.isLoading :
+                                stat.label === "Total Users"  ? totalInvitedUsersApi.isLoading :
+                                stat.label === "Departments"  ? deptsApi.isLoading :
                                 stat.label === "Roles"        ? rolesApi.isLoading : false
                             }
                             accentColor={stat.bgColor}

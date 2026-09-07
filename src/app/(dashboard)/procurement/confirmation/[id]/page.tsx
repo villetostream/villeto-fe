@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Clock3, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Clock3, Loader2, Package, Truck, Monitor, Wrench, X, History } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import withPermissions from "@/components/permissions/permission-protected-routes";
-import { usePurchaseOrder, useConfirmPOReceipt } from "@/queries/procurement/purchase-orders";
+import { usePurchaseOrder, useConfirmPOReceipt, useConfirmPOFinalBilling } from "@/queries/procurement/purchase-orders";
 import ConfirmReceiptModal from "@/components/procurement/modals/ConfirmReceiptModal";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+function formatCurrency(amount: number, currency: string = "USD") {
+  const locale = currency === "NGN" ? "en-NG" : "en-US";
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
 }
 
 function formatDate(dateStr: string | null | undefined) {
@@ -149,11 +151,9 @@ function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchase
               <thead>
                 <tr className="border-y border-black/[0.06] bg-[#f9faf9]">
                   <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Item</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Included Qty</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Received in Shipment</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Awaiting Receipt</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">PO Outstanding After Receipt</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Remaining Disposition</th>
+                  <th className="px-5 py-2.5 text-center text-xs font-semibold text-[#68726d] whitespace-nowrap">Quantity Sent</th>
+                  <th className="px-5 py-2.5 text-center text-xs font-semibold text-[#68726d] whitespace-nowrap">Quantity Received</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-semibold text-[#68726d] whitespace-nowrap">Remaining on Order</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,42 +169,37 @@ function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchase
                   return (
                   <tr key={i} className="border-b border-black/[0.04] last:border-b-0">
                     <td className="px-5 py-3 font-medium text-[#111815]">{item.name || "Item"}</td>
-                    <td className="px-5 py-3 text-[#111815]">{item.quantityReady || 0} included</td>
-                    <td className="px-5 py-3 text-[#111815]">{item.quantityReceived || 0}</td>
-                    <td className="px-5 py-3 text-[#111815]">{item.quantityAwaitingReceipt || 0}</td>
-                    <td className="px-5 py-3 text-[#111815]">
+                    <td className="px-5 py-3 text-center text-[#111815] font-medium">{item.quantityReady || 0}</td>
+                    <td className="px-5 py-3 text-center text-[#111815]">{(item.quantityReceived || 0) > 0 ? item.quantityReceived : "—"}</td>
+                    <td className="px-5 py-3">
                       {outstandingAfterReceipt === undefined ? (
-                        "—"
+                        <span className="text-[#68726d]">—</span>
                       ) : (
-                        <div>
-                          <p className="font-medium">{outstandingAfterReceipt} remaining</p>
-                          <p className="text-[11px] text-[#89918d]">of {orderedQuantity} ordered</p>
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <div>
+                            <p className="font-medium text-[#111815]">{outstandingAfterReceipt} remaining</p>
+                            <p className="text-[11px] text-[#89918d]">of {orderedQuantity} ordered</p>
+                          </div>
+                          {item.remainingDisposition === "cannot_fulfill" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium whitespace-nowrap mt-0.5">
+                              <AlertCircle className="w-3.5 h-3.5" /> {remainingQty} Cannot Fulfill
+                            </span>
+                          ) : item.remainingDisposition === "backordered" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium whitespace-nowrap mt-0.5">
+                              <Clock3 className="w-3.5 h-3.5" /> {remainingQty} Backordered (exp. {formatDate(item.expectedReadyDate).split(",")[0]})
+                            </span>
+                          ) : notice.declaration === "full" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#f0faf8] text-[#087f70] text-xs font-medium whitespace-nowrap mt-0.5">
+                              Fully Fulfilled
+                            </span>
+                          ) : null}
+                          {item.dispositionReason && (
+                            <p className="text-[11px] text-[#89918d] italic truncate max-w-[200px]" title={item.dispositionReason}>
+                              Reason: {item.dispositionReason}
+                            </p>
+                          )}
                         </div>
                       )}
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        {item.remainingDisposition === "cannot_fulfill" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium whitespace-nowrap">
-                            <AlertCircle className="w-3.5 h-3.5" /> {remainingQty} Cannot Fulfill
-                          </span>
-                        ) : item.remainingDisposition === "backordered" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium whitespace-nowrap">
-                            <Clock3 className="w-3.5 h-3.5" /> {remainingQty} Backordered (exp. {formatDate(item.expectedReadyDate).split(",")[0]})
-                          </span>
-                        ) : notice.declaration === "full" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#f0faf8] text-[#087f70] text-xs font-medium whitespace-nowrap">
-                            Fully Fulfilled
-                          </span>
-                        ) : (
-                          <span className="text-[#68726d]">—</span>
-                        )}
-                        {item.dispositionReason && (
-                          <p className="text-[11px] text-[#89918d] italic truncate max-w-[200px]" title={item.dispositionReason}>
-                            Reason: {item.dispositionReason}
-                          </p>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 )})}
@@ -217,12 +212,186 @@ function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchase
   );
 }
 
+function ItemFulfillmentDrawer({
+  open,
+  onClose,
+  item,
+  fulfillments,
+}: {
+  open: boolean;
+  onClose: () => void;
+  item: any;
+  fulfillments: any[];
+}) {
+  if (!item) return null;
+
+  // Filter fulfillments that include this item
+  const relevantFulfillments = fulfillments
+    .map((f) => {
+      const lineItem = f.lineItems?.find(
+        (li: any) => li.purchaseOrderLineItemId === item.purchaseOrderLineItemId
+      );
+      return { notice: f, lineItem };
+    })
+    .filter((f) => !!f.lineItem)
+    // Sort chronologically by readyAt or shippedAt
+    .sort((a, b) => {
+      const dateA = new Date(a.notice.readyAt || a.notice.shippedAt).getTime();
+      const dateB = new Date(b.notice.readyAt || b.notice.shippedAt).getTime();
+      return dateA - dateB;
+    });
+
+  const qtyReady = item.quantityReady || 0;
+  const isCancelled = item.remainingDisposition === "cannot_fulfill";
+  const isFullyReady = qtyReady >= item.quantity;
+  const remaining = item.quantity - qtyReady;
+
+  const methodLabel: Record<string, string> = {
+    carrier: "Carrier",
+    vendor_truck: "Vendor Truck",
+    digital: "Digital",
+    service: "Service",
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent showCloseButton={false} className="max-w-2xl p-0 overflow-hidden sm:max-h-[85vh] flex flex-col gap-0 border-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] bg-[#f9faf9]">
+          <div>
+            <DialogTitle className="text-lg font-bold text-[#0b100e]">{item.name}</DialogTitle>
+            <p className="text-sm text-[#68726d] mt-0.5 truncate max-w-sm">
+              {item.description || "No description"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl hover:bg-black/[0.04] transition-colors"
+          >
+            <X className="h-4 w-4 text-[#68726d]" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-6 space-y-6 bg-white">
+          {/* Summary Section */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-[14px] bg-[#fcfcfc] border border-black/[0.06]">
+            <div>
+              <p className="text-xs text-[#89918d] uppercase tracking-wide font-medium">Ordered</p>
+              <p className="text-base font-semibold mt-0.5 text-[#0b100e]">{item.quantity}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[#89918d] uppercase tracking-wide font-medium">Fulfilled</p>
+              <p className="text-base font-semibold mt-0.5 text-[#087f70]">{qtyReady}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[#89918d] uppercase tracking-wide font-medium">Remaining</p>
+              <p className="text-base font-semibold mt-0.5 text-[#0b100e]">
+                {isCancelled ? 0 : (remaining > 0 ? remaining : 0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[#89918d] uppercase tracking-wide font-medium">Status</p>
+              <div className="mt-1">
+                {isFullyReady ? (
+                  <span className="text-xs text-[#087f70] bg-[#f0faf8] border border-[#087f70]/20 px-1.5 py-0.5 rounded-md font-medium">Fully Fulfilled</span>
+                ) : isCancelled ? (
+                  <span className="text-xs text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md font-medium">{remaining} Cannot Fulfill</span>
+                ) : item.remainingDisposition === "backordered" ? (
+                  <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md font-medium">
+                    Backordered (exp. {formatDate(item.expectedReadyDate).split(",")[0]})
+                  </span>
+                ) : qtyReady > 0 ? (
+                  <span className="text-xs text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md font-medium">Partially Fulfilled</span>
+                ) : (
+                  <span className="text-xs text-[#68726d] font-medium bg-[#f5f7f6] px-1.5 py-0.5 rounded-md border border-black/[0.06]">Pending</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Timeline Section */}
+          <div>
+            <h3 className="text-sm font-semibold text-[#0b100e] flex items-center gap-2 mb-4">
+              <History className="h-4 w-4 text-[#89918d]" />
+              Fulfillment Timeline
+            </h3>
+
+            {relevantFulfillments.length === 0 ? (
+              <p className="text-sm text-[#89918d] italic">No fulfillments recorded for this item yet.</p>
+            ) : (
+              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[1.25rem] before:-translate-x-px before:h-full before:w-0.5 before:bg-black/[0.06]">
+                {(() => {
+                  let runningReady = 0;
+                  return relevantFulfillments.map((f, idx) => {
+                    const method = f.notice.fulfillmentMethod || "unknown";
+                    const isPhysical = ["carrier", "vendor_truck"].includes(method);
+                    let Icon = Package;
+                    if (isPhysical) Icon = Truck;
+                    else if (method === "digital") Icon = Monitor;
+                    else if (method === "service") Icon = Wrench;
+
+                    const li = f.lineItem!;
+                    runningReady += li.quantityReady || 0;
+                    const remainingAtTime = Math.max(0, item.quantity - runningReady);
+
+                    const badgeColor =
+                      f.notice.dispatchStatus === "dispatched"
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : "bg-gray-50 text-gray-600 border-gray-200";
+
+                    return (
+                      <div key={f.notice.vendorDeliveryNoticeId || idx} className="relative flex items-start gap-4 group">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-[#f9faf9] text-[#89918d] shrink-0 shadow-sm z-10">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0 p-4 rounded-[14px] border border-black/[0.06] bg-white shadow-sm space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-[#0b100e]">
+                              {formatDate(f.notice.readyAt || f.notice.shippedAt)}
+                            </p>
+                            {isPhysical && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${badgeColor}`}>
+                                {f.notice.dispatchStatus === "dispatched" ? "Dispatched" : "Pending Dispatch"}
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium text-[#111815]">
+                              {li.quantityReady} Fulfilled
+                              {li.remainingDisposition && <span className="text-[#89918d] font-normal"> · {remainingAtTime} {li.remainingDisposition === "cannot_fulfill" ? "Cannot fulfill remaining" : `Backordered remaining (exp. ${formatDate(li.expectedReadyDate || item.expectedReadyDate).split(",")[0]})`}</span>}
+                            </p>
+                          <p className="text-xs text-[#89918d] mt-1">
+                            Via {methodLabel[method] || method}
+                            {f.notice.carrier && ` (${f.notice.carrier})`}
+                          </p>
+                        </div>
+                        
+                        {(li.quantityReceived || 0) > 0 && (
+                           <div className="pt-2 border-t border-black/[0.04]">
+                             <p className="text-xs text-[#087f70] font-medium">{li.quantityReceived} received by buyer</p>
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })})()}
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function ConfirmationDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const receiptMut = useConfirmPOReceipt(id);
+  const finalizeBillingMut = useConfirmPOFinalBilling(id);
   const [activeNotice, setActiveNotice] = useState<any>(null);
+  const [selectedItemForDrawer, setSelectedItemForDrawer] = useState<any>(null);
 
   const { data, isLoading, isError } = usePurchaseOrder(id);
 
@@ -282,6 +451,22 @@ function ConfirmationDetailPage() {
         lineItem.vendorDeliveryNoticeLineItemId,
         outstandingAfterReceipt,
       );
+    }
+  }
+
+  let isFinalDeliveryDefault = false;
+  if (activeNotice) {
+    if (activeNotice.declaration === "full") {
+      isFinalDeliveryDefault = true;
+    } else {
+      isFinalDeliveryDefault = (po.lineItems || []).every((li: any) => {
+        const outstanding = outstandingByPurchaseOrderLineId.get(li.purchaseOrderLineItemId) || 0;
+        const noticeItem = (activeNotice.lineItems || []).find(
+          (nli: any) => nli.purchaseOrderLineItemId === li.purchaseOrderLineItemId
+        );
+        const maxReceivable = noticeItem?.quantityAwaitingReceipt ?? noticeItem?.quantityReady ?? noticeItem?.quantity ?? 0;
+        return outstanding - maxReceivable <= 0;
+      });
     }
   }
 
@@ -469,7 +654,11 @@ function ConfirmationDetailPage() {
                     const remainingQty = Math.max(0, (item.quantity || 0) - (item.quantityReady || 0));
                     
                     return (
-                      <tr key={i} className="border-b border-black/[0.04] last:border-b-0 hover:bg-[#fcfcfc] transition-colors">
+                      <tr 
+                        key={i} 
+                        className="border-b border-black/[0.04] last:border-b-0 hover:bg-[#fcfcfc] transition-colors cursor-pointer"
+                        onClick={() => setSelectedItemForDrawer(item)}
+                      >
                         <td className="px-6 py-4 font-medium text-[#111815] min-w-[120px]">{item.name}</td>
                         <td className="px-6 py-4 text-[#68726d] max-w-[200px] truncate" title={item.description}>{item.description || "—"}</td>
                         <td className="px-6 py-4 text-[#111815]">{item.quantity}</td>
@@ -503,8 +692,8 @@ function ConfirmationDetailPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right text-[#111815]">{formatCurrency(item.unitPrice)}</td>
-                        <td className="px-6 py-4 text-right font-medium text-[#111815]">{formatCurrency((item.quantity || 0) * (item.unitPrice || 0))}</td>
+                        <td className="px-6 py-4 text-right text-[#111815]">{formatCurrency(item.unitPrice, po.currency)}</td>
+                        <td className="px-6 py-4 text-right font-medium text-[#111815]">{formatCurrency((item.quantity || 0) * (item.unitPrice || 0), po.currency)}</td>
                       </tr>
                     );
                   })}
@@ -570,24 +759,38 @@ function ConfirmationDetailPage() {
           </div>
         </div>
       </div>
+      <ItemFulfillmentDrawer
+        open={!!selectedItemForDrawer}
+        onClose={() => setSelectedItemForDrawer(null)}
+        item={selectedItemForDrawer}
+        fulfillments={fulfillmentHistory}
+      />
       {activeNotice && (
         <ConfirmReceiptModal
           open={!!activeNotice}
           onClose={() => setActiveNotice(null)}
-          onConfirm={async (payload) => {
+          onConfirm={async (payload, finalizeBilling) => {
             try {
               await receiptMut.mutateAsync({
                 fulfillmentId: activeNotice.vendorDeliveryNoticeId,
                 payload,
               });
+              
+              if (finalizeBilling) {
+                await finalizeBillingMut.mutateAsync({
+                  reason: "All vendor invoices are resolved; no further billing is expected.",
+                });
+              }
+
               toast.success("Delivery receipt confirmed.");
               setActiveNotice(null);
             } catch (err: any) {
               toast.error(err.response?.data?.message || "Failed to confirm receipt");
             }
           }}
-          isPending={receiptMut.isPending}
+          isPending={receiptMut.isPending || finalizeBillingMut.isPending}
           lineItems={activeNotice.lineItems || []}
+          isFinalDeliveryDefault={isFinalDeliveryDefault}
         />
       )}
     </div>

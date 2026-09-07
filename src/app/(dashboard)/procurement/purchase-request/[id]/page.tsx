@@ -696,19 +696,7 @@ function VendorSelect({ value, onChange, vendors }: {
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setSearch("");
-      }
-    };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
 
   // Focus the search input whenever the dropdown opens
   useEffect(() => {
@@ -726,49 +714,49 @@ function VendorSelect({ value, onChange, vendors }: {
   });
 
   return (
-    <div className="relative" ref={ref}>
-      <button type="button" onClick={() => {
-        setOpen(v => {
-          if (v) clearSearch();
-          return !v;
-        });
-      }}
-        className="w-full h-9 px-3 rounded-lg border border-black/[0.06] bg-white text-sm flex items-center justify-between hover:border-[#087f70]/60 focus:outline-none transition-colors">
-        <span className={selected ? "text-[#0b100e]" : "text-[#68726d] text-xs"}>
-          {selected ? (selected.displayName || selected.legalName || "Unknown Vendor") : "Select vendor"}
-        </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-[#68726d] shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute left-0 right-0 z-50 bg-white border border-black/[0.06] rounded-[12px] shadow-lg mt-1 overflow-hidden" style={{ minWidth: "200px" }}>
-          {/* Search input */}
-          <div className="px-2 pt-2 pb-1 border-b border-border/40">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#68726d] pointer-events-none" />
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search vendor..."
-                className="w-full h-8 pl-8 pr-3 text-sm rounded-md border border-border/60 bg-[#f9faf9] focus:outline-none focus:border-[#087f70]/60 focus:bg-white transition-colors"
-              />
-            </div>
-          </div>
-          {/* Vendor list */}
-          <div className="max-h-44 overflow-y-auto">
-            {filtered.length === 0 ? (
-              <p className="text-sm text-[#68726d] px-4 py-3 text-center">No vendors found</p>
-            ) : filtered.map(v => (
-              <button key={v.vendorId} type="button" onClick={() => { onChange(v.vendorId); setOpen(false); setSearch(""); }}
-                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#f9faf9] transition-colors ${value === v.vendorId ? "text-[#087f70] font-medium bg-[#f0faf8]" : "text-[#0b100e]"}`}>
-                {v.displayName || v.legalName || "Unknown Vendor"}
-              </button>
-            ))}
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) clearSearch(); }}>
+      <PopoverTrigger asChild>
+        <button type="button"
+          className="w-full h-9 px-3 rounded-lg border border-black/[0.06] bg-white text-sm flex items-center justify-between hover:border-[#087f70]/60 focus:outline-none transition-colors">
+          <span className={selected ? "text-[#0b100e]" : "text-[#68726d] text-xs"}>
+            {selected ? (selected.displayName || selected.legalName || "Unknown Vendor") : "Select vendor"}
+          </span>
+          <ChevronDown className={`w-3.5 h-3.5 text-[#68726d] shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="p-0 z-50 bg-white border border-black/[0.06] rounded-[12px] shadow-lg overflow-hidden"
+        style={{ width: "var(--radix-popover-trigger-width)", minWidth: "200px" }}
+        align="start"
+        sideOffset={4}
+      >
+        {/* Search input */}
+        <div className="px-2 pt-2 pb-1 border-b border-border/40">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#68726d] pointer-events-none" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search vendor..."
+              className="w-full h-8 pl-8 pr-3 text-sm rounded-md border border-border/60 bg-[#f9faf9] focus:outline-none focus:border-[#087f70]/60 focus:bg-white transition-colors"
+            />
           </div>
         </div>
-      )}
-    </div>
+        {/* Vendor list */}
+        <div className="max-h-44 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-[#68726d] px-4 py-3 text-center">No vendors found</p>
+          ) : filtered.map(v => (
+            <button key={v.vendorId} type="button" onClick={() => { onChange(v.vendorId); setOpen(false); setSearch(""); }}
+              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#f9faf9] transition-colors flex flex-col ${value === v.vendorId ? "bg-[#f0faf8]" : ""}`}>
+              <span className={`truncate ${value === v.vendorId ? "text-[#087f70] font-medium" : "text-[#0b100e]"}`}>{v.displayName || v.legalName || "Unknown Vendor"}</span>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
