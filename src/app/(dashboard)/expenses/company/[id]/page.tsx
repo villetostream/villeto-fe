@@ -198,7 +198,7 @@ export default function CompanyExpenseDetailPage() {
 
   const { data: expenseDetail, isLoading, isFetching, error } = useCompanyExpenseDetail(reportId);
   // Show skeleton during both first fetch AND background refetch to avoid showing stale status
-  const isPageLoading = isLoading || isFetching;
+  const isPageLoading = isPending || isFetching;
   const updateStatusMutation = useUpdateCompanyExpenseStatus();
 
   // Pre-fetch users so the cache is warm before the modal opens.
