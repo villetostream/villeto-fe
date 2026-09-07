@@ -448,8 +448,8 @@ function EditPurchaseOrderPage() {
   const detailUrl = buildPODetailUrl(id, outerTab, innerTab);
   const listUrl = buildPOListUrl(outerTab, innerTab);
 
-  const { data: poData, isLoading, isFetching } = usePurchaseOrder(id);
-  const isPageLoading = isLoading || isFetching;
+  const { data: poData, isPending, isFetching } = usePurchaseOrder(id);
+  const isPageLoading = isPending || isFetching;
   const po = poData?.data;
 
   // Header form — seeded from the PO once loaded

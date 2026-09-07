@@ -135,6 +135,7 @@ export const useCreatePurchaseOrder = () => {
       return response.data;
     },
     onSuccess: () => {
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -160,6 +161,7 @@ export const useUpdatePurchaseOrder = (id: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -225,6 +227,7 @@ export const useSubmitPurchaseOrderForApproval = (id: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -258,6 +261,7 @@ export const usePurchaseOrderApprovalDecision = () => {
     },
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -276,6 +280,7 @@ export const useIssuePurchaseOrder = () => {
     },
     onSuccess: (_data, id: string) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -294,6 +299,7 @@ export const useCancelPurchaseOrder = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(variables.id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -312,6 +318,7 @@ export const useDeletePurchaseOrder = () => {
       return Promise.resolve({ success: true, id });
     },
     onSuccess: () => {
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -330,6 +337,7 @@ export const useClosePurchaseOrder = () => {
     },
     onSuccess: (_data, id: string) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -349,6 +357,7 @@ export const useShortClosePOLine = (purchaseOrderId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(purchaseOrderId) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -368,6 +377,7 @@ export const useConfirmPOFinalBilling = (purchaseOrderId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(purchaseOrderId) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });
@@ -403,6 +413,7 @@ export const useConfirmPOReceipt = (id: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrder(id) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders, type: "inactive" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.procurement.purchaseOrders });
     },
   });

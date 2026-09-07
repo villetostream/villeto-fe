@@ -69,7 +69,7 @@ function WorkflowStep({ label, person, timestamp, done, pending, isLast, badge, 
   );
 }
 
-function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchaseOrderLineItems, outstandingAfterReceiptByFulfillmentLineId }: { notice: any; index: number; canReceive: boolean; onReceive: () => void; purchaseOrderLineItems: any[]; outstandingAfterReceiptByFulfillmentLineId: Map<string, number>; }) {
+function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchaseOrderLineItems, outstandingAfterReceiptByFulfillmentLineId, outstandingAfterReadyByFulfillmentLineId }: { notice: any; index: number; canReceive: boolean; onReceive: () => void; purchaseOrderLineItems: any[]; outstandingAfterReceiptByFulfillmentLineId: Map<string, number>; outstandingAfterReadyByFulfillmentLineId?: Map<string, number>; }) {
   const [expanded, setExpanded] = useState(false);
   const isDigital = notice.fulfillmentMethod === "digital";
   const titlePrefix = isDigital ? "Digital Delivery" : "Shipment";
@@ -165,7 +165,9 @@ function FulfillmentHistoryCard({ notice, index, canReceive, onReceive, purchase
                   const outstandingAfterReceipt = outstandingAfterReceiptByFulfillmentLineId.get(
                     item.vendorDeliveryNoticeLineItemId,
                   );
-                  const remainingQty = Math.max(0, orderedQuantity - (item.quantityReady || 0));
+                  const remainingQty = outstandingAfterReadyByFulfillmentLineId 
+                    ? (outstandingAfterReadyByFulfillmentLineId.get(item.vendorDeliveryNoticeLineItemId) ?? Math.max(0, orderedQuantity - (item.quantityReady || 0)))
+                    : Math.max(0, orderedQuantity - (item.quantityReady || 0));
                   return (
                   <tr key={i} className="border-b border-black/[0.04] last:border-b-0">
                     <td className="px-5 py-3 font-medium text-[#111815]">{item.name || "Item"}</td>
@@ -419,7 +421,17 @@ function ConfirmationDetailPage() {
       new Date(right.readyAt || right.shippedAt).getTime(),
   );
   const outstandingAfterReceiptByFulfillmentLineId = new Map<string, number>();
+  const outstandingAfterReadyByFulfillmentLineId = new Map<string, number>();
   const outstandingByPurchaseOrderLineId = new Map<string, number>(
+    (po.lineItems || []).map((lineItem: any) => [
+      lineItem.purchaseOrderLineItemId,
+      Math.max(
+        Number(lineItem.quantity || 0) - Number(lineItem.shortClosedQuantity || 0),
+        0,
+      ),
+    ]),
+  );
+  const outstandingReadyByPurchaseOrderLineId = new Map<string, number>(
     (po.lineItems || []).map((lineItem: any) => [
       lineItem.purchaseOrderLineItemId,
       Math.max(
@@ -437,20 +449,38 @@ function ConfirmationDetailPage() {
       const outstandingBeforeReceipt = outstandingByPurchaseOrderLineId.get(
         purchaseOrderLineItemId,
       );
-      if (outstandingBeforeReceipt === undefined) continue;
+      if (outstandingBeforeReceipt !== undefined) {
+        const outstandingAfterReceipt = Math.max(
+          outstandingBeforeReceipt - Number(lineItem.quantityReceived || 0),
+          0,
+        );
+        outstandingByPurchaseOrderLineId.set(
+          purchaseOrderLineItemId,
+          outstandingAfterReceipt,
+        );
+        outstandingAfterReceiptByFulfillmentLineId.set(
+          lineItem.vendorDeliveryNoticeLineItemId,
+          outstandingAfterReceipt,
+        );
+      }
 
-      const outstandingAfterReceipt = Math.max(
-        outstandingBeforeReceipt - Number(lineItem.quantityReceived || 0),
-        0,
-      );
-      outstandingByPurchaseOrderLineId.set(
+      const outstandingBeforeReady = outstandingReadyByPurchaseOrderLineId.get(
         purchaseOrderLineItemId,
-        outstandingAfterReceipt,
       );
-      outstandingAfterReceiptByFulfillmentLineId.set(
-        lineItem.vendorDeliveryNoticeLineItemId,
-        outstandingAfterReceipt,
-      );
+      if (outstandingBeforeReady !== undefined) {
+        const outstandingAfterReady = Math.max(
+          outstandingBeforeReady - Number(lineItem.quantityReady || 0),
+          0,
+        );
+        outstandingReadyByPurchaseOrderLineId.set(
+          purchaseOrderLineItemId,
+          outstandingAfterReady,
+        );
+        outstandingAfterReadyByFulfillmentLineId.set(
+          lineItem.vendorDeliveryNoticeLineItemId,
+          outstandingAfterReady,
+        );
+      }
     }
   }
 
@@ -628,7 +658,7 @@ function ConfirmationDetailPage() {
                 <div className="px-6 py-5 border-b border-black/[0.06]">
                   <h2 className="text-base font-semibold text-[#0b100e]">Order Items</h2>
                 </div>
-                <div className="overflow-x-auto">
+                <div>
                   <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-black/[0.06] bg-[#f9faf9]">
@@ -651,7 +681,9 @@ function ConfirmationDetailPage() {
                     const disp = isFullyReady ? null : (item.remainingDisposition || noticeItemWithDisp?.remainingDisposition);
                     const expDate = isFullyReady ? null : (item.expectedReadyDate || noticeItemWithDisp?.expectedReadyDate);
                     const dispReason = isFullyReady ? null : (item.dispositionReason || noticeItemWithDisp?.dispositionReason);
-                    const remainingQty = Math.max(0, (item.quantity || 0) - (item.quantityReady || 0));
+                    
+                    const backorderedQty = item.quantityRemainingToReady ?? Math.max(0, (item.quantity || 0) - (item.quantityReady || 0) - (item.shortClosedQuantity || 0));
+                    const cannotFulfillQty = item.shortClosedQuantity || 0;
                     
                     return (
                       <tr 
@@ -665,22 +697,31 @@ function ConfirmationDetailPage() {
                         <td className="px-6 py-4 min-w-[150px]">
                           <div className="flex flex-col gap-1.5 items-start">
                             <span className="text-[#111815] font-medium">{item.quantityReady || 0} / {item.quantity} Ready</span>
-                            {disp === "cannot_fulfill" && (
+                            
+                            {cannotFulfillQty > 0 && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 whitespace-nowrap">
-                                <AlertCircle className="w-3 h-3 mr-1" /> {remainingQty} Cannot Fulfill
+                                <AlertCircle className="w-3 h-3 mr-1" /> {cannotFulfillQty} Cannot Fulfill
                               </span>
                             )}
-                            {disp === "backordered" && (
+                            
+                            {backorderedQty > 0 && disp === "backordered" && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-600 whitespace-nowrap">
-                                <Clock3 className="w-3 h-3 mr-1" /> {remainingQty} Backordered (exp. {formatDate(expDate).split(",")[0]})
+                                <Clock3 className="w-3 h-3 mr-1" /> {backorderedQty} Backordered (exp. {formatDate(expDate).split(",")[0]})
                               </span>
                             )}
+
+                            {disp === "cannot_fulfill" && cannotFulfillQty === 0 && backorderedQty > 0 && (
+                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 whitespace-nowrap">
+                                 <AlertCircle className="w-3 h-3 mr-1" /> {backorderedQty} Cannot Fulfill
+                               </span>
+                            )}
+
                             {!disp && item.quantityReady >= item.quantity && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#f0faf8] text-[#087f70] whitespace-nowrap">
                                 Fully Fulfilled
                               </span>
                             )}
-                            {!disp && item.quantityReady > 0 && item.quantityReady < item.quantity && (
+                            {!disp && item.quantityReady > 0 && item.quantityReady < item.quantity && cannotFulfillQty === 0 && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">
                                   Pending Remaining
                                 </span>
@@ -723,6 +764,7 @@ function ConfirmationDetailPage() {
                     onReceive={() => setActiveNotice(notice)}
                     purchaseOrderLineItems={po.lineItems || []}
                     outstandingAfterReceiptByFulfillmentLineId={outstandingAfterReceiptByFulfillmentLineId}
+                    outstandingAfterReadyByFulfillmentLineId={outstandingAfterReadyByFulfillmentLineId}
                   />
                 ))}
               </div>

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ConfirmReceiptModal({
   open,
@@ -181,14 +182,14 @@ export default function ConfirmReceiptModal({
           
           {/* Finalize Billing Checkbox */}
           <div className="pt-4 border-t border-black/[0.06]">
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <div className="flex items-center h-5">
-                <input
-                  type="checkbox"
+            <label className="flex items-start gap-3 cursor-pointer group" htmlFor="finalize-billing">
+              <div className="flex items-start h-5">
+                <Checkbox
+                  id="finalize-billing"
                   checked={finalizeBilling}
-                  onChange={(e) => setFinalizeBilling(e.target.checked)}
+                  onCheckedChange={(checked) => setFinalizeBilling(checked as boolean)}
                   disabled={isPending}
-                  className="w-4 h-4 rounded border-black/[0.15] text-[#087f70] focus:ring-[#087f70]"
+                  className="mt-0.5 data-[state=checked]:bg-[#087f70] data-[state=checked]:border-[#087f70]"
                 />
               </div>
               <div className="flex flex-col">
@@ -196,7 +197,7 @@ export default function ConfirmReceiptModal({
                   Finalize Billing
                 </span>
                 <span className="text-xs text-[#68726d] mt-0.5">
-                  Check this if this is the final delivery and no further vendor invoices are expected.
+                  Check this to finalize the order so the vendor can submit the invoice for this PO.
                 </span>
               </div>
             </label>
