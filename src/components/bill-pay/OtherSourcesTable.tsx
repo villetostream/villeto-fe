@@ -10,17 +10,24 @@ import { useDataTable } from "@/components/datatable/useDataTable";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 
 type OtherSourceBill = {
-  id: string;
+  invoiceId: string;
+  vendor: string;
   source: string;
-  sender: string;
-  received: string;
-  extractedAmount: string;
+  billPurchase: string;
+  amount: string;
+  dueDate: string;
   status: string;
 };
 
 const mockOtherSources: OtherSourceBill[] = [
-  { id: "INV-2025-081", source: "Email (invoices@villeto.com)", sender: "billing@aws.com", received: "10 Sept 2025, 09:41 AM", extractedAmount: "₦142,500.00", status: "Needs Review" },
-  { id: "INV-2025-082", source: "API Integration", sender: "QuickBooks Integration", received: "09 Sept 2025, 14:22 PM", extractedAmount: "₦85,000.00", status: "Processed" },
+  { invoiceId: "INV-00041", vendor: "Acme Ltd", source: "Email", billPurchase: "Cloud Services", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Paid" },
+  { invoiceId: "INV-00039", vendor: "Delta Services", source: "Manual", billPurchase: "Office Supplies", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Approved" },
+  { invoiceId: "INV-00039", vendor: "Nova Tech", source: "Email", billPurchase: "Advisory Services", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Ready for Payment" },
+  { invoiceId: "INV-00039", vendor: "Zenith Corp", source: "Manual", billPurchase: "Software Subscription", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Awaiting Approval" },
+  { invoiceId: "INV-00039", vendor: "Delta Services", source: "Email", billPurchase: "Equipment Lease", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Approved" },
+  { invoiceId: "INV-00039", vendor: "Pinnacle Ltd", source: "Manual", billPurchase: "Monthly Stationery", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Ready for Payment" },
+  { invoiceId: "INV-00039", vendor: "Delta Services", source: "Email", billPurchase: "Software Subscription", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Approved" },
+  { invoiceId: "INV-00039", vendor: "Atlas Partners", source: "Manual", billPurchase: "Equipment Lease", amount: "₦4,200,000.00", dueDate: "10 Sept 2025", status: "Paid" },
 ];
 
 const columnHelper = createColumnHelper<OtherSourceBill>();
@@ -40,8 +47,9 @@ export function OtherSourcesTable() {
     if (tableprops.globalSearch) {
       const searchLower = tableprops.globalSearch.toLowerCase();
       result = result.filter(r => 
-        r.id.toLowerCase().includes(searchLower) || 
-        r.sender.toLowerCase().includes(searchLower) ||
+        r.invoiceId.toLowerCase().includes(searchLower) || 
+        r.vendor.toLowerCase().includes(searchLower) ||
+        r.billPurchase.toLowerCase().includes(searchLower) ||
         r.source.toLowerCase().includes(searchLower)
       );
     }
@@ -53,34 +61,42 @@ export function OtherSourcesTable() {
   }, [filteredSources.length, tableprops.setTotalItems]);
 
   const columns = useMemo(() => [
-    columnHelper.accessor("id", {
-      header: "REFERENCE",
-      cell: (info) => <p className="font-medium text-gray-900">{info.getValue()}</p>,
+    columnHelper.accessor("invoiceId", {
+      header: "INVOICE ID",
+      cell: (info) => <p className="text-gray-500">{info.getValue()}</p>,
+    }),
+    columnHelper.accessor("vendor", {
+      header: "VENDOR NAME",
+      cell: (info) => <p className="font-bold text-gray-900">{info.getValue()}</p>,
     }),
     columnHelper.accessor("source", {
       header: "SOURCE",
       cell: (info) => <p className="text-gray-500">{info.getValue()}</p>,
     }),
-    columnHelper.accessor("sender", {
-      header: "SENDER",
+    columnHelper.accessor("billPurchase", {
+      header: "BILL / PURCHASE",
       cell: (info) => <p className="text-gray-500">{info.getValue()}</p>,
     }),
-    columnHelper.accessor("received", {
-      header: "RECEIVED AT",
-      cell: (info) => <p className="text-gray-500">{info.getValue()}</p>,
+    columnHelper.accessor("amount", {
+      header: "AMOUNT",
+      cell: (info) => <p className="font-bold text-gray-900">{info.getValue()}</p>,
     }),
-    columnHelper.accessor("extractedAmount", {
-      header: "EXTRACTED AMOUNT",
-      cell: (info) => <p className="font-medium text-gray-900">{info.getValue()}</p>,
+    columnHelper.accessor("dueDate", {
+      header: "DUE DATE",
+      cell: (info) => <p className="text-gray-500">{info.getValue()}</p>,
     }),
     columnHelper.accessor("status", {
       header: "STATUS",
       cell: (info) => {
         const status = info.getValue().toLowerCase();
-        if (status === "needs review") {
-          return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 font-normal">Needs Review</Badge>;
-        } else if (status === "processed") {
-          return <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-normal">Processed</Badge>;
+        if (status === "awaiting approval") {
+          return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 font-normal">Awaiting Approval</Badge>;
+        } else if (status === "approved") {
+          return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-50 font-normal">Approved</Badge>;
+        } else if (status === "paid") {
+          return <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-normal">Paid</Badge>;
+        } else if (status === "ready for payment") {
+          return <Badge variant="outline" className="bg-[#f0f4ff] text-[#4b7cf3] border-[#d8e2fd] hover:bg-[#f0f4ff] font-normal">Ready for Payment</Badge>;
         }
         return <Badge variant="outline">{info.getValue()}</Badge>;
       },
@@ -107,7 +123,7 @@ export function OtherSourcesTable() {
       enableColumnVisibility={false}
       selectedDataIds={tableprops.selectedDataIds}
       setSelectedDataIds={tableprops.setSelectedDataIds}
-      onRowClick={(row) => router.push(`/bill-pay/invoice/${(row as OtherSourceBill).id}`)}
+      onRowClick={(row) => router.push(`/bill-pay/invoice/${(row as OtherSourceBill).invoiceId}`)}
       tableHeader={{
         actionButton: <></>,
         isSearchable: true,
