@@ -34,6 +34,8 @@ export const API_KEYS = {
     ROLE_DETAIL: (roleId: string) => `roles/${roleId}` as const,
     /** GET  /roles/capabilities?module={module} */
     ROLES_CAPABILITIES: (module: string) => `roles/capabilities?module=${module}` as const,
+    /** GET /roles/capabilities — full scoped capability catalog */
+    ROLES_CAPABILITY_CATALOG: "roles/capabilities",
     /** PATCH /roles/{roleId}/capabilities */
     ROLE_CAPABILITIES: (roleId: string) => `roles/${roleId}/capabilities` as const,
   },

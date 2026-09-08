@@ -13,6 +13,7 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import withPermissions from "@/components/permissions/permission-protected-routes";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 
 type Payment = {
   id: string;
@@ -39,6 +40,7 @@ const columnHelper = createColumnHelper<Payment>();
 
 function PaymentsDashboard() {
   const router = useRouter();
+  const policies = useAuthorizationPolicies();
   const [activeTab, setActiveTab] = useState("all");
   const [showAccountDetails, setShowAccountDetails] = useState(true);
 
@@ -121,7 +123,7 @@ function PaymentsDashboard() {
       <div className="space-y-6 flex-1 flex flex-col min-h-[600px]">
         
         {/* Top Account Details Section */}
-        {showAccountDetails ? (
+        {policies.billPay.canViewSensitivePayment && showAccountDetails ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
         
         {/* Left White Card */}
@@ -206,7 +208,7 @@ function PaymentsDashboard() {
         </div>
 
         </div>
-      ) : (
+      ) : policies.billPay.canViewSensitivePayment ? (
         <div className="flex justify-end shrink-0">
           <Button 
             variant="ghost" 
@@ -217,7 +219,7 @@ function PaymentsDashboard() {
             <Eye className="w-4 h-4 mr-2" /> Show Account Details
           </Button>
         </div>
-      )}
+      ) : null}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 shrink-0">
@@ -309,6 +311,7 @@ function PaymentsDashboard() {
 }
 
 export default withPermissions(PaymentsDashboard, [
-  { resource: "bill_pay.payment", action: "schedule" },
+  { resource: "bill_pay.payment_request", action: "view" },
+  { resource: "bill_pay.payment", action: "view" },
   { resource: "bill_pay.payment", action: "initiate" },
 ]);

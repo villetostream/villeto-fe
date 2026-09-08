@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Download, CheckCircle2, CloudLightning } from "lucide-react";
+import { Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useHeaderBackStore } from "@/stores/useHeaderBackStore";
@@ -13,14 +13,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 type PaymentStatus = "Draft" | "Awaiting Authorization" | "Paid";
 
-export default function PaymentSetupPage() {
+function PaymentSetupPage() {
   const router = useRouter();
   const params = useParams();
   const paymentId = (params?.id as string) || "INV-2024";
   const { setBackHandler, clearBackHandler } = useHeaderBackStore();
+  const policies = useAuthorizationPolicies();
 
   useEffect(() => {
     setBackHandler(() => router.back());
@@ -28,7 +31,7 @@ export default function PaymentSetupPage() {
   }, [setBackHandler, clearBackHandler, router]);
 
   // Dev-only toggle for the UI designer
-  const [status, setStatus] = useState<PaymentStatus>("Draft");
+  const [status] = useState<PaymentStatus>("Draft");
 
   // Form state
   const [fundingAccount, setFundingAccount] = useState("villeto");
@@ -37,32 +40,11 @@ export default function PaymentSetupPage() {
   const [whenToPay, setWhenToPay] = useState("immediately");
   const [scheduleDate, setScheduleDate] = useState<Date>();
 
-  const isReadonly = status === "Awaiting Authorization" || status === "Paid";
+  const isReadonly = status === "Awaiting Authorization" || status === "Paid" || !policies.billPay.canPreparePayment;
 
   return (
     <div className="flex-1 pb-8 flex flex-col relative">
       
-      {/* Dev-only Toggler - Floating at bottom right */}
-      <div className="fixed bottom-6 right-6 bg-white p-4 rounded-xl shadow-2xl border border-black/[0.08] z-50 flex flex-col gap-2 w-64">
-        <p className="text-xs font-bold text-[#68726d] uppercase mb-1 flex items-center gap-1">
-          <CloudLightning className="w-3 h-3 text-amber-500" /> Dev Toggler
-        </p>
-        <RadioGroup value={status} onValueChange={(val) => setStatus(val as PaymentStatus)} className="flex flex-col gap-2">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Draft" id="dev-draft" />
-            <Label htmlFor="dev-draft">Draft</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Awaiting Authorization" id="dev-await" />
-            <Label htmlFor="dev-await">Awaiting Authorization</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Paid" id="dev-paid" />
-            <Label htmlFor="dev-paid">Paid</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
       {/* Header Section (Sticky) */}
       <div className="sticky -top-3 sm:-top-5 lg:-top-6 z-10 bg-[#f4f7f5] pb-4 mb-8 px-6 lg:px-8 pt-5 sm:pt-7 lg:pt-8 -mt-3 sm:-mt-5 lg:-mt-6">
         <div className="max-w-[1200px] mx-auto w-full flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -75,7 +57,7 @@ export default function PaymentSetupPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            {status === "Draft" && (
+            {status === "Draft" && policies.billPay.canPreparePayment && (
               <Button className="bg-[#087f70] hover:bg-[#076b5e] text-white rounded-[8px] h-10 px-5 font-semibold text-[13px]">
                 Submit for Authorization
               </Button>
@@ -165,10 +147,12 @@ export default function PaymentSetupPage() {
                           <RadioGroupItem value="immediately" id="r-now" className="text-[#087f70] border-black/[0.12]" />
                           <Label htmlFor="r-now" className="text-[13px] font-medium text-[#68726d]">Pay immediately</Label>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="schedule" id="r-schedule" className="text-[#087f70] border-black/[0.12]" />
-                          <Label htmlFor="r-schedule" className="text-[13px] font-medium text-[#68726d]">Schedule payment</Label>
-                        </div>
+                        {policies.billPay.canSchedulePayment && (
+                          <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="schedule" id="r-schedule" className="text-[#087f70] border-black/[0.12]" />
+                            <Label htmlFor="r-schedule" className="text-[13px] font-medium text-[#68726d]">Schedule payment</Label>
+                          </div>
+                        )}
                       </RadioGroup>
                       {whenToPay === "schedule" && (
                         <div className="relative mt-2 max-w-xs">
@@ -227,7 +211,7 @@ export default function PaymentSetupPage() {
             </Card>
 
             {/* Payment Recipient Card */}
-            <Card className="rounded-[14px] shadow-sm border-black/[0.08] overflow-hidden">
+            {policies.billPay.canViewSensitivePayment && <Card className="rounded-[14px] shadow-sm border-black/[0.08] overflow-hidden">
               <CardContent className="p-6">
                 <h3 className="text-[15px] font-bold text-[#10231d] mb-4">Payment Recipient</h3>
                 <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -253,7 +237,7 @@ export default function PaymentSetupPage() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card>}
 
           </div>
 
@@ -367,3 +351,8 @@ export default function PaymentSetupPage() {
     </div>
   );
 }
+
+export default withPermissions(PaymentSetupPage, [
+  { resource: "bill_pay.payment_request", action: "view" },
+  { resource: "bill_pay.payment", action: "view" },
+]);

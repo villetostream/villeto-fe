@@ -64,13 +64,22 @@ export const navigationItems: NavItem[] = [
     icon: <HugeiconsIcon icon={MoneySendSquareFreeIcons} />,
     label: "Expenses",
     href: "/expenses",
-    permissions: [], // Always visible — personal tab is the minimum
+    permissions: [
+      { resource: "expense.report", action: "read_own" },
+      { resource: "expense.report", action: "read_department" },
+      { resource: "expense.report", action: "read_company" },
+      { resource: "expense.report", action: "create" },
+    ],
     section: "MAIN MENU",
     subItems: [
       {
         label: "All Expenses",
         href: "/expenses",
-        permissions: [],
+        permissions: [
+          { resource: "expense.report", action: "read_own" },
+          { resource: "expense.report", action: "read_department" },
+          { resource: "expense.report", action: "read_company" },
+        ],
       },
       {
         label: "Card Transactions",
@@ -81,7 +90,7 @@ export const navigationItems: NavItem[] = [
       {
         label: "Reimbursements",
         href: "/expenses/reimbursements",
-        permissions: [],
+        permissions: [{ resource: "expense.report", action: "read_own" }],
       },
       {
         label: "Travel",
@@ -105,7 +114,10 @@ export const navigationItems: NavItem[] = [
     href: "/people",
     permissions: [
       { resource: "user", action: "manage" },
-      { resource: "user", action: "read" },
+      { resource: "user.directory", action: "read" },
+      { resource: "department", action: "read_company" },
+      { resource: "department", action: "manage" },
+      { resource: "role", action: "manage" },
     ],
     section: "MANAGEMENT",
   },
@@ -167,7 +179,8 @@ export const navigationItems: NavItem[] = [
         label: "Payments",
         href: "/bill-pay/payments",
         permissions: [
-          { resource: "bill_pay.payment", action: "schedule" },
+          { resource: "bill_pay.payment_request", action: "view" },
+          { resource: "bill_pay.payment", action: "view" },
           { resource: "bill_pay.payment", action: "initiate" },
         ],
       },
@@ -188,7 +201,7 @@ export const navigationItems: NavItem[] = [
     icon: <Shop />,
     label: "Vendors",
     href: "/vendors",
-    permissions: [{ resource: "vendor", action: "read_company" }],
+    permissions: [{ resource: "vendor", action: "sensitive.read" }],
     section: "MANAGEMENT",
   },
   {

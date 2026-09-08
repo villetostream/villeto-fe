@@ -6,15 +6,14 @@ import { useAxios } from "@/hooks/useAxios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { logger } from "@/lib/logger";
 import { CheckCircle2, XCircle, X, FileText } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 import { toast } from "sonner";
 import withPermissions from "@/components/permissions/permission-protected-routes";
 import { asArray, asRecord, getString, isRecord, pickString } from "@/lib/types/api-error";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default withPermissions(VendorDetailsPage, [
-  { resource: "vendor", action: "read_company" },
-  { resource: "vendor", action: "manage" },
+  { resource: "vendor", action: "sensitive.read" },
 ]);
 
 function VendorDetailsPage() {
@@ -22,7 +21,7 @@ function VendorDetailsPage() {
   const router = useRouter();
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const can = useAuthStore(s => s.can);
+  const policies = useAuthorizationPolicies();
 
   const [vendor, setVendor] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -192,35 +191,35 @@ function VendorDetailsPage() {
 
         <div className="flex items-center gap-3">
           {/* Approve / Reject / Request Info */}
-          {isUnderReview && can('vendor', 'reject') && (
+          {isUnderReview && policies.vendors.canReject && (
             <button disabled={isSubmitting} onClick={() => setRejectModalOpen(true)}
               className="px-4 h-9 rounded-[8px] border border-[#d33d44] text-[#d33d44] font-semibold text-[13px] hover:bg-[#fdf2f2] transition-colors disabled:opacity-50">
               Reject vendor
             </button>
           )}
 
-          {isUnderReview && can('vendor', 'approve') && (
+          {isUnderReview && policies.vendors.canApprove && (
             <button disabled={isSubmitting} onClick={() => handleDecision("approved")}
               className="px-4 h-9 rounded-[8px] bg-[#087f70] text-white font-semibold text-[13px] hover:bg-[#076b5e] transition-colors disabled:opacity-50 shadow-sm">
               {isSubmitting ? "Processing..." : "Approve vendor"}
             </button>
           )}
           {/* Activate */}
-          {(isApprovedPhase4 || isDeactivated) && can('vendor', 'activate') && (
+          {(isApprovedPhase4 || isDeactivated) && policies.vendors.canActivate && (
             <button disabled={isSubmitting} onClick={() => handleStatusUpdate("Active")}
               className="px-4 h-9 rounded-[8px] bg-[#087f70] text-white font-semibold text-[13px] hover:bg-[#076b5e] transition-colors disabled:opacity-50 shadow-sm">
               {isSubmitting ? "Processing..." : isDeactivated ? "Reactivate vendor" : "Activate vendor"}
             </button>
           )}
           {/* Deactivate */}
-          {isActive && can('vendor', 'deactivate') && (
+          {isActive && policies.vendors.canDeactivate && (
             <button disabled={isSubmitting} onClick={() => handleStatusUpdate("Inactive")}
               className="px-4 h-9 rounded-[8px] border border-[#d33d44] text-[#d33d44] font-semibold text-[13px] hover:bg-[#fdf2f2] transition-colors disabled:opacity-50">
               {isSubmitting ? "Processing..." : "Deactivate vendor"}
             </button>
           )}
           {/* Resend Invitation */}
-          {(isInvited || isOnboarding) && can('vendor', 'invite') && (
+          {(isInvited || isOnboarding) && policies.vendors.canInvite && (
             <button disabled={isSubmitting} onClick={handleResendInvitation}
               className="px-4 h-9 rounded-[8px] bg-[#087f70] text-white font-semibold text-[13px] hover:bg-[#076b5e] transition-colors disabled:opacity-50 shadow-sm cursor-pointer">
               {isSubmitting ? "Sending..." : "Resend Invitation"}

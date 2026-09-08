@@ -1,5 +1,7 @@
 "use client";
 
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
 import { AuditTrailTable } from "@/components/expenses/AuditTrailTable";
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -80,4 +82,8 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default withPermissions(Page, [
+  { resource: "expense.report", action: "read_own" },
+  { resource: "expense.report", action: "read_department" },
+  { resource: "expense.report", action: "read_company" },
+]);

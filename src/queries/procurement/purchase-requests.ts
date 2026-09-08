@@ -551,11 +551,12 @@ export interface Vendor {
   vendorId: string;
   legalName: string | null;
   displayName: string;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
   status: string;
   approvalStatus: string;
+  isPaymentEnabled?: boolean;
 }
 
 export const useGetVendors = (
@@ -565,8 +566,9 @@ export const useGetVendors = (
   return useQuery({
     queryKey: QUERY_KEYS.vendors.approved,
     queryFn: async () => {
-      // Pass the approvalStatus query param as the user specified, ensuring we only fetch approved vendors
-      const url = `/vendors?page=1&limit=100&approvalStatus=approved`;
+      // Procurement selection only needs safe lookup fields. The full /vendors
+      // endpoint intentionally requires sensitive-vendor access.
+      const url = `/vendors/directory?page=1&limit=100&approvalStatus=approved`;
       const res = await axiosInstance.get(url);
       return res.data;
     },

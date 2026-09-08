@@ -1,5 +1,7 @@
 "use client";
 
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -91,7 +93,7 @@ function deriveFreshViolations(expenses: ExpenseItem[]): PolicyCheckResult[] {
   return results;
 }
 
-export default function EditReportPage() {
+function EditReportPage() {
   const params = useParams();
   const reportId = params.id as string;
   const router = useRouter();
@@ -880,3 +882,7 @@ export default function EditReportPage() {
     </div>
   );
 }
+
+export default withPermissions(EditReportPage, [
+  { resource: "expense.report", action: "update_own_draft" },
+]);
