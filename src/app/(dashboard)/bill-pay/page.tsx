@@ -8,10 +8,13 @@ import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
 import { ConfigureEmailModal } from "@/components/bill-pay/ConfigureEmailModal";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import withPermissions from "@/components/permissions/permission-protected-routes";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 
 function BillPayPage() {
   const router = useRouter();
   const setAction = useHeaderActionStore((state) => state.setAction);
+  const clearAction = useHeaderActionStore((state) => state.clearAction);
+  const policies = useAuthorizationPolicies();
   const [showConfigureEmail, setShowConfigureEmail] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
@@ -25,6 +28,10 @@ function BillPayPage() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!policies.billPay.canCreateIntake && !policies.billPay.canCreateInvoice) {
+      clearAction();
+      return () => clearAction();
+    }
     setAction({
       label: "New Bill",
       items: [
@@ -39,14 +46,15 @@ function BillPayPage() {
           onClick: () => router.push("/bill-pay/add-recurring"),
         },
       ],
-      ...(activeTab === "other" && {
+      ...(activeTab === "other" && policies.billPay.canManageConfiguration && {
         secondaryAction: {
           label: "Configure Email",
           onClick: () => setShowConfigureEmail(true),
         },
       }),
     });
-  }, [router, setAction, activeTab]);
+    return () => clearAction();
+  }, [router, setAction, clearAction, activeTab, policies.billPay.canCreateIntake, policies.billPay.canCreateInvoice, policies.billPay.canManageConfiguration]);
 
   return (
     <div className="flex flex-col h-full pb-2">
@@ -86,7 +94,7 @@ function BillPayPage() {
         {/* Tabs Section */}
         <BillPayTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        <ConfigureEmailModal open={showConfigureEmail} onOpenChange={setShowConfigureEmail} />
+        {policies.billPay.canManageConfiguration && <ConfigureEmailModal open={showConfigureEmail} onOpenChange={setShowConfigureEmail} />}
       </div>
     </div>
   );

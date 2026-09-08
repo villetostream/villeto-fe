@@ -11,11 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { logger } from "@/lib/logger";
-import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 import { reimbursements } from "@/lib/mock-data";
 
 const Page = () => {
-  const { can } = useAuthStore();
+  const policies = useAuthorizationPolicies();
   const params = useParams();
   const expenseId = Number(params.id);
   const [currentStatus, setCurrentStatus] = useState<
@@ -102,9 +103,9 @@ const Page = () => {
 
   // Authorization: does this user have approval rights?
   // Workflow state: is the expense in a reviewable status?
-  const isAuthorizedToApprove = can('expense.report', 'approve_department');
+  const isAuthorizedToApprove = policies.expenses.canApprove;
   const _canApprove = isAuthorizedToApprove && statusToDisplay === 'pending';
-  const _canReject = can('expense.report', 'reject_department') && statusToDisplay === 'pending';
+  const _canReject = policies.expenses.canReject && statusToDisplay === 'pending';
 
   const handleApprove = (note: string) => {
     setCurrentStatus("approved");
@@ -248,4 +249,8 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default withPermissions(Page, [
+  { resource: "expense.report", action: "read_own" },
+  { resource: "expense.report", action: "read_department" },
+  { resource: "expense.report", action: "read_company" },
+]);

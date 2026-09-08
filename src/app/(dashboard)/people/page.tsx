@@ -1,38 +1,35 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Building2, UserCog, UserCheck } from "lucide-react";
 import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryTab";
+import { DepartmentsTab } from "@/components/dashboard/people/depts/DepartmentTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
-import { useGetAllUsersApi, useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
+import { useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
 import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/queries/role/get-all-roles";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { InviteEmployeesWarningModal } from "@/components/dashboard/people/modals/InviteEmployeesWarningModal";
 import { AddEmployeeModal } from "@/components/dashboard/people/invite/AddEmployeeModal";
 import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
-import { useAuthStore } from "@/stores/auth-stores";
-import { asRecord, isRecord, pickString } from "@/lib/types/api-error";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 
 function People() {
-    const can = useAuthStore(s => s.can);
-    const canReadUsers      = can('user', 'read') || can('user', 'manage');
-    const canReadDepts      = can('department', 'read') || can('department', 'manage');
-    const canReadRoles      = can('role', 'read') || can('role', 'manage');
-    const canReadDirectory  = can('user', 'read') || can('user', 'manage');
+    const policies = useAuthorizationPolicies();
+    const { canManageUsers, canViewDepartments, canViewRoles, canViewUsers: canReadDirectory } = policies.people;
 
-    const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1 } });
-    const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1, status: "Active" } });
+    const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1 } });
+    const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1, status: "Active" } });
     
     // useGetAllDepartmentsApi and useGetAllRolesApi are called here at page level
     // so their cache is warm before UserProfileModal opens (which gates them on isOpen).
-    const deptsApi     = useGetAllDepartmentsApi({ enabled: canReadDepts });
-    const rolesApi     = useGetAllRolesApi({ limit: 50 }, { enabled: canReadRoles });
+    const deptsApi     = useGetAllDepartmentsApi({ enabled: canViewDepartments });
+    const rolesApi     = useGetAllRolesApi({ limit: 50 }, { enabled: canViewRoles });
     const directoryApi = useGetDirectoryUsersApi({ enabled: canReadDirectory, params: { status: "all" } });
 
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
@@ -41,16 +38,32 @@ function People() {
     const uniqueDeptCount = deptsApi?.data?.meta?.totalCount || "0";
 
     const statCards = [
-        { icon: Users,     label: "Total Users",   value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users",   bgColor: "#384A57" },
-        { icon: UserCheck, label: "Active Users",  value: activeInvitedUsersApi?.data?.meta?.totalCount || "0",                          description: "Currently active members",  bgColor: "#0FA68E" },
-        { icon: Building2, label: "Departments",   value: uniqueDeptCount,                          description: "View Departments",           bgColor: "#5A67D8" },
-        { icon: UserCog,   label: "Roles",         value: rolesApi?.data?.meta?.totalCount || "0",  description: "View Roles",                 bgColor: "#418341" },
+        ...(canManageUsers ? [
+            { icon: Users, label: "Total Users", value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users", bgColor: "#384A57" },
+            { icon: UserCheck, label: "Active Users", value: activeInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Currently active members", bgColor: "#0FA68E" },
+        ] : []),
+        ...(canViewDepartments ? [{ icon: Building2, label: "Departments", value: uniqueDeptCount, description: "View Departments", bgColor: "#5A67D8" }] : []),
+        ...(canViewRoles ? [{ icon: UserCog, label: "Roles", value: rolesApi?.data?.meta?.totalCount || "0", description: "View Roles", bgColor: "#418341" }] : []),
     ];
 
     const searchParams = useSearchParams();
     const router       = useRouter();
 
-    const activeTab = searchParams.get("tab") || "all-users";
+    const requestedTab = searchParams.get("tab");
+    const fallbackTab = canManageUsers
+        ? "all-users"
+        : canReadDirectory
+            ? "directory"
+            : canViewDepartments
+                ? "departments"
+                : "roles";
+    const activeTab =
+        (requestedTab === "all-users" && canManageUsers) ||
+        (requestedTab === "directory" && canReadDirectory) ||
+        (requestedTab === "departments" && canViewDepartments) ||
+        (requestedTab === "roles" && canViewRoles)
+            ? requestedTab
+            : fallbackTab;
     const setActiveTab = (tab: string) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab);
@@ -62,8 +75,7 @@ function People() {
 
     // Register dynamic header CTA button
     const { setAction, clearAction } = useHeaderActionStore();
-    const canManageUsers = useAuthStore(s => s.can)('user', 'manage');
-    const _canManageRoles = useAuthStore(s => s.can)('role', 'manage');
+    const canManageRoles = policies.people.canManageRoles;
 
     // Register the correct header button per tab
     useEffect(() => {
@@ -87,10 +99,14 @@ function People() {
                 clearAction();
             }
         } else if (activeTab === "roles") {
-            setAction({
-                label: "Create Role",
-                onClick: () => router.push("/people/create-role"),
-            });
+            if (canManageRoles) {
+                setAction({
+                    label: "Create Role",
+                    onClick: () => router.push("/people/create-role"),
+                });
+            } else {
+                clearAction();
+            }
         } else if (activeTab === "directory") {
             if (canManageUsers) {
                 setAction({
@@ -128,12 +144,21 @@ function People() {
             } else {
                 clearAction();
             }
+        } else if (activeTab === "departments") {
+            if (policies.people.canManageDepartments) {
+                setAction({
+                    label: "Add Department",
+                    onClick: () => router.push("/people/add-department"),
+                });
+            } else {
+                clearAction();
+            }
         } else {
             clearAction();
         }
 
         return () => clearAction();
-    }, [activeTab, setAction, clearAction, router, canManageUsers]);
+    }, [activeTab, setAction, clearAction, router, canManageRoles, canManageUsers, policies.people.canManageDepartments]);
 
     return (
         <div className="flex flex-col space-y-6 h-full pb-2">
@@ -162,7 +187,7 @@ function People() {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                         <TabsList className="bg-[#f5f7f6] p-1 h-10 rounded-[10px] inline-flex border border-black/[0.05]">
-                                <PermissionGuard resource="user" action="manage">
+                                <PermissionGuard anyOf={["user.manage"]}>
                                     <TabsTrigger
                                         value="all-users"
                                         className="data-[state=active]:bg-white data-[state=active]:text-[#0b100e] data-[state=active]:shadow-sm text-[#68726d] rounded-[6px] px-5 text-[13px] font-semibold h-full"
@@ -170,7 +195,7 @@ function People() {
                                         Invited Users
                                     </TabsTrigger>
                                 </PermissionGuard>
-                                <PermissionGuard resource="role" action="manage">
+                                <PermissionGuard anyOf={["role.manage"]}>
                                     <TabsTrigger
                                         value="roles"
                                         className="data-[state=active]:bg-white data-[state=active]:text-[#0b100e] data-[state=active]:shadow-sm text-[#68726d] rounded-[6px] px-5 text-[13px] font-semibold h-full"
@@ -178,10 +203,15 @@ function People() {
                                         Roles
                                     </TabsTrigger>
                                 </PermissionGuard>
-                                <PermissionGuard permissions={[
-                                    { resource: "user", action: "manage" },
-                                    { resource: "user", action: "read_company" }
-                                ]}>
+                                <PermissionGuard anyOf={["department.read_company", "department.manage"]}>
+                                    <TabsTrigger
+                                        value="departments"
+                                        className="data-[state=active]:bg-white data-[state=active]:text-[#0b100e] data-[state=active]:shadow-sm text-[#68726d] rounded-[6px] px-5 text-[13px] font-semibold h-full"
+                                    >
+                                        Departments
+                                    </TabsTrigger>
+                                </PermissionGuard>
+                                <PermissionGuard anyOf={["user.directory.read", "user.manage"]}>
                                     <TabsTrigger
                                         value="directory"
                                         data-tour="directory-tab"
@@ -195,17 +225,29 @@ function People() {
                             <div id="tab-actions" className="flex items-center gap-2" />
                         </div>
     
-                        <TabsContent value="all-users" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <AllUsersTab />
-                        </TabsContent>
+                        {canManageUsers && (
+                            <TabsContent value="all-users" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <AllUsersTab />
+                            </TabsContent>
+                        )}
     
-                        <TabsContent value="roles" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <RolesTab />
-                        </TabsContent>
+                        {canViewRoles && (
+                            <TabsContent value="roles" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <RolesTab />
+                            </TabsContent>
+                        )}
+
+                        {canViewDepartments && (
+                            <TabsContent value="departments" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <DepartmentsTab />
+                            </TabsContent>
+                        )}
     
-                        <TabsContent value="directory" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <DirectoryTab />
-                        </TabsContent>
+                        {canReadDirectory && (
+                            <TabsContent value="directory" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <DirectoryTab />
+                            </TabsContent>
+                        )}
                     </Tabs>
     
                 <InviteEmployeesWarningModal
@@ -235,8 +277,8 @@ function People() {
     
     export default withPermissions(People, [
         { resource: "user", action: "manage" },
-        { resource: "user", action: "read" },
-        { resource: "user", action: "read_company" },
+        { resource: "user.directory", action: "read" },
         { resource: "role", action: "manage" },
-        { resource: "department", action: "manage" }
+        { resource: "department", action: "manage" },
+        { resource: "department", action: "read_company" }
     ]);

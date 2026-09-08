@@ -1,344 +1,200 @@
-"use client"
+"use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, ChevronRight, Edit2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { useGetARoleApi } from "@/queries/role/get-a-role";
-import { CapabilityGroup, CapabilitiesByModule, Role } from "@/queries/role/get-all-roles";
-import { useGetAllPermissionsApi } from "@/features/auth/queries/permissions";
-import type { Permission } from "@/features/auth/types";
-import { formatPermissionName } from "@/lib/utils";
-import withPermissions from "@/components/permissions/permission-protected-routes";
+import { useMemo, useState } from "react";
+import { ChevronRight, Edit2, GitBranch, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth-stores";
-import { Button } from "@/components/ui/button";
-import PermissionGuard from "@/components/permissions/permission-protected-components";
-import ConfirmationModal from "@/components/modals/ConfirmationModal";
-import { useDeleteRoleApi } from "@/queries/role/delete-role";
 import toast from "react-hot-toast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import ConfirmationModal from "@/components/modals/ConfirmationModal";
+import PermissionGuard from "@/components/permissions/permission-protected-components";
+import { getApiErrorMessage } from "@/lib/types/api-error";
+import { formatPermissionName } from "@/lib/utils";
+import { useDeleteRoleApi } from "@/queries/role/delete-role";
+import { useGetARoleApi } from "@/queries/role/get-a-role";
+import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
+import type { CapabilityScopeType } from "@/queries/role/get-all-roles";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
-// ── Capability Group Card (expandable, read-only) ──────────────────────────
-function CapabilityGroupCard({ group, index }: { group: CapabilityGroup; index: number }) {
-    const [expanded, setExpanded] = useState(false);
-    return (
-        <div className="border border-black/[0.08] rounded-[12px] overflow-hidden bg-white">
-            <div
-                onClick={() => setExpanded(v => !v)}
-                className="w-full flex items-start justify-between p-4 text-left hover:bg-[#f5f7f6] transition-colors cursor-pointer select-none"
-            >
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <Checkbox
-                        checked={true}
-                        disabled
-                        className="mt-0.5 w-4 h-4 border-2 border-[#0ea894] data-[state=checked]:border-[#0ea894] data-[state=checked]:bg-[#0ea894] shrink-0"
-                    />
-                    <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[#0b100e]">{index}. {group.name}</p>
-                        <p className="text-[12px] text-[#66706b] mt-0.5">{group.description}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <span className="text-[11px] text-[#84908a]">{group.permissions.length} permissions</span>
-                    {expanded
-                        ? <ChevronUp className="w-4 h-4 text-[#84908a]" />
-                        : <ChevronDown className="w-4 h-4 text-[#84908a]" />
-                    }
-                </div>
-            </div>
-            {expanded && (
-                <div className="border-t border-black/[0.05] bg-[#f9faf9] px-4 pb-4 pt-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
-                        {group.permissions.map(p => (
-                            <div key={p.permissionId} className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#0ea894]/60 shrink-0" />
-                                <span className="text-[12px] text-[#66706b]">{formatPermissionName(p.name)}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
+const SCOPE_LABELS: Record<CapabilityScopeType, string> = {
+  own: "Own records",
+  reporting_chain: "Reporting chain",
+  department: "Department",
+  company: "Entire company",
+};
 
-// ── Module Section ─────────────────────────────────────────────────────────
-function ModuleSection({ moduleName, groups }: { moduleName: string; groups: CapabilityGroup[] }) {
-    const [open, setOpen] = useState(true);
-    const label = moduleName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-    return (
-        <div className="space-y-3">
-            <button
-                type="button"
-                onClick={() => setOpen(v => !v)}
-                className="flex items-center gap-2 w-full text-left"
-            >
-                <span className="text-[11px] font-bold text-[#84908a] uppercase tracking-[0.1em]">{label}</span>
-                <div className="flex-1 h-px bg-black/[0.06]" />
-                {open ? <ChevronUp className="w-4 h-4 text-[#84908a]" /> : <ChevronDown className="w-4 h-4 text-[#84908a]" />}
-            </button>
-            {open && (
-                <div className="space-y-2">
-                    {groups.map((g, i) => <CapabilityGroupCard key={g.capabilityGroupId} group={g} index={i + 1} />)}
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ── View Role Page ─────────────────────────────────────────────────────────
 function ViewRolePage() {
-    const params = useParams();
-    const router = useRouter();
-    const currentUser = useAuthStore(state => state.user);
-    const roleId = params.roleId as string;
-    const { data: roleData, isLoading } = useGetARoleApi(roleId, { enabled: !!roleId });
-    const deleteRoleMutation = useDeleteRoleApi();
-    const role = roleData?.data as Role | undefined;
+  const params = useParams();
+  const router = useRouter();
+  const roleId = params.roleId as string;
+  const roleQuery = useGetARoleApi(roleId, { enabled: Boolean(roleId) });
+  const catalogQuery = useGetAllRoleCapabilitiesApi(Boolean(roleId));
+  const deleteRole = useDeleteRoleApi();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-
-    const handleDelete = async () => {
-        try {
-            await deleteRoleMutation.mutateAsync(roleId);
-            toast.success("Role deleted successfully.");
-            setDeleteModalOpen(false);
-            router.push("/people?tab=roles");
-        } catch (_error) {
-            toast.error("Failed to delete the role.");
-            setDeleteModalOpen(false);
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="p-6">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0ea894]" />
-                </div>
-            </div>
-        );
+  const role = roleQuery.data?.data;
+  const catalogByKey = useMemo(
+    () => new Map((catalogQuery.data ?? []).map((group) => [group.key, group])),
+    [catalogQuery.data],
+  );
+  const selectedByModule = useMemo(() => {
+    const modules = new Map<string, NonNullable<typeof role>["selectedCapabilities"]>();
+    for (const capability of role?.selectedCapabilities ?? []) {
+      modules.set(capability.module, [...(modules.get(capability.module) ?? []), capability]);
     }
+    return Array.from(modules.entries()).sort(([left], [right]) => left.localeCompare(right));
+  }, [role]);
 
-    if (!role) {
-        return (
-            <div className="p-6 text-center text-slate-400 text-sm">Role not found.</div>
-        );
+  const handleDelete = async () => {
+    try {
+      await deleteRole.mutateAsync(roleId);
+      toast.success("Role deleted successfully.");
+      router.push("/people?tab=roles");
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "This role could not be deleted."));
+    } finally {
+      setDeleteOpen(false);
     }
+  };
 
-    const roleName = role.name?.replace(/_/g, ' ') || "Role";
-    const totalUsers = role.totalAssignedUsers || 0;
+  if (roleQuery.isLoading) {
+    return <div className="m-24 h-8 w-8 animate-spin rounded-full border-b-2 border-[#0ea894]" />;
+  }
+  if (roleQuery.isError || !role) {
+    return <div className="p-12 text-center text-sm text-slate-500">Role details could not be loaded.</div>;
+  }
 
-    const isViewedRoleOwner = roleName.toLowerCase() === "owner" || role.name?.toLowerCase() === "owner";
-    const currentUserRoleName = currentUser?.companyRole?.name || currentUser?.villetoRole?.name || "";
-    const isCurrentUserOwner = currentUserRoleName.toLowerCase() === "owner";
-    const isEditDisabled = isViewedRoleOwner && !isCurrentUserOwner;
+  const isActive = role.isActive === true || role.isActive === "Active";
+  const roleName = role.name?.replace(/_/g, " ") || "Role";
 
-    // Capability groups from capabilitiesByModule (could be object or array depending on API)
-    const rawCapModules: any = role.capabilitiesByModule ?? {};
-    const capArray = Array.isArray(rawCapModules)
-        ? rawCapModules
-        : Object.entries(rawCapModules).map(([mod, data]: [string, any]) => ({ module: mod, ...data }));
-
-    const hasCapabilities = capArray.some(m => m.capabilityGroups?.length > 0);
-
-    // Flat individual permissions (directly assigned, not from groups)
-    const directPermissions = role.permissions ?? [];
-    const hasDirectPermissions = directPermissions.length > 0;
-
-    // Group direct permissions by resource for display and sort alphabetically
-    const groupPermissionsByResource = (perms: Permission[]) => {
-        const map: Record<string, { resource: string; permissions: Permission[] }> = {};
-        for (const p of perms) {
-            const res = p.resource || "other";
-            if (!map[res]) map[res] = { resource: res, permissions: [] };
-            map[res].permissions.push(p);
-        }
-        const groups = Object.values(map);
-        // Sort resources alphabetically
-        groups.sort((a, b) => a.resource.localeCompare(b.resource));
-        // Sort permissions within each resource alphabetically
-        for (const group of groups) {
-            group.permissions.sort((a, b) => formatPermissionName(a.name).localeCompare(formatPermissionName(b.name)));
-        }
-        return groups;
-    };
-    const permissionGroups = groupPermissionsByResource(directPermissions);
-
-    const sortedCapModules = capArray
-        .map(data => {
-            const moduleName = data.module || "Unknown";
-            const sortedGroups = [...(data.capabilityGroups || [])].sort((a, b) => a.name.localeCompare(b.name));
-            return { moduleName, capabilityGroups: sortedGroups };
-        })
-        .sort((a, b) => a.moduleName.localeCompare(b.moduleName));
-
-    return (
-        <div className="p-6 pt-0 space-y-6">
-            {/* Header / Actions - Sticky */}
-            <div className="flex items-center justify-between gap-4 sticky -top-5 z-50 bg-dashboard-background pt-5 pb-4 -mx-6 px-6 -mt-5">
-                <h1 className="text-2xl font-semibold">Role Details</h1>
-                
-                <div className="flex items-center gap-3 shrink-0">
-                    <PermissionGuard resource="role" action="manage">
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            disabled={isEditDisabled}
-                            className="gap-2 h-9 rounded-[8px] text-[13px] font-semibold"
-                            onClick={() => setDeleteModalOpen(true)}
-                        >
-                            Delete Role
-                        </Button>
-                    </PermissionGuard>
-
-                    <PermissionGuard resource="role" action="manage">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isEditDisabled}
-                            onClick={() => {
-                                sessionStorage.setItem("rolesReturnPath", `/people/view-role/${roleId}`);
-                                router.push(`/people/create-role?id=${roleId}`);
-                            }}
-                        >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            Edit Role
-                        </Button>
-                    </PermissionGuard>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-10">
-                {/* Sidebar */}
-                <aside className="space-y-4 md:sticky md:top-24 self-start">
-                    {/* Role Card */}
-                    <div className="w-full flex items-center justify-between p-4 border border-[#0ea894]/25 rounded-[14px] bg-[#e7f6f2]/30">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-[#087f70] capitalize">{roleName}</p>
-                                <Badge variant={role.isActive ? "active" : "inactive"} className="text-xs">
-                                    {role.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                            </div>
-                            <p className="text-[13px] text-[#66706b] first-letter:uppercase">
-                                {role.description || "No description provided."}
-                            </p>
-                            {role.source && (
-                                <p className="text-[11px] text-[#84908a] mt-1 capitalize">
-                                    {role.isDefault ? "Default" : "Custom"} · {role.source.replace(/_/g, ' ')}
-                                </p>
-                            )}
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-[#0ea894] flex-shrink-0" />
-                    </div>
-
-                    {/* User Count */}
-                    <div className="border border-black/[0.08] rounded-[12px] p-4 bg-white">
-                        <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-semibold text-[#0b100e]">Assigned Users</span>
-                            <span className="text-[13px] font-bold text-[#087f70]">{totalUsers}</span>
-                        </div>
-                        {totalUsers === 0 && (
-                            <p className="text-[12px] text-[#84908a] mt-1">No users assigned to this role yet.</p>
-                        )}
-                    </div>
-                </aside>
-
-                {/* Main Content */}
-                <main className="space-y-8">
-                    {/* Section: Capabilities by Module */}
-                    <div className="space-y-5">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-[15px] font-semibold text-[#0b100e]">Capabilities</h2>
-                            <span className="text-[11px] text-[#84908a] font-normal">(grouped by module)</span>
-                        </div>
-
-                        {hasCapabilities ? (
-                            <div className="space-y-8">
-                                {sortedCapModules.map(({ moduleName, capabilityGroups }) =>
-                                    capabilityGroups?.length > 0 ? (
-                                        <ModuleSection key={moduleName} moduleName={moduleName} groups={capabilityGroups} />
-                                    ) : null
-                                )}
-                            </div>
-                        ) : (
-                            <div className="border border-dashed border-black/[0.08] rounded-[12px] p-8 text-center">
-                                <p className="text-[13px] text-[#84908a]">No capability groups assigned to this role.</p>
-                                <PermissionGuard resource="role" action="manage">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isEditDisabled}
-                                        className="mt-3 border-[#0ea894]/30 text-[#087f70] hover:bg-[#e7f6f2] rounded-[8px] text-[13px] font-semibold"
-                                        onClick={() => router.push(`/people/create-role?id=${roleId}`)}
-                                    >
-                                        Assign Capabilities
-                                    </Button>
-                                </PermissionGuard>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Section: Directly Assigned Permissions */}
-                    {hasDirectPermissions && (
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-[15px] font-semibold text-[#0b100e]">Direct Permissions</h2>
-                                <span className="text-[11px] text-[#84908a] font-normal">(individually assigned)</span>
-                            </div>
-                            <div className="border border-black/[0.08] rounded-[12px] p-5 space-y-6 bg-white">
-                                {permissionGroups.map(group => (
-                                    <div key={group.resource} className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-[11px] font-bold text-[#84908a] uppercase tracking-[0.1em]">
-                                                {formatPermissionName(group.resource)}
-                                            </h3>
-                                            <div className="flex-1 h-px bg-black/[0.06]" />
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8">
-                                            {group.permissions.map((p) => (
-                                                <div key={p.permissionId} className="flex items-center gap-3">
-                                                    <Checkbox
-                                                        checked
-                                                        disabled
-                                                        className="w-4 h-4 border-2 border-[#0ea894] data-[state=checked]:border-[#0ea894] data-[state=checked]:bg-[#0ea894]"
-                                                    />
-                                                    <label className="text-[13px] text-[#66706b]">
-                                                        {formatPermissionName(p.name)}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {!hasCapabilities && !hasDirectPermissions && (
-                        <div className="border border-dashed border-black/[0.08] rounded-[12px] p-10 text-center">
-                            <p className="text-[13px] text-[#84908a]">No capabilities or permissions assigned to this role.</p>
-                        </div>
-                    )}
-
-                    <ConfirmationModal
-                        isOpen={isDeleteModalOpen}
-                        onClose={() => setDeleteModalOpen(false)}
-                        onConfirm={handleDelete}
-                        title="Delete Role"
-                        description={
-                            <>
-                                Are you sure you want to delete <span className="font-semibold text-slate-900">{roleName}</span>?
-                                Users assigned to this role might lose their access. This action cannot be undone.
-                            </>
-                        }
-                    />
-                </main>
-            </div>
+  return (
+    <div className="space-y-6 p-6 pt-0">
+      <div className="sticky -top-5 z-50 -mx-6 -mt-5 flex items-center justify-between gap-4 bg-dashboard-background px-6 pb-4 pt-5">
+        <h1 className="text-2xl font-semibold">Role details</h1>
+        <div className="flex items-center gap-3">
+          <PermissionGuard resource="role" action="manage">
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>Delete role</Button>
+          </PermissionGuard>
+          <PermissionGuard resource="role" action="manage">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                sessionStorage.setItem("rolesReturnPath", `/people/view-role/${roleId}`);
+                router.push(`/people/create-role?id=${roleId}`);
+              }}
+            >
+              <Edit2 className="size-3.5" /> Edit role
+            </Button>
+          </PermissionGuard>
         </div>
-    );
+      </div>
+
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[300px_1fr]">
+        <aside className="space-y-4 self-start md:sticky md:top-24">
+          <div className="flex items-center justify-between rounded-[14px] border border-[#0ea894]/25 bg-[#e7f6f2]/30 p-4">
+            <div className="min-w-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <p className="font-semibold capitalize text-[#087f70]">{roleName}</p>
+                <Badge variant={isActive ? "active" : "inactive"}>{isActive ? "Active" : "Inactive"}</Badge>
+              </div>
+              <p className="text-[13px] text-[#66706b]">{role.description || "No description provided."}</p>
+              <p className="mt-2 text-[11px] capitalize text-[#84908a]">
+                {role.isDefault ? "Villeto default" : "Custom role"}{role.source ? ` · ${role.source.replace(/_/g, " ")}` : ""}
+              </p>
+            </div>
+            <ChevronRight className="size-5 shrink-0 text-[#0ea894]" />
+          </div>
+          <div className="rounded-xl border border-black/[0.08] bg-white p-4">
+            <p className="text-[13px] font-semibold">Assigned users <span className="text-[#087f70]">{role.totalAssignedUsers ?? 0}</span></p>
+            <p className="mt-1 text-[11px] text-[#84908a]">Changes to this role affect every assigned user.</p>
+          </div>
+          <div className="rounded-xl border border-black/[0.08] bg-white p-4">
+            <p className="text-[13px] font-semibold">Effective permissions <span className="text-[#087f70]">{role.effectivePermissions?.length ?? role.permissions?.length ?? 0}</span></p>
+            <p className="mt-1 text-[11px] text-[#84908a]">Calculated by Villeto from selected and required capabilities.</p>
+          </div>
+        </aside>
+
+        <main className="space-y-8">
+          <section className="space-y-5">
+            <div>
+              <h2 className="text-[15px] font-semibold text-[#0b100e]">Selected capabilities</h2>
+              <p className="mt-1 text-[12px] text-[#66706b]">Business workflows explicitly selected for this role.</p>
+            </div>
+            {selectedByModule.length ? selectedByModule.map(([module, capabilities]) => (
+              <div key={module} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#84908a]">{formatPermissionName(module)}</h3>
+                  <div className="h-px flex-1 bg-black/[0.06]" />
+                </div>
+                {capabilities?.map((capability) => {
+                  const group = catalogByKey.get(capability.key);
+                  const departmentCount = capability.scopeConfig?.departmentIds?.length ?? 0;
+                  const entityCount = capability.scopeConfig?.legalEntityIds?.length ?? 0;
+                  return (
+                    <div key={capability.key} className="rounded-xl border border-black/[0.08] bg-white p-4">
+                      <div className="flex flex-wrap items-start gap-3">
+                        <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700"><ShieldCheck className="size-4" /></div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-[13px] font-semibold">{capability.name}</p>
+                            <Badge variant="outline" className="px-2 py-0.5">{SCOPE_LABELS[capability.scopeType]}</Badge>
+                            <Badge variant="outline" className="px-2 py-0.5 capitalize">{capability.riskLevel}</Badge>
+                          </div>
+                          <p className="mt-1 text-[12px] text-[#66706b]">{group?.description}</p>
+                          {(departmentCount > 0 || entityCount > 0) && (
+                            <p className="mt-2 text-[11px] text-[#84908a]">
+                              {departmentCount > 0 ? `${departmentCount} selected department${departmentCount === 1 ? "" : "s"}` : ""}
+                              {departmentCount > 0 && entityCount > 0 ? " · " : ""}
+                              {entityCount > 0 ? `${entityCount} selected legal entit${entityCount === 1 ? "y" : "ies"}` : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )) : (
+              <div className="rounded-xl border border-dashed p-8 text-center text-[13px] text-[#84908a]">No optional capabilities selected.</div>
+            )}
+          </section>
+
+          {(role.impliedCapabilities?.length ?? 0) > 0 && (
+            <section className="space-y-3">
+              <div>
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold"><GitBranch className="size-4 text-[#087f70]" /> Included dependencies</h2>
+                <p className="mt-1 text-[12px] text-[#66706b]">Villeto adds these automatically so each selected workflow remains usable.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {role.impliedCapabilities?.map((capability) => (
+                  <div key={capability.key} className="flex items-center gap-3 rounded-xl border border-black/[0.08] bg-[#f9faf9] p-3">
+                    <LockKeyhole className="size-4 shrink-0 text-[#84908a]" />
+                    <div>
+                      <p className="text-[12px] font-semibold">{capability.name}</p>
+                      <p className="text-[11px] text-[#84908a]">{formatPermissionName(capability.module)} · {SCOPE_LABELS[capability.scopeType]}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
+
+      <ConfirmationModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete role"
+        description="This permanently deletes the role. Roles with assignment history must be deactivated instead."
+        confirmLabel={deleteRole.isPending ? "Deleting…" : "Delete role"}
+        destructive
+      />
+    </div>
+  );
 }
 
-export default withPermissions(ViewRolePage, []);
+export default withPermissions(ViewRolePage, [
+  { resource: "role", action: "manage" },
+]);

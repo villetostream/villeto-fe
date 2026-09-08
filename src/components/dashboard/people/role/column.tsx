@@ -9,7 +9,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Role } from "@/queries/role/get-all-roles";
+import { isRoleActive, Role } from "@/queries/role/get-all-roles";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import Link from "next/link";
 import { Edit2, Trash2 } from "lucide-react";
@@ -17,11 +17,10 @@ import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import { useDeleteRoleApi } from "@/queries/role/delete-role";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { useAuthStore } from "@/stores/auth-stores";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 const columnHelper = createColumnHelper<Role>();
 
-export const columns: ColumnDef<Role, unknown>[] = [
+export const columns = [
     columnHelper.display({
         id: "idNo",
         header: "S/N",
@@ -69,9 +68,10 @@ export const columns: ColumnDef<Role, unknown>[] = [
     columnHelper.accessor("isActive", {
         header: "STATUS",
         cell: (info) => {
+            const active = isRoleActive(info.row.original);
             return (
-                <Badge variant={info.row.original.isActive ? "active" : "inactive"}>
-                    <span className="ml-1 capitalize">{info.row.original.isActive ? "active" : "inactive"}</span>
+                <Badge variant={active ? "active" : "inactive"}>
+                    <span className="ml-1 capitalize">{active ? "active" : "inactive"}</span>
                 </Badge>
             );
         },
@@ -82,20 +82,15 @@ export const columns: ColumnDef<Role, unknown>[] = [
         enableHiding: false,
         cell: (data) => <ActionCell role={data.row.original} />,
     }),
-] as any as ColumnDef<Role, unknown>[];
+] as unknown as ColumnDef<Role, unknown>[];
 
 function ActionCell({ role }: { role: Role }) {
     const roleId = role.roleId;
     const { mutateAsync: deleteRole } = useDeleteRoleApi();
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     
-    const { user } = useAuthStore();
-    const isCurrentUserOwner = (user?.companyRole?.name || (user as any)?.villetoRole?.name)?.toLowerCase() === "owner";
-    const isTargetOwner = role.name?.toLowerCase() === "owner";
     const hasAssignedUsers = Number(role.totalAssignedUsers) > 0;
-    
-    const canUpdate = !isTargetOwner || isCurrentUserOwner;
-    const canDelete = !isTargetOwner && !hasAssignedUsers;
+    const canDelete = !hasAssignedUsers;
 
     const handleDelete = async () => {
         try {
@@ -128,32 +123,16 @@ function ActionCell({ role }: { role: Role }) {
                     </DropdownMenuItem>
                     
                     <PermissionGuard resource="role" action="manage">
-                        {canUpdate ? (
-                            <DropdownMenuItem asChild>
-                                <Link 
-                                    href={`/people/create-role?id=${roleId}`}
-                                    onClick={() => sessionStorage.setItem("rolesReturnPath", `/people?tab=roles`)}
-                                    className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-slate-50 text-[#475467]"
-                                >
-                                    <Edit2 className="w-5 h-5 text-slate-500" />
-                                    <span className="font-medium">Update Role</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        ) : (
-                            <TooltipProvider>
-                                <Tooltip delayDuration={200}>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-not-allowed opacity-50 text-[#475467] w-full" onClick={(e) => e.stopPropagation()}>
-                                            <Edit2 className="w-5 h-5 text-slate-500" />
-                                            <span className="font-medium">Update Role</span>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="left" className="z-[10000]">
-                                        <p>Only Owners can modify this role</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={`/people/create-role?id=${roleId}`}
+                                onClick={() => sessionStorage.setItem("rolesReturnPath", `/people?tab=roles`)}
+                                className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-slate-50 text-[#475467]"
+                            >
+                                <Edit2 className="w-5 h-5 text-slate-500" />
+                                <span className="font-medium">Update Role</span>
+                            </Link>
+                        </DropdownMenuItem>
                     </PermissionGuard>
 
                     <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
@@ -180,7 +159,7 @@ function ActionCell({ role }: { role: Role }) {
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="left" className="z-[10000] max-w-xs text-center">
-                                        <p>{isTargetOwner ? "The Owner role cannot be deleted" : "Cannot delete a role that has active users assigned to it"}</p>
+                                        <p>Roles with user assignment history must be deactivated instead</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>

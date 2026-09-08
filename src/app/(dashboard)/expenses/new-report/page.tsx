@@ -1,5 +1,7 @@
 "use client";
 
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -185,7 +187,7 @@ function deriveFreshViolations(expenses: ExpenseItem[]): PolicyCheckResult[] {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function NewReportPage() {
+function NewReportPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const axios = useAxios();
@@ -974,3 +976,7 @@ export default function NewReportPage() {
     </div>
   );
 }
+
+export default withPermissions(NewReportPage, [
+  { resource: "expense.report", action: "create" },
+]);

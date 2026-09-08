@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewExpenseHeaderAction from "@/components/expenses/NewExpenseHeaderAction";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
@@ -11,16 +10,15 @@ import {
   type PersonalExpenseRow,
 } from "@/components/expenses/table/personalColumns";
 import { useSearchParams, useRouter } from "next/navigation";
-import ExpenseEmptyState from "@/components/expenses/EmptyState";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { usePersonalExpenses, useCompanyExpenses, useDraftExpenses, CompanyExpenseReport } from "@/lib/react-query/expenses";
 import { PersonalExpensesSkeleton } from "@/components/expenses/PersonalExpensesSkeleton";
 import { getCompanyColumns } from "@/components/expenses/table/companyColumns";
 import { FileText, Clock, CheckCircle2, Banknote, Search, Plus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 import type { ColumnDef } from "@tanstack/react-table";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 type ExpenseTableRow = Record<string, unknown> & {
   status?: string;
@@ -31,18 +29,15 @@ type ExpenseTableRow = Record<string, unknown> & {
   amount?: number | string;
 };
 
-export default function Reimbursements() {
+function Reimbursements() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const can = useAuthStore((state) => state.can);
-  const authReady = useAuthStore((state) => !state.isLoading);
+  const policies = useAuthorizationPolicies();
+  const authReady = policies.ready;
 
   // ── Scope derivation (safe: false until auth is ready) ───────────────────
-  const hasTeamScope    = authReady && can("expense.report", "read_department");
-  const hasCompanyScope = authReady && can("expense.report", "read_company");
-  const canApproveExpense = authReady && can("expense.report", "approve");
-
-
+  const hasTeamScope    = authReady && (policies.expenses.listScope === "team" || policies.expenses.listScope === "company");
+  const hasCompanyScope = authReady && policies.expenses.listScope === "company";
   // ── Outer tab list (recalculated once auth is ready) ─────────────────────
   const outerTabs = useMemo(() => [
     ...(hasCompanyScope ? [{ key: "company-expenses", label: "Company Expenses" }] : []),
@@ -448,3 +443,9 @@ export default function Reimbursements() {
     </div>
   );
 }
+
+export default withPermissions(Reimbursements, [
+  { resource: "expense.report", action: "read_own" },
+  { resource: "expense.report", action: "read_department" },
+  { resource: "expense.report", action: "read_company" },
+]);

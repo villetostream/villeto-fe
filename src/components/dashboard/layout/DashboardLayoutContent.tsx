@@ -24,7 +24,11 @@ import VilletoSetupGuide from "@/components/tour/VilletoSetupGuide";
 import { useTourStore } from "@/stores/useTourStore";
 import { ChatPortal } from "@/components/chat";
 import { SplashScreen } from "@/components/ui/splash-screen";
-import { getEffectiveCompanyPermissions } from "@/features/auth/role-access";
+import {
+  AUTHORIZATION_FOCUS_MAX_AGE_MS,
+  AUTHORIZATION_INVALIDATED_EVENT,
+  parseAuthorizationSnapshot,
+} from "@/features/auth/authorization";
 
 function subscribe() {
   return () => {};
@@ -49,7 +53,7 @@ export default function DashboardLayoutContent({
 }: DashboardLayoutProps) {
   const isMounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
   const axios = useAxios();
-  const { setCompanyPermissions, login, logout, user, isLoading } = useAuthStore();
+  const { login, logout, user, isLoading } = useAuthStore();
   const accessToken = useAuthStore((s) => s.accessToken);
   const isTourActive = useTourStore((s) => s.isTourActive);
   const setupGuideReady = useTourStore((s) => s.setupGuideReady);
@@ -87,20 +91,20 @@ export default function DashboardLayoutContent({
         }
 
         const currentUser = useAuthStore.getState().user;
+        const authorization = parseAuthorizationSnapshot(userData.authorization);
         login({
           ...currentUser,
           ...userData,
           companyId: companyId || userData.companyId || currentUser?.companyId,
+          authorization,
         } as User);
       }
-
-      setCompanyPermissions(getEffectiveCompanyPermissions(responseData));
     } catch {
       // Silently handle — user session may still be valid
     } finally {
       setProfileFetched(true);
     }
-  }, [axios, login, setCompanyPermissions]);
+  }, [axios, login]);
 
   // Always hold the latest version of the function so setInterval/addEventListener
   // call the current closure without needing to be listed as effect deps.
@@ -119,15 +123,30 @@ export default function DashboardLayoutContent({
     // Initial fetch on mount
     refreshRef.current();
 
-    // Re-check permissions every 2 min so admin role changes propagate without re-login.
-    // Using refreshRef so this never causes the effect to re-run when the function identity changes.
-    const interval = setInterval(() => refreshRef.current(), 2 * 60 * 1000);
-    const handleFocus = () => refreshRef.current();
+    const handleFocus = () => {
+      if (
+        useAuthStore
+          .getState()
+          .isAuthorizationStale(AUTHORIZATION_FOCUS_MAX_AGE_MS)
+      ) {
+        void refreshRef.current();
+      }
+    };
+    const handleAuthorizationInvalidated = () => {
+      void refreshRef.current();
+    };
     window.addEventListener("focus", handleFocus);
+    window.addEventListener(
+      AUTHORIZATION_INVALIDATED_EVENT,
+      handleAuthorizationInvalidated,
+    );
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener(
+        AUTHORIZATION_INVALIDATED_EVENT,
+        handleAuthorizationInvalidated,
+      );
     };
   // Intentionally only isLoading: runs once after hydration.
   // Adding user/router here would create an infinite loop because refreshUserAndPermissions

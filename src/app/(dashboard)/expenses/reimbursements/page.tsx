@@ -1,5 +1,7 @@
 "use client";
 
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -58,7 +60,7 @@ const getStatusLabel = (status: string): string => {
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
 
-export default function ReimbursementsPage() {
+function ReimbursementsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabStatus>("all");
   const [search, setSearch] = useState("");
@@ -338,3 +340,9 @@ export default function ReimbursementsPage() {
     </PageLoader>
   );
 }
+
+export default withPermissions(ReimbursementsPage, [
+  { resource: "expense.report", action: "read_own" },
+  { resource: "expense.report", action: "read_department" },
+  { resource: "expense.report", action: "read_company" },
+]);

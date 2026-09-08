@@ -25,6 +25,7 @@ import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { toast } from "sonner";
 import { asArray, asRecord, getApiErrorMessage, getString, isRecord, pickString } from "@/lib/types/api-error";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 interface StagedUser {
     id: string;           // local keying
@@ -46,7 +47,7 @@ interface FormValues {
     ownershipPercentage?: number;
 }
 
-export default function InviteLeadershipPage() {
+function InviteLeadershipPage() {
     const router = useRouter();
     const axios = useAxios();
     const rolesApi = useGetVilletoRolesApi();
@@ -721,3 +722,7 @@ export default function InviteLeadershipPage() {
         </div>
     );
 }
+
+export default withPermissions(InviteLeadershipPage, [
+    { resource: "user", action: "manage" },
+]);

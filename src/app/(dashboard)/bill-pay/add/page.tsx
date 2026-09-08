@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import BillLineItemBatchModal from "@/components/bill-pay/BillLineItemBatchModal";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
-export default function AddBillPage() {
+function AddBillPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   
@@ -374,3 +375,8 @@ export default function AddBillPage() {
     </div>
   );
 }
+
+export default withPermissions(AddBillPage, [
+  { resource: "bill_pay.intake", action: "create" },
+  { resource: "bill_pay.invoice", action: "create" },
+]);

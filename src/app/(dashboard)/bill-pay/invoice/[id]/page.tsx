@@ -15,19 +15,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 const MOCK_INVOICE: Record<string, { vendor: string, amount: string }> = {
   "INV-2025-081": { vendor: "billing@aws.com", amount: "₦142,500.00" },
   "INV-2025-082": { vendor: "QuickBooks Integration", amount: "₦85,000.00" },
 };
 
-export default function InvoiceDetailsPage() {
+function InvoiceDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const { setBackHandler, clearBackHandler } = useHeaderBackStore();
 
-  const [viewRole, setViewRole] = useState<"creator" | "approver">("creator");
+  const policies = useAuthorizationPolicies();
   const [status, setStatus] = useState<"Pending" | "Approved">("Pending");
 
   useEffect(() => {
@@ -41,13 +43,6 @@ export default function InvoiceDetailsPage() {
     <div className="flex-1 pb-8 flex flex-col">
       {/* Demo Controls - ONLY FOR TESTING THE VIEWS */}
       <div className="hidden bg-[#f0faf8] border-b border-[#087f70]/20 p-3 flex justify-end gap-4 text-[13px] sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-           <span className="text-[#087f70] font-semibold">Demo Role:</span>
-           <select className="bg-white border border-[#087f70]/30 rounded-[6px] px-2 py-1 text-[#10231d] outline-none shadow-sm" value={viewRole} onChange={(e) => setViewRole(e.target.value as "creator" | "approver")}>
-              <option value="creator">Creator</option>
-              <option value="approver">Approver</option>
-           </select>
-        </div>
         <div className="flex items-center gap-2">
            <span className="text-[#087f70] font-semibold">Demo Status:</span>
            <select className="bg-white border border-[#087f70]/30 rounded-[6px] px-2 py-1 text-[#10231d] outline-none shadow-sm" value={status} onChange={(e) => setStatus(e.target.value as "Pending" | "Approved")}>
@@ -73,7 +68,7 @@ export default function InvoiceDetailsPage() {
           </div>
           
           <div className="flex items-center gap-3">
-             {status === "Pending" && viewRole === "creator" && (
+             {status === "Pending" && policies.billPay.canEditInvoice && (
                 <>
                    <Button variant="outline" className="text-[#087f70] border-[#087f70]/30 hover:bg-[#f0faf8] hover:text-[#076b5e] h-10 rounded-[8px] font-semibold text-[13px] px-5">
                       <Pencil className="w-4 h-4 mr-2" /> Edit Bill
@@ -83,7 +78,7 @@ export default function InvoiceDetailsPage() {
                    </Button>
                 </>
              )}
-             {status === "Pending" && viewRole === "approver" && (
+             {status === "Pending" && policies.billPay.canApproveInvoice && (
                 <>
                    <Button variant="outline" className="text-[#d33d44] border-red-200 hover:bg-red-50 hover:text-red-700 h-10 rounded-[8px] font-semibold text-[13px] px-6">
                       Reject Bill
@@ -285,3 +280,8 @@ export default function InvoiceDetailsPage() {
     </div>
   );
 }
+
+export default withPermissions(InvoiceDetailsPage, [
+  { resource: "bill_pay.invoice", action: "view" },
+  { resource: "bill_pay.intake", action: "view" },
+]);
