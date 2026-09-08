@@ -14,6 +14,7 @@ export const CAPABILITIES = {
     buyer: "procurement_buyer",
   },
   purchaseOrder: {
+    creator: "purchase_order_creator",
     viewer: "purchase_order_viewer",
     buyer: "procurement_buyer",
     editor: "purchase_order_editor",
