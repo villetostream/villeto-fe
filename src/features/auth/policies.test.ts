@@ -25,6 +25,32 @@ describe("authorization policies", () => {
     expect(policies.purchaseRequests.listScope).toBe("team");
   });
 
+  it("keeps PO Creator access on the own purchase-order scope", () => {
+    const policies = buildAuthorizationPolicies(snapshot(
+      [
+        "procurement.purchase_order.create",
+        "procurement.purchase_order.read_own",
+        "procurement.purchase_order.update_draft",
+        "procurement.purchase_order.assign_vendor",
+        "procurement.purchase_order.submit_for_approval",
+      ],
+      [{
+        key: "purchase_order_creator",
+        module: "procurement",
+        scopeType: "own",
+        scopeConfig: null,
+        isImplied: false,
+        sourceRoleIds: ["po-creator-role"],
+      }],
+    ));
+
+    expect(policies.purchaseOrders.listScope).toBe("own");
+    expect(policies.purchaseOrders.canCreate).toBe(true);
+    expect(policies.purchaseOrders.canUpdateDraft).toBe(true);
+    expect(policies.purchaseOrders.canSubmit).toBe(true);
+    expect(policies.purchaseOrders.canApprove).toBe(false);
+  });
+
   it("selects the strongest scope across multiple roles", () => {
     expect(strongestScope([
       { key: "expense_viewer", module: "expense", scopeType: "own", scopeConfig: null, isImplied: false, sourceRoleIds: [] },

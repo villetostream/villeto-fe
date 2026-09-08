@@ -440,7 +440,7 @@ function PODetailPage() {
     ? (po.createdBy as { userId?: string }).userId
     : undefined;
   const isOwnPO = !!user?.userId && !!createdById && user.userId === createdById;
-  const isSubmitterView = isOwnScope || isOwnPO;
+  const isSubmitterView = isOwnPO;
   const stage = (po.status || "").toLowerCase() as WFStage;
 
   // Render drafts inline without early return
