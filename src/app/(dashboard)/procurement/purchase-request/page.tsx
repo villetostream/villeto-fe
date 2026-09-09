@@ -138,6 +138,7 @@ function PRActionMenu({
   canConvert,
   onApprove,
   onReject,
+  onConvert,
   onView,
 }: {
   pr: PurchaseRequest;
@@ -145,6 +146,7 @@ function PRActionMenu({
   canConvert: boolean;
   onApprove: () => void;
   onReject: () => void;
+  onConvert?: () => void;
   onView: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -162,8 +164,9 @@ function PRActionMenu({
 
   const showApprove = canApprove && pr.currentUserActionRequired && pr.status === "submitted";
   const showReject  = canApprove && pr.currentUserActionRequired && pr.status === "submitted";
+  const showConvert = canConvert && pr.status === "approved";
 
-  if (!showApprove && !showReject) {
+  if (!showApprove && !showReject && !showConvert) {
     // Read-only eye button
     return (
       <button
@@ -211,6 +214,18 @@ function PRActionMenu({
               >
                 <XCircle className="w-3.5 h-3.5 text-[#d33d44]" />
                 Reject
+              </button>
+            </>
+          )}
+          {showConvert && onConvert && (
+            <>
+              <div className="border-t border-black/[0.06] my-1" />
+              <button
+                onClick={e => { e.stopPropagation(); setOpen(false); onConvert(); }}
+                className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#087f70] hover:bg-[#f0faf8] transition-colors font-semibold"
+              >
+                <CheckCircle className="w-3.5 h-3.5 text-[#087f70]" />
+                Convert to PO
               </button>
             </>
           )}
@@ -683,6 +698,7 @@ function PRTable({
                         onView={() => router.push(`/procurement/purchase-request/${pr.purchaseRequestId}?outerTab=${scope}&innerTab=${activeTab}`)}
                         onApprove={() => handleApproveRow(pr.purchaseRequestId)}
                         onReject={() => setRejectTarget(pr.purchaseRequestId)}
+                        onConvert={() => router.push(`/procurement/purchase-order/new?prId=${pr.purchaseRequestId}`)}
                       />
                     </td>
                   </tr>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useAuthStore, type User } from '@/stores/auth-stores';
+import { parseAuthorizationSnapshot } from '@/features/auth/authorization';
 import { ReactNode, useEffect } from 'react';
 
 interface AuthProviderProps {
@@ -11,8 +12,14 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     useEffect(() => {
+        if (initialUser) {
+            initialUser.authorization = initialUser.authorization 
+                ? parseAuthorizationSnapshot(initialUser.authorization) 
+                : undefined;
+            useAuthStore.getState().login(initialUser);
+        }
+        
         useAuthStore.setState({
-            user: initialUser ?? null,
             isLoading: false,
         });
     }, [initialUser]);

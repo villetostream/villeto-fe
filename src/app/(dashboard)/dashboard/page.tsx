@@ -21,7 +21,6 @@ import {
   ClipboardCheck,
   Receipt
 } from "lucide-react";
-import PermissionGuard from "@/components/permissions/permission-protected-components";
 import { useAuthStore } from "@/stores/auth-stores";
 import { useGetPurchaseRequests } from "@/queries/procurement/purchase-requests";
 import { usePurchaseOrders } from "@/queries/procurement/purchase-orders";
@@ -132,7 +131,6 @@ export default function DashboardPage() {
   const isAnyLoading = prLoading || poLoading || entityLoading || expLoading || usersLoading || vendorsLoading;
 
   return (
-    <PermissionGuard>
       <div className="space-y-6 pb-12 h-full">
         
         {/* 1. Welcome Hero */}
@@ -382,7 +380,6 @@ export default function DashboardPage() {
         </section>
 
       </div>
-    </PermissionGuard>
   );
 }
 

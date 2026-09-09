@@ -18,15 +18,7 @@ import PermissionGuard from "@/components/permissions/permission-protected-compo
 import { useAuthStore } from "@/stores/auth-stores";
 
 
-function getDepartmentName(dept: unknown): string {
-  if (!dept) return "—";
-  if (typeof dept === "string") return dept || "—";
-  if (isRecord(dept)) {
-    const name = dept.departmentName ?? dept.name;
-    if (typeof name === "string" && name) return name;
-  }
-  return "—";
-}
+
 
 function formatName(value: string | null | undefined): string {
   if (!value) return "—";
@@ -201,7 +193,7 @@ export const columns = (
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
-                            <PermissionGuard resource="user" action="read">
+                            <PermissionGuard anyOf={["user.manage", "user.directory.read"]}>
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
                                     onClick={() => onViewProfile(data.row.original.userId)}
@@ -214,14 +206,17 @@ export const columns = (
                             <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
                             
                             {isActive && (() => {
-                                const roleName = String(data.row.original.villetoRole?.name || data.row.original.position || "").toUpperCase();
-                                const isOwner = roleName.includes("OWNER");
+                                const assignedRoles = Array.isArray(data.row.original.companyRoles)
+                                    ? data.row.original.companyRoles
+                                    : [];
+                                const isOwner = assignedRoles.some((role) => role?.templateKey === "owner")
+                                    || data.row.original.companyRole?.templateKey === "owner";
                                 const currentUserId = useAuthStore.getState().user?.userId;
                                 const isSelf = data.row.original.userId === currentUserId;
                                 const canDeactivate = !isOwner && !isSelf;
 
                                 return canDeactivate ? (
-                                    <PermissionGuard resource="user" action="manage">
+                                    <PermissionGuard anyOf={["user.manage"]}>
                                         <DropdownMenuItem 
                                             className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
                                             onClick={() => {
@@ -237,7 +232,7 @@ export const columns = (
                             })()}
 
                             {!isActive && onResendInvitation && (
-                                <PermissionGuard resource="user" action="manage">
+                                <PermissionGuard anyOf={["user.manage"]}>
                                     <DropdownMenuItem 
                                         className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#087f70]"
                                         onClick={() => onResendInvitation(data.row.original)}

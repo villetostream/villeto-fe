@@ -303,4 +303,4 @@ function AddSingleUser() {
     );
 }
 
-export default withPermissions(AddSingleUser, []);
+export default withPermissions(AddSingleUser, [{ resource: "user", action: "manage" }]);

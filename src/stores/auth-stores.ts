@@ -1,12 +1,19 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Role } from '@/queries/role/get-all-roles';
-import { Department } from '@/queries/departments/get-all-departments';
 import { getCurrencyConfig } from "@/lib/utils/currency";
 import { clearTokenRefresh } from "@/lib/tokenRefreshService";
 
-import { User, CompanyPermission } from '@/features/auth/types';
-export type { User, CompanyPermission };
+import type { User, CompanyPermission, AuthorizationSnapshot, CapabilityScopeType, AuthorizationCapabilityGrant } from '@/features/auth/types';
+import {
+    buildAuthorizationIndexes,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    toPermissionName,
+    uniqueCapabilityScopes
+} from '@/features/auth/authorization';
+
+export type { User, CompanyPermission, AuthorizationSnapshot, CapabilityScopeType, AuthorizationCapabilityGrant };
 
 // ─── Store Interface ──────────────────────────────────────────────────────────
 
@@ -14,6 +21,8 @@ interface AuthState {
     user: User | null;
     accessToken: string | null;
     isLoading: boolean;
+    
+    authorization: AuthorizationSnapshot | null;
 
     /** The flat list of company-level permissions for this user. */
     companyPermissions: CompanyPermission[];
@@ -26,6 +35,11 @@ interface AuthState {
      */
     _permissionSet: Set<string>;
     _managedResources: Set<string>;
+    
+    /**
+     * Timestamp of the last time authorization was hydrated or fetched.
+     */
+    _authorizationHydratedAt: number;
 
     // ─ Setters ─
     setAccessToken: (token: string) => void;
@@ -51,6 +65,13 @@ interface AuthState {
      *   return can('vendor', 'approve'); // true only if user has vendor.approve
      */
     can: (resource: string, action: string) => boolean;
+    canAny: (permissions: string[]) => boolean;
+    canAll: (permissions: string[]) => boolean;
+
+    /**
+     * Checks if the current authorization snapshot is stale based on maxAgeMs.
+     */
+    isAuthorizationStale: (maxAgeMs: number) => boolean;
 
     // ─ Utilities ─
     getCurrencySymbol: () => string;
@@ -58,7 +79,9 @@ interface AuthState {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-function buildPermissionSets(permissions: CompanyPermission[]) {
+function buildPermissionSets(permissions: CompanyPermission[], authorization: AuthorizationSnapshot | null) {
+    const { permissionSet: authSnapshotPermissionSet } = buildAuthorizationIndexes(authorization);
+    
     const permissionSet = new Set<string>();
     const managedResources = new Set<string>();
     for (const p of permissions) {
@@ -68,6 +91,12 @@ function buildPermissionSets(permissions: CompanyPermission[]) {
             permissionSet.add(`${p.resource}.${p.action}`);
         }
     }
+    
+    // Add all snapshot permissions
+    for (const p of authSnapshotPermissionSet) {
+        permissionSet.add(p);
+    }
+    
     return { _permissionSet: permissionSet, _managedResources: managedResources };
 }
 
@@ -76,9 +105,11 @@ export const useAuthStore = create<AuthState>()(
         (set, get) => ({
             user: null,
             isLoading: true,
+            authorization: null,
             companyPermissions: [],
             _permissionSet: new Set<string>(),
             _managedResources: new Set<string>(),
+            _authorizationHydratedAt: 0,
             accessToken: null,
 
             getCurrencySymbol: () => {
@@ -92,14 +123,20 @@ export const useAuthStore = create<AuthState>()(
 
             setCompanyPermissions: (permissions: CompanyPermission[]) => {
                 const list = Array.isArray(permissions) ? permissions : [];
-                set({ companyPermissions: list, ...buildPermissionSets(list) });
+                set({ companyPermissions: list, ...buildPermissionSets(list, get().authorization) });
             },
 
             login: (data: User) => {
                 if (typeof window !== "undefined") {
                     localStorage.setItem("villeto_lastActivityTime", Date.now().toString());
                 }
-                set({ user: data });
+                const authorization = data.authorization ?? null;
+                set({ 
+                    user: data, 
+                    authorization,
+                    _authorizationHydratedAt: Date.now(),
+                    ...buildPermissionSets(get().companyPermissions, authorization)
+                });
             },
 
             logout: () => {
@@ -120,9 +157,11 @@ export const useAuthStore = create<AuthState>()(
 
                 set({
                     user: null,
+                    authorization: null,
                     companyPermissions: [],
                     _permissionSet: new Set(),
                     _managedResources: new Set(),
+                    _authorizationHydratedAt: 0,
                     accessToken: null,
                 });
                 sessionStorage.removeItem("auth-storage");
@@ -146,11 +185,31 @@ export const useAuthStore = create<AuthState>()(
                     p => p.resource === resource && (p.action === action || p.action === "manage")
                 );
             },
+            
+            canAny: (permissions: string[]): boolean => {
+                const { _permissionSet } = get();
+                return hasAnyPermission(_permissionSet, permissions);
+            },
+            
+            canAll: (permissions: string[]): boolean => {
+                const { _permissionSet } = get();
+                return hasAllPermissions(_permissionSet, permissions);
+            },
+
+            isAuthorizationStale: (maxAgeMs: number): boolean => {
+                const { _authorizationHydratedAt } = get();
+                if (!_authorizationHydratedAt) return true;
+                return Date.now() - _authorizationHydratedAt > maxAgeMs;
+            },
 
             hydrate: () => {
                 // Rebuild Sets from persisted companyPermissions after rehydration
-                const { companyPermissions } = get();
-                set({ isLoading: false, ...buildPermissionSets(companyPermissions ?? []) });
+                const { companyPermissions, authorization } = get();
+                set({ 
+                    isLoading: false, 
+                    _authorizationHydratedAt: Date.now(),
+                    ...buildPermissionSets(companyPermissions ?? [], authorization) 
+                });
             },
         }),
         {
@@ -160,6 +219,7 @@ export const useAuthStore = create<AuthState>()(
             partialize: (state) => ({
                 user: state.user,
                 companyPermissions: state.companyPermissions,
+                authorization: state.authorization,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) {
@@ -180,7 +240,18 @@ export const useCan = (resource: string, action: string): boolean => {
     return useAuthStore(state => state.can(resource, action));
 };
 
+export const useCanPermission = (permission: string): boolean => {
+    return useAuthStore(state => state._permissionSet.has(permission));
+};
+
+export const useCapabilityScopes = (capabilityKey: string): CapabilityScopeType[] => {
+    const authorization = useAuthStore(state => state.authorization);
+    if (!authorization) return [];
+    const grants = authorization.capabilityGrants.filter(g => g.key === capabilityKey);
+    return uniqueCapabilityScopes(grants);
+};
+
 /** Returns the user's display role (for labels/badges only — not for logic). */
 export const useUserRole = () => {
-    return useAuthStore(state => state.user?.villetoRole);
+    return useAuthStore(state => state.user?.companyRole || state.user?.villetoRole);
 };

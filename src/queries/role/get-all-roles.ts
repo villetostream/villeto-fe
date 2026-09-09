@@ -23,6 +23,33 @@ export interface CapabilityGroupPermission {
     action: string;
 }
 
+export type CapabilityScopeType = "own" | "reporting_chain" | "department" | "company";
+export type CapabilityRiskLevel = "standard" | "elevated" | "sensitive";
+
+export interface RoleCapabilityScopeConfig {
+    departmentIds?: string[];
+    legalEntityIds?: string[];
+}
+
+export interface RoleCapabilityInput {
+    key: string;
+    scopeType: CapabilityScopeType;
+    scopeConfig?: RoleCapabilityScopeConfig;
+}
+
+export interface SelectedRoleCapability extends RoleCapabilityInput {
+    name: string;
+    module: string;
+    description?: string;
+    riskLevel: CapabilityRiskLevel;
+}
+
+export interface ImpliedRoleCapability extends RoleCapabilityInput {
+    name: string;
+    module: string;
+    description?: string;
+}
+
 export interface CapabilityGroup {
     capabilityGroupId: string;
     key: string;
@@ -31,6 +58,12 @@ export interface CapabilityGroup {
     module: string;
     sortOrder: number;
     isActive: boolean;
+    supportedScopes?: CapabilityScopeType[];
+    defaultScope?: CapabilityScopeType;
+    riskLevel?: CapabilityRiskLevel;
+    isBaseCapability?: boolean;
+    scopePermissions?: Partial<Record<CapabilityScopeType, string[]>>;
+    requiredCapabilityKeys?: string[];
     permissions: CapabilityGroupPermission[];
 }
 
@@ -44,7 +77,7 @@ export interface Role {
     roleId: string;
     name: string;
     description?: string;
-    isActive: boolean;
+    isActive: boolean | "Active" | "Inactive";
     permissions: Permission[];
     createdAt: Date;
     updatedAt: Date;
@@ -55,6 +88,14 @@ export interface Role {
     isDefault?: boolean;
     capabilityGroupKeys?: string[];
     capabilitiesByModule?: CapabilitiesByModule;
+    selectedCapabilities?: SelectedRoleCapability[];
+    impliedCapabilities?: ImpliedRoleCapability[];
+    effectivePermissions?: Permission[];
+    modules?: string[];
+}
+
+export function isRoleActive(role: Pick<Role, "isActive">): boolean {
+    return role.isActive === true || role.isActive === "Active";
 }
 
 // ── Response shape ─────────────────────────────────────────────────────────

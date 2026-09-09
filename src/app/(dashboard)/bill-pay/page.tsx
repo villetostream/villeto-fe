@@ -55,28 +55,27 @@ function BillPayPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 shrink-0">
           <StatsCard
             title="Total Bills This Month"
-            value="₦12,850,000"
-            subtitle={<span className="text-[11px] text-emerald-500 font-medium">+2.5% from last period</span>}
+            value="—"
             icon={<Receipt2 variant="Bulk" className="w-5 h-5 text-emerald-500" />}
             accentColor="#10b981"
           />
           <StatsCard
             title="Pending Approvals"
-            value="7"
+            value="—"
             subtitle={<span className="text-[11px] text-[#68726d]">Review pending bills</span>}
             icon={<ClipboardText variant="Bulk" className="w-5 h-5 text-amber-500" />}
             accentColor="#f59e0b"
           />
           <StatsCard
             title="Ready for Payment"
-            value="4"
+            value="—"
             subtitle={<span className="text-[11px] text-[#68726d]">Release payments</span>}
             icon={<Cards variant="Bulk" className="w-5 h-5 text-blue-500" />}
             accentColor="#3b82f6"
           />
           <StatsCard
             title="Completed This Month"
-            value="23"
+            value="—"
             subtitle={<span className="text-[11px] text-[#68726d]">View completed transactions</span>}
             icon={<TickCircle variant="Bulk" className="w-5 h-5 text-emerald-500" />}
             accentColor="#10b981"

@@ -23,8 +23,9 @@ function formatNumberInput(value: string) {
   const formattedInt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return dec !== undefined ? `${formattedInt}.${dec}` : formattedInt;
 }
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
-export default function AddRecurringBillPage() {
+function AddRecurringBillPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   
@@ -342,3 +343,7 @@ export default function AddRecurringBillPage() {
     </div>
   );
 }
+
+export default withPermissions(AddRecurringBillPage, [
+    { resource: "bill_pay.invoice", action: "create" },
+]);

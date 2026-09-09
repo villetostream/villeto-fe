@@ -8,6 +8,7 @@ import { useAuthStore } from "@/features/auth/store";
 import { isConnectionPoolError, CONNECTION_POOL_MESSAGE } from "@/shared/lib/errors/api-errors";
 import { scheduleTokenRefresh } from "@/lib/tokenRefreshService";
 import { getEffectiveCompanyPermissions } from "@/features/auth/role-access";
+import { logoutAndRedirect } from "@/lib/logout";
 
 declare module "axios" {
     export interface AxiosRequestConfig {
@@ -137,13 +138,7 @@ export function useAxios(): AxiosInstance {
                         return instance(originalRequest);
                     } catch (refreshError) {
                         processQueue(refreshError, null);
-                        useAuthStore.getState().logout();
-                        if (
-                          typeof window !== "undefined" &&
-                          !window.location.pathname.startsWith("/login")
-                        ) {
-                          window.location.href = "/login";
-                        }
+                        logoutAndRedirect();
                         return Promise.reject(refreshError);
                     } finally {
                         isRefreshing = false;
@@ -155,13 +150,7 @@ export function useAxios(): AxiosInstance {
                     !isOnboardingPath
                 ) {
                     // We already retried and still got 401. Log out and redirect.
-                    useAuthStore.getState().logout();
-                    if (
-                      typeof window !== "undefined" &&
-                      !window.location.pathname.startsWith("/login")
-                    ) {
-                      window.location.href = "/login";
-                    }
+                    logoutAndRedirect();
                     return Promise.reject(error);
                 }
 

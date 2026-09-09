@@ -21,7 +21,9 @@ const MOCK_INVOICE: Record<string, { vendor: string, amount: string }> = {
   "INV-2025-082": { vendor: "QuickBooks Integration", amount: "₦85,000.00" },
 };
 
-export default function InvoiceDetailsPage() {
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
+function InvoiceDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -285,3 +287,8 @@ export default function InvoiceDetailsPage() {
     </div>
   );
 }
+
+export default withPermissions(InvoiceDetailsPage, [
+    { resource: "bill_pay.invoice", action: "review" },
+    { resource: "bill_pay.invoice", action: "approve" },
+]);

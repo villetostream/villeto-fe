@@ -90,8 +90,8 @@ function ActionCell({ role }: { role: Role }) {
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     
     const { user } = useAuthStore();
-    const isCurrentUserOwner = (user?.companyRole?.name || (user as any)?.villetoRole?.name)?.toLowerCase() === "owner";
-    const isTargetOwner = role.name?.toLowerCase() === "owner";
+    const isCurrentUserOwner = (user?.companyRole?.templateKey || (user as any)?.villetoRole?.templateKey) === "owner";
+    const isTargetOwner = role.templateKey === "owner";
     const hasAssignedUsers = Number(role.totalAssignedUsers) > 0;
     
     const canUpdate = !isTargetOwner || isCurrentUserOwner;
@@ -127,7 +127,7 @@ function ActionCell({ role }: { role: Role }) {
                         </Link>
                     </DropdownMenuItem>
                     
-                    <PermissionGuard resource="role" action="manage">
+                    <PermissionGuard anyOf={["role.manage"]}>
                         {canUpdate ? (
                             <DropdownMenuItem asChild>
                                 <Link 
@@ -158,7 +158,7 @@ function ActionCell({ role }: { role: Role }) {
 
                     <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
                     
-                    <PermissionGuard resource="role" action="manage">
+                    <PermissionGuard anyOf={["role.manage"]}>
                         {canDelete ? (
                             <DropdownMenuItem 
                                 className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"

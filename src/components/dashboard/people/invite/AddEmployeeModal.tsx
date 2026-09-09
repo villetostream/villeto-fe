@@ -258,10 +258,10 @@ export function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
                 const parts = msg.split(': ');
                 let rawError = parts.length > 1 ? parts[1] : parts[0];
                 rawError = rawError.charAt(0).toUpperCase() + rawError.slice(1);
-                return rawError.replace(/_/g, ' ');
+                return rawError.replace(/_/g, ' ').replace(' in this file or company', ' in the company');
             }).join(" • ");
         }
-        return String(msgData || "Validation failed");
+        return String(msgData || "Validation failed").replace(' in this file or company', ' in the company');
     };
 
     const handleInitialSubmit = async () => {
@@ -286,7 +286,7 @@ export function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
                 const hardErrors = errors.filter((e: any) => !e.message.toLowerCase().includes("duplicate") && !e.message.toLowerCase().includes("already belongs"));
 
                 if (hardErrors.length > 0) {
-                    setValidationError(hardErrors[0].message);
+                    setValidationError(hardErrors[0].message.replace(' in this file or company', ' in the company'));
                 } else if (hasDuplicates) {
                     setDuplicateMode(true);
                 } else {

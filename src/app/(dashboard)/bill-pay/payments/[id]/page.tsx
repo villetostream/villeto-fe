@@ -16,7 +16,9 @@ import { format } from "date-fns";
 
 type PaymentStatus = "Draft" | "Awaiting Authorization" | "Paid";
 
-export default function PaymentSetupPage() {
+import withPermissions from "@/components/permissions/permission-protected-routes";
+
+function PaymentSetupPage() {
   const router = useRouter();
   const params = useParams();
   const paymentId = (params?.id as string) || "INV-2024";
@@ -367,3 +369,8 @@ export default function PaymentSetupPage() {
     </div>
   );
 }
+
+export default withPermissions(PaymentSetupPage, [
+    { resource: "bill_pay.payment", action: "initiate" },
+    { resource: "bill_pay.payment", action: "schedule" },
+]);

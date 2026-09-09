@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { scheduleTokenRefresh } from "@/lib/tokenRefreshService";
 import { getEffectiveCompanyPermissions } from "@/features/auth/role-access";
+import { logoutAndRedirect } from "@/lib/logout";
 
 const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -131,26 +132,14 @@ export function useAxios(): AxiosInstance {
               return instance(originalRequest);
             } catch (refreshError) {
               processQueue(refreshError, null);
-              useAuthStore.getState().logout();
-              if (
-                typeof window !== "undefined" &&
-                !window.location.pathname.startsWith("/login")
-              ) {
-                window.location.href = "/login";
-              }
+              logoutAndRedirect();
               return Promise.reject(refreshError);
             } finally {
               isRefreshing = false;
             }
           } else {
             // We already retried and still got 401, or something else is wrong.
-            useAuthStore.getState().logout();
-            if (
-              typeof window !== "undefined" &&
-              !window.location.pathname.startsWith("/login")
-            ) {
-              window.location.href = "/login";
-            }
+            logoutAndRedirect();
             return Promise.reject(error);
           }
         }

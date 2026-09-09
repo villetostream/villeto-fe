@@ -25,7 +25,8 @@ import VilletoSetupGuide from "@/components/tour/VilletoSetupGuide";
 import { useTourStore } from "@/stores/useTourStore";
 import { ChatPortal } from "@/components/chat";
 import { SplashScreen } from "@/components/ui/splash-screen";
-import { getEffectiveCompanyPermissions } from "@/features/auth/role-access";
+import { AUTHORIZATION_FOCUS_MAX_AGE_MS, parseAuthorizationSnapshot } from "@/features/auth/authorization";
+import { logoutAndRedirect } from "@/lib/logout";
 
 function subscribe() {
   return () => {};
@@ -83,20 +84,19 @@ export default function DashboardLayoutContent({
           userData.status === "deleted" ||
           userData.deletedAt
         ) {
-          useAuthStore.getState().logout();
-          window.location.href = "/login";
+          logoutAndRedirect();
           return;
         }
 
         const currentUser = useAuthStore.getState().user;
+        const authorization = parseAuthorizationSnapshot(responseData.authorization);
         login({
           ...currentUser,
           ...userData,
           companyId: companyId || userData.companyId || currentUser?.companyId,
+          authorization,
         } as User);
       }
-
-      setCompanyPermissions(getEffectiveCompanyPermissions(responseData));
     } catch {
       // Silently handle — user session may still be valid
     } finally {
@@ -113,8 +113,7 @@ export default function DashboardLayoutContent({
     if (isLoading) return;
 
     if (!user) {
-      logout();
-      window.location.href = "/login";
+      logoutAndRedirect();
       return;
     }
 
@@ -124,7 +123,11 @@ export default function DashboardLayoutContent({
     // Re-check permissions every 2 min so admin role changes propagate without re-login.
     // Using refreshRef so this never causes the effect to re-run when the function identity changes.
     const interval = setInterval(() => refreshRef.current(), 2 * 60 * 1000);
-    const handleFocus = () => refreshRef.current();
+    const handleFocus = () => {
+      if (useAuthStore.getState().isAuthorizationStale(AUTHORIZATION_FOCUS_MAX_AGE_MS)) {
+        refreshRef.current();
+      }
+    };
     window.addEventListener("focus", handleFocus);
 
     return () => {
