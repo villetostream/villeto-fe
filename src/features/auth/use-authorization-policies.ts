@@ -6,5 +6,5 @@ import { buildAuthorizationPolicies } from "./policies";
 
 export function useAuthorizationPolicies() {
   const authorization = useAuthStore((state) => state.authorization);
-  return useMemo(() => buildAuthorizationPolicies(authorization), [authorization]);
+  return useMemo(() => buildAuthorizationPolicies(authorization ?? null), [authorization]);
 }

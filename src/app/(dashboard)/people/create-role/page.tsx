@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Loader2, Plus, ShieldAlert } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -10,8 +10,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import SuccessModal from "@/components/modals/SuccessModal";
+
+import { roleSchema } from "@/lib/schemas/schemas";
+import type { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+
+import { useCreateRoleApi } from "@/queries/role/create-role";
+import { useUpdateRoleApi } from "@/queries/role/update-role";
+import { useUpdateRoleCapabilitiesApi } from "@/queries/role/update-role-capabilities";
+import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
+import { useGetARoleApi } from "@/queries/role/get-a-role";
+import type { CapabilityGroup, Role, RoleCapabilityInput } from "@/queries/role/get-all-roles";
+import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
+import { useLegalEntities } from "@/queries/legal-entities";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/shared/lib/query/keys";
+import { useAuthStore } from "@/stores/auth-stores";
+import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/types/api-error";
+
 import withPermissions from "@/components/permissions/permission-protected-routes";
+import SuccessModal from "@/components/modals/SuccessModal";
 import { RoleCapabilityEditor } from "@/components/dashboard/people/role/RoleCapabilityEditor";
 import {
   capabilitiesEqual,
@@ -19,23 +40,6 @@ import {
   newlySelectedSensitiveCapabilities,
   normalizeCapabilities,
 } from "@/features/auth/role-capability-form";
-import { getApiErrorMessage } from "@/lib/types/api-error";
-import { roleSchema } from "@/lib/schemas/schemas";
-import { logger } from "@/lib/logger";
-import { useCreateRoleApi } from "@/queries/role/create-role";
-import { useGetARoleApi } from "@/queries/role/get-a-role";
-import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
-import type { CapabilityGroup, Role, RoleCapabilityInput } from "@/queries/role/get-all-roles";
-import { useUpdateRoleApi } from "@/queries/role/update-role";
-import { useUpdateRoleCapabilitiesApi } from "@/queries/role/update-role-capabilities";
-
-interface RoleDetails {
-  name: string;
-  description: string;
-  isActive: boolean;
-}
-
-const EMPTY_DETAILS: RoleDetails = { name: "", description: "", isActive: true };
 
 function RoleEditorForm({
   roleId,
@@ -48,17 +52,20 @@ function RoleEditorForm({
 }) {
   const router = useRouter();
   const isEditMode = Boolean(roleId);
-  const [initialDetails] = useState<RoleDetails>(() => role
-    ? {
-        name: role.name ?? "",
-        description: role.description ?? "",
-        isActive: role.isActive === true || role.isActive === "Active",
-      }
-    : EMPTY_DETAILS);
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const isCurrentUserOwner = (user?.companyRole?.templateKey || (user as any)?.villetoRole?.templateKey) === "owner";
+  
+  const { data: departmentsData } = useGetAllDepartmentsApi();
+  const { data: legalEntitiesData } = useLegalEntities({ enabled: true });
+  
+  const departments = useMemo(() => departmentsData?.data || [], [departmentsData]);
+  const legalEntities = useMemo(() => legalEntitiesData?.data || [], [legalEntitiesData]);
+
   const [initialCapabilities] = useState<RoleCapabilityInput[]>(() =>
     capabilitiesFromRole(role?.selectedCapabilities, catalog),
   );
-  const [details, setDetails] = useState<RoleDetails>(initialDetails);
+  
   const [capabilities, setCapabilities] = useState<RoleCapabilityInput[]>(initialCapabilities);
   const [confirmedSensitiveAccess, setConfirmedSensitiveAccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -67,27 +74,69 @@ function RoleEditorForm({
   const updateRole = useUpdateRoleApi();
   const updateCapabilities = useUpdateRoleCapabilitiesApi();
 
-  const metadataChanged = JSON.stringify(details) !== JSON.stringify(initialDetails);
+  const {
+    register,
+    formState: { errors, isDirty },
+    getValues,
+    reset,
+    control,
+  } = useForm<z.input<typeof roleSchema>>({
+    resolver: zodResolver(roleSchema),
+    defaultValues: {
+      name: role?.name ?? "",
+      description: role?.description ?? "",
+      isActive: role?.isActive === true || role?.isActive === "Active",
+    },
+  });
+
+  const formValues = useWatch({ control });
+
   const capabilitiesChanged = !capabilitiesEqual(capabilities, initialCapabilities);
-  const hasChanges = !isEditMode || metadataChanged || capabilitiesChanged;
+  const hasChanges = !isEditMode || isDirty || capabilitiesChanged;
+  
   const newlySensitiveKeys = useMemo(
     () => newlySelectedSensitiveCapabilities(initialCapabilities, capabilities, catalog),
     [capabilities, catalog, initialCapabilities],
   );
+  
   const isSaving = createRole.isPending || updateRole.isPending || updateCapabilities.isPending;
 
+  // Unsaved changes guard
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = "";
+        }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
+
   const handleCancel = () => {
+    if (hasChanges && !window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        return;
+    }
     const returnPath = sessionStorage.getItem("rolesReturnPath");
     sessionStorage.removeItem("rolesReturnPath");
     router.push(returnPath || "/people?tab=roles");
   };
 
-  const handleSubmit = async () => {
-    const validation = roleSchema.safeParse(details);
-    if (!validation.success) {
-      toast.error(validation.error.issues[0]?.message ?? "Please review the role details.");
-      return;
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.roles });
+    if (roleId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.role(roleId) });
     }
+    
+    if (!isEditMode) {
+        reset({});
+        handleCancel();
+    }
+  };
+
+  const handleSubmit = async () => {
+    const data = getValues();
     if (newlySensitiveKeys.length && !confirmedSensitiveAccess) {
       toast.error("Confirm the sensitive capabilities before saving this role.");
       return;
@@ -95,8 +144,8 @@ function RoleEditorForm({
 
     try {
       if (roleId) {
-        if (metadataChanged) {
-          await updateRole.mutateAsync({ id: roleId, data: details });
+        if (isDirty) {
+          await updateRole.mutateAsync({ id: roleId, data });
         }
         if (capabilitiesChanged) {
           await updateCapabilities.mutateAsync({
@@ -106,11 +155,13 @@ function RoleEditorForm({
         }
       } else {
         await createRole.mutateAsync({
-          name: details.name.trim(),
-          description: details.description.trim() || undefined,
+          name: data.name.trim(),
+          description: data.description?.trim() || undefined,
           capabilities: normalizeCapabilities(capabilities),
         });
       }
+      
+      reset(getValues());
       setShowSuccessModal(true);
     } catch (error: unknown) {
       logger.error("Error saving role", error);
@@ -118,52 +169,60 @@ function RoleEditorForm({
     }
   };
 
+  const isTargetOwner = role?.templateKey === "owner";
+  const blockedFromEditing = isTargetOwner && !isCurrentUserOwner;
+
   return (
     <div className="p-6">
       <div className="grid grid-cols-1 items-start gap-12 md:grid-cols-[300px_1fr]">
         <aside className="sticky top-6 h-fit space-y-8">
-          <h1 className="text-[24px] font-bold text-[#0b100e]">Roles and access</h1>
-          <div className="flex w-full items-center justify-between rounded-[14px] border border-[#0ea894]/25 bg-[#e7f6f2]/30 p-4 text-[#087f70]">
+          <h1 className="text-[24px] font-bold text-[#0b100e]">Roles and Permissions</h1>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between rounded-[14px] border border-[#0ea894]/25 bg-[#e7f6f2]/30 hover:bg-[#e7f6f2]/50 transition-colors p-4 text-[#087f70]"
+          >
             <div className="flex items-center gap-3">
               <Plus className="size-5" />
-              <span className="text-[15px] font-semibold">{isEditMode ? "Edit role" : "Add new role"}</span>
+              <span className="text-[15px] font-semibold">{isEditMode ? "Edit Role" : "Add New Role"}</span>
             </div>
             <ChevronRight className="size-5" />
-          </div>
-          <div className="rounded-xl border border-black/[0.08] bg-white p-4 text-[12px] text-[#66706b]">
-            <p className="font-semibold text-[#303834]">How access works</p>
-            <p className="mt-1">Capabilities describe a job outcome. Scope controls which company records the role can reach. Backend authorization remains the final enforcement point.</p>
+          </button>
+          <div className="bg-white rounded-[16px] border border-black/[0.06] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <h3 className="text-[13px] font-bold text-[#0b100e] mb-2">How access works</h3>
+            <p className="text-[12.5px] text-[#68726d] leading-relaxed">
+              Each capability describes what someone can do (e.g. view invoices, approve purchases). The scope controls whose data they can see — just their own, their team&apos;s, or the entire company.
+            </p>
           </div>
         </aside>
 
         <main className="max-w-3xl space-y-8">
-          <section className="space-y-5">
-            <h2 className="text-[20px] font-bold text-[#0b100e]">{isEditMode ? "Role details" : "Describe the new role"}</h2>
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
+            <h2 className="text-[20px] font-bold text-[#0b100e]">Describe {isEditMode ? "" : "New "}Role</h2>
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[13px] font-semibold">Role name<span className="text-red-500">*</span></Label>
+              <Label htmlFor="name" className="text-[13px] font-semibold text-[#0b100e]">Role Name<span className="text-red-500">*</span></Label>
               <Input
                 id="name"
-                value={details.name}
-                onChange={(event) => setDetails((current) => ({ ...current, name: event.target.value }))}
+                {...register("name")}
                 placeholder="e.g. Procurement Manager"
-                className="h-[46px] rounded-[10px] border-black/[0.1] text-[13px]"
+                className="h-[46px] rounded-[10px] border-black/[0.1] text-[13px] focus-visible:ring-[#0ea894]"
               />
+              {errors.name && <p className="text-[12px] text-red-500">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="description" className="text-[13px] font-semibold">Description</Label>
               <Textarea
                 id="description"
-                value={details.description}
-                onChange={(event) => setDetails((current) => ({ ...current, description: event.target.value }))}
+                {...register("description")}
                 placeholder="Describe who should receive this role"
-                className="min-h-[96px] resize-none rounded-[10px] border-black/[0.1] text-[13px]"
+                className="min-h-[96px] resize-none rounded-[10px] border-black/[0.1] text-[13px] focus-visible:ring-[#0ea894]"
               />
+              {errors.description && <p className="text-[12px] text-red-500">{errors.description.message}</p>}
             </div>
             {isEditMode && (
               <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-black/[0.08] bg-white p-4">
                 <Checkbox
-                  checked={details.isActive}
-                  onCheckedChange={(checked) => setDetails((current) => ({ ...current, isActive: checked === true }))}
+                  checked={formValues.isActive}
+                  onCheckedChange={(checked) => reset({ ...getValues(), isActive: checked === true })}
                 />
                 <span>
                   <span className="block text-[13px] font-semibold text-[#303834]">Role is active</span>
@@ -171,12 +230,11 @@ function RoleEditorForm({
                 </span>
               </label>
             )}
-          </section>
+          </form>
 
           <section className="space-y-4">
             <div>
-              <h2 className="text-[20px] font-bold text-[#0b100e]">Assign capabilities</h2>
-              <p className="mt-1 text-[12px] text-[#66706b]">Select complete workflows and choose the narrowest scope the role needs.</p>
+              <h2 className="text-[20px] font-bold text-[#0b100e]">Choose what this role can do</h2>
             </div>
             <RoleCapabilityEditor
               catalog={catalog}
@@ -185,6 +243,9 @@ function RoleEditorForm({
                 setCapabilities(next);
                 setConfirmedSensitiveAccess(false);
               }}
+              departments={departments}
+              legalEntities={legalEntities}
+              isEditDisabled={blockedFromEditing}
             />
           </section>
 
@@ -202,25 +263,35 @@ function RoleEditorForm({
             </Alert>
           )}
 
-          <div className="sticky bottom-0 z-20 flex justify-end gap-4 border-t border-black/[0.08] bg-[#f4f7f5] py-5">
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
-            <Button
-              type="button"
-              className="min-w-36 bg-[#0ea894] text-white hover:bg-[#0c9785]"
-              disabled={isSaving || !hasChanges}
-              onClick={handleSubmit}
-            >
-              {isSaving ? "Saving…" : isEditMode ? "Update role" : "Create role"}
-            </Button>
+          <div className="sticky bottom-0 pb-6 pt-4 mt-8 bg-[#f4f7f5] border-t border-black/[0.08] flex justify-end gap-4 z-20 after:absolute after:top-full after:left-0 after:right-0 after:h-[100px] after:bg-[#f4f7f5]">
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving} className="px-8 h-[46px] rounded-[10px]">Cancel</Button>
+            
+            {blockedFromEditing ? (
+              <div className="flex items-center gap-3">
+                  <span className="text-sm text-red-500 font-medium">Only Owners can modify this role</span>
+                  <Button type="button" disabled className="px-12 h-[46px] rounded-[10px] bg-[#0ea894] text-white opacity-50">
+                      Update role
+                  </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="px-12 h-[46px] rounded-[10px] text-[13px] font-semibold bg-[#0ea894] hover:bg-[#0c9785] text-white shadow-[0_8px_20px_-10px_rgba(14,168,148,0.7)] hover:translate-y-[-1px] transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
+                disabled={isSaving || !hasChanges}
+                onClick={handleSubmit}
+              >
+                {isSaving ? "Saving…" : isEditMode ? "Update role" : "Create role"}
+              </Button>
+            )}
           </div>
         </main>
       </div>
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={handleCancel}
+        onClose={handleSuccessClose}
         title={`Role ${isEditMode ? "Updated" : "Created"} Successfully`}
-        description={details.name}
+        description={getValues().name}
       />
     </div>
   );
@@ -235,9 +306,12 @@ function CreateRolePage() {
 
   if (capabilityCatalog.isLoading || (isEditMode && roleQuery.isLoading)) {
     return (
-      <div className="flex items-center justify-center gap-3 p-24 text-[#84908a]">
-        <Loader2 className="size-7 animate-spin text-[#0ea894]" />
-        <span className="text-sm font-medium">Loading role configuration…</span>
+      <div className="p-6">
+        <h1 className="text-[24px] font-bold text-[#0b100e] mb-8">Roles and Permissions</h1>
+        <div className="flex items-center justify-center py-32 text-[#84908a] gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-[#0ea894]" />
+            <span className="text-[13px] font-medium">Loading role configuration...</span>
+        </div>
       </div>
     );
   }

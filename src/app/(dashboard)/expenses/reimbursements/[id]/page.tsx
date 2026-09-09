@@ -60,7 +60,7 @@ interface Step {
   pending?: boolean;
 }
 
-function buildSteps(status: ReportStatus, report: typeof unsortedReimbursements[0]): Step[] {
+function buildSteps(status: ReportStatus, report: any): Step[] {
   const createdDone  = true;
   const managerDone  = ["approved", "paid", "rejected", "declined"].includes(status);
   const paymentDone  = status === "paid";
@@ -185,7 +185,7 @@ function ReimbursementDetailPage() {
   const axiosInstance = useAxios();
 
   const reportId = Number(params.id);
-  const report = unsortedReimbursements.find((r) => r.id === reportId);
+  const report = undefined as any;
 
   // Local status override — swapped in when API isn't ready yet
   const [localStatus, setLocalStatus] = useState<ReportStatus | null>(null);

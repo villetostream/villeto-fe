@@ -189,7 +189,7 @@ export const columns = (
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
-                            <PermissionGuard anyOf={["user.manage"]}>
+                            <PermissionGuard anyOf={["user.manage", "user.directory.read"]}>
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
                                     onClick={() => onViewProfile(data.row.original.userId)}

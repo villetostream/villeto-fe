@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Filter, MoreHorizontal, FileText, CheckCircle2, XCircle, Banknote, Clock } from "lucide-react";
-import { unsortedReimbursements } from "@/lib/mock-data";
 import { getStatusIcon } from "@/lib/helper";
 import { PageLoader } from "@/components/PageLoader/PageLoader";
 import type { PersonalExpenseStatus } from "@/components/expenses/table/personalColumns";
@@ -68,34 +67,13 @@ function ReimbursementsPage() {
   const [perPage, setPerPage] = useState(10);
 
   // Stats
-  const pendingCount = unsortedReimbursements.filter(
-    (r) => r.status === "pending"
-  ).length;
-  const approvedCount = unsortedReimbursements.filter(
-    (r) => r.status === "approved"
-  ).length;
-  const rejectedCount = unsortedReimbursements.filter((r) =>
-    ["rejected", "declined"].includes(r.status)
-  ).length;
-  const totalPayout = unsortedReimbursements
-    .filter((r) => ["approved", "paid"].includes(r.status))
-    .reduce((sum, r) => sum + r.amount, 0);
+  const pendingCount = 0;
+  const approvedCount = 0;
+  const rejectedCount = 0;
+  const totalPayout = 0;
 
   // Filter rows
-  const filtered = unsortedReimbursements.filter((r) => {
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "rejected"
-        ? ["rejected", "declined"].includes(r.status)
-        : r.status === activeTab);
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      r.employee.toLowerCase().includes(q) ||
-      r.category.toLowerCase().includes(q) ||
-      r.description.toLowerCase().includes(q);
-    return matchesTab && matchesSearch;
-  });
+  const filtered: any[] = [];
 
   const tabs: { key: TabStatus; label: string }[] = [
     { key: "all", label: "All" },
@@ -221,7 +199,7 @@ function ReimbursementsPage() {
                   paginated.map((r) => {
                     const initials = r.employee
                       .split(" ")
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join("")
                       .toUpperCase()
                       .slice(0, 2);

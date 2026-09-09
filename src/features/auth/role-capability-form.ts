@@ -60,7 +60,7 @@ export function selectCapability(
   if (group.isBaseCapability || capabilities.some((item) => item.key === group.key)) {
     return capabilities;
   }
-  return [...capabilities, { key: group.key, scopeType: group.defaultScope }];
+  return [...capabilities, { key: group.key, scopeType: group.defaultScope || "company" }];
 }
 
 export function removeCapability(

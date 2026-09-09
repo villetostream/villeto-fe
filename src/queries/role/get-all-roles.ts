@@ -41,12 +41,14 @@ export interface RoleCapabilityInput {
 export interface SelectedRoleCapability extends RoleCapabilityInput {
     name: string;
     module: string;
+    description?: string;
     riskLevel: CapabilityRiskLevel;
 }
 
 export interface ImpliedRoleCapability extends RoleCapabilityInput {
     name: string;
     module: string;
+    description?: string;
 }
 
 export interface CapabilityGroup {
@@ -57,12 +59,12 @@ export interface CapabilityGroup {
     module: string;
     sortOrder: number;
     isActive: boolean;
-    supportedScopes: CapabilityScopeType[];
-    defaultScope: CapabilityScopeType;
-    riskLevel: CapabilityRiskLevel;
-    isBaseCapability: boolean;
-    scopePermissions: Partial<Record<CapabilityScopeType, string[]>>;
-    requiredCapabilityKeys: string[];
+    supportedScopes?: CapabilityScopeType[];
+    defaultScope?: CapabilityScopeType;
+    riskLevel?: CapabilityRiskLevel;
+    isBaseCapability?: boolean;
+    scopePermissions?: Partial<Record<CapabilityScopeType, string[]>>;
+    requiredCapabilityKeys?: string[];
     permissions: CapabilityGroupPermission[];
 }
 

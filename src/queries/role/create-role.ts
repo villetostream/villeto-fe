@@ -16,7 +16,7 @@ export const useCreateRoleApi = () => {
 
     return useMutation<Response, Error, CreateRolePayload>({
         retry: false,
-        mutationFn: async (payload) => {
+        mutationFn: async (payload: CreateRolePayload) => {
             const res = await axiosInstance.post(API_KEYS.ROLE.ROLES, payload);
             return res.data;
         },

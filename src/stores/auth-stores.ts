@@ -28,7 +28,7 @@ interface AuthState {
     user: User | null;
     accessToken: string | null;
     isLoading: boolean;
-
+    
     /** The single server-produced source of truth for client-side access UX. */
     authorization: AuthorizationSnapshot | null;
     authorizationFetchedAt: number | null;
@@ -199,4 +199,4 @@ export const useCapabilityScopes = (capabilityKey: string): CapabilityScopeType[
     useAuthStore((state) => state.scopesFor(capabilityKey));
 
 /** Display role only; role names must never be used for authorization. */
-export const useUserRole = () => useAuthStore((state) => state.user?.villetoRole);
+export const useUserRole = () => useAuthStore((state) => state.user?.companyRole || state.user?.villetoRole);

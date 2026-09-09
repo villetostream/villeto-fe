@@ -20,7 +20,6 @@ declare module "axios" {
     _retry?: boolean;
   }
 }
-
 type ApiErrorPayload = {
   message?: unknown;
   error?: unknown;

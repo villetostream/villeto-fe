@@ -9,7 +9,7 @@
 
 import type { Role } from '@/features/people/types';
 
-// ─── Authorization Snapshot ─────────────────────────────────────────────────
+// ─── Authorization Snapshot ───────────────────────────────────────────────────
 
 export type CapabilityScopeType =
     | 'own'

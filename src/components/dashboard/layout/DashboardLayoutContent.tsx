@@ -29,6 +29,7 @@ import {
   AUTHORIZATION_INVALIDATED_EVENT,
   parseAuthorizationSnapshot,
 } from "@/features/auth/authorization";
+import { logoutAndRedirect } from "@/lib/logout";
 
 function subscribe() {
   return () => {};
@@ -85,8 +86,7 @@ export default function DashboardLayoutContent({
           userData.status === "deleted" ||
           userData.deletedAt
         ) {
-          useAuthStore.getState().logout();
-          window.location.href = "/login";
+          logoutAndRedirect();
           return;
         }
 
@@ -115,38 +115,33 @@ export default function DashboardLayoutContent({
     if (isLoading) return;
 
     if (!user) {
-      logout();
-      window.location.href = "/login";
+      logoutAndRedirect();
       return;
     }
 
     // Initial fetch on mount
     refreshRef.current();
 
+    // Re-check permissions every 2 min so admin role changes propagate without re-login.
+    const interval = setInterval(() => { void refreshRef.current(); }, 2 * 60 * 1000);
+
     const handleFocus = () => {
-      if (
-        useAuthStore
-          .getState()
-          .isAuthorizationStale(AUTHORIZATION_FOCUS_MAX_AGE_MS)
-      ) {
+      if (useAuthStore.getState().isAuthorizationStale(AUTHORIZATION_FOCUS_MAX_AGE_MS)) {
         void refreshRef.current();
       }
     };
+
     const handleAuthorizationInvalidated = () => {
       void refreshRef.current();
     };
+
     window.addEventListener("focus", handleFocus);
-    window.addEventListener(
-      AUTHORIZATION_INVALIDATED_EVENT,
-      handleAuthorizationInvalidated,
-    );
+    window.addEventListener(AUTHORIZATION_INVALIDATED_EVENT, handleAuthorizationInvalidated);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
-      window.removeEventListener(
-        AUTHORIZATION_INVALIDATED_EVENT,
-        handleAuthorizationInvalidated,
-      );
+      window.removeEventListener(AUTHORIZATION_INVALIDATED_EVENT, handleAuthorizationInvalidated);
     };
   // Intentionally only isLoading: runs once after hydration.
   // Adding user/router here would create an infinite loop because refreshUserAndPermissions

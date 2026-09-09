@@ -31,7 +31,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   const can = useAuthStore((state) => state.can);
   const canAny = useAuthStore((state) => state.canAny);
   const canAll = useAuthStore((state) => state.canAll);
-  useAuthStore((state) => state.authorization?.revision);
+  useAuthStore((state) => state.authorization?.revision); // trigger re-render
 
   const requirements: boolean[] = [];
 

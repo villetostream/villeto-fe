@@ -2,47 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, UserCog, UserCheck } from "lucide-react";
+import { Users, UserCog, UserCheck } from "lucide-react";
 import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryTab";
-import { DepartmentsTab } from "@/components/dashboard/people/depts/DepartmentTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
 import { useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
-import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
 import { useGetAllRolesApi } from "@/queries/role/get-all-roles";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { InviteEmployeesWarningModal } from "@/components/dashboard/people/modals/InviteEmployeesWarningModal";
 import { AddEmployeeModal } from "@/components/dashboard/people/invite/AddEmployeeModal";
 import { useHeaderActionStore } from "@/stores/useHeaderActionStore";
 import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
+import { asRecord, isRecord, pickString } from "@/lib/types/api-error";
 
 function People() {
     const policies = useAuthorizationPolicies();
-    const { canManageUsers, canViewDepartments, canViewRoles, canViewUsers: canReadDirectory } = policies.people;
+    const { canManageUsers, canViewRoles, canViewUsers: canReadDirectory, canManageRoles } = policies.people;
 
     const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1 } });
     const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1, status: "Active" } });
     
-    // useGetAllDepartmentsApi and useGetAllRolesApi are called here at page level
-    // so their cache is warm before UserProfileModal opens (which gates them on isOpen).
-    const deptsApi     = useGetAllDepartmentsApi({ enabled: canViewDepartments });
     const rolesApi     = useGetAllRolesApi({ limit: 50 }, { enabled: canViewRoles });
     const directoryApi = useGetDirectoryUsersApi({ enabled: canReadDirectory, params: { status: "all" } });
 
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
     const hasDirectoryData    = directoryTotalCount > 0;
 
-    const uniqueDeptCount = deptsApi?.data?.meta?.totalCount || "0";
-
     const statCards = [
         ...(canManageUsers ? [
             { icon: Users, label: "Total Users", value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users", bgColor: "#384A57" },
             { icon: UserCheck, label: "Active Users", value: activeInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Currently active members", bgColor: "#0FA68E" },
         ] : []),
-        ...(canViewDepartments ? [{ icon: Building2, label: "Departments", value: uniqueDeptCount, description: "View Departments", bgColor: "#5A67D8" }] : []),
         ...(canViewRoles ? [{ icon: UserCog, label: "Roles", value: rolesApi?.data?.meta?.totalCount || "0", description: "View Roles", bgColor: "#418341" }] : []),
     ];
 
@@ -54,16 +47,15 @@ function People() {
         ? "all-users"
         : canReadDirectory
             ? "directory"
-            : canViewDepartments
-                ? "departments"
-                : "roles";
+            : "roles";
+            
     const activeTab =
         (requestedTab === "all-users" && canManageUsers) ||
         (requestedTab === "directory" && canReadDirectory) ||
-        (requestedTab === "departments" && canViewDepartments) ||
         (requestedTab === "roles" && canViewRoles)
             ? requestedTab
             : fallbackTab;
+            
     const setActiveTab = (tab: string) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab);
@@ -75,7 +67,6 @@ function People() {
 
     // Register dynamic header CTA button
     const { setAction, clearAction } = useHeaderActionStore();
-    const canManageRoles = policies.people.canManageRoles;
 
     // Register the correct header button per tab
     useEffect(() => {
@@ -144,21 +135,12 @@ function People() {
             } else {
                 clearAction();
             }
-        } else if (activeTab === "departments") {
-            if (policies.people.canManageDepartments) {
-                setAction({
-                    label: "Add Department",
-                    onClick: () => router.push("/people/add-department"),
-                });
-            } else {
-                clearAction();
-            }
         } else {
             clearAction();
         }
 
         return () => clearAction();
-    }, [activeTab, setAction, clearAction, router, canManageRoles, canManageUsers, policies.people.canManageDepartments]);
+    }, [activeTab, setAction, clearAction, router, canManageRoles, canManageUsers]);
 
     return (
         <div className="flex flex-col space-y-6 h-full pb-2">
@@ -171,7 +153,6 @@ function People() {
                             value={stat.value}
                             isLoading={
                                 stat.label === "Total Users"  ? totalInvitedUsersApi.isLoading :
-                                stat.label === "Departments"  ? deptsApi.isLoading :
                                 stat.label === "Roles"        ? rolesApi.isLoading : false
                             }
                             accentColor={stat.bgColor}
@@ -203,14 +184,6 @@ function People() {
                                         Roles
                                     </TabsTrigger>
                                 </PermissionGuard>
-                                <PermissionGuard anyOf={["department.read_company", "department.manage"]}>
-                                    <TabsTrigger
-                                        value="departments"
-                                        className="data-[state=active]:bg-white data-[state=active]:text-[#0b100e] data-[state=active]:shadow-sm text-[#68726d] rounded-[6px] px-5 text-[13px] font-semibold h-full"
-                                    >
-                                        Departments
-                                    </TabsTrigger>
-                                </PermissionGuard>
                                 <PermissionGuard anyOf={["user.directory.read", "user.manage"]}>
                                     <TabsTrigger
                                         value="directory"
@@ -234,12 +207,6 @@ function People() {
                         {canViewRoles && (
                             <TabsContent value="roles" className="mt-2 flex-1 min-h-0 flex flex-col">
                                 <RolesTab />
-                            </TabsContent>
-                        )}
-
-                        {canViewDepartments && (
-                            <TabsContent value="departments" className="mt-2 flex-1 min-h-0 flex flex-col">
-                                <DepartmentsTab />
                             </TabsContent>
                         )}
     
@@ -276,9 +243,7 @@ function People() {
     }
     
     export default withPermissions(People, [
-        { resource: "user", action: "manage" },
         { resource: "user.directory", action: "read" },
-        { resource: "role", action: "manage" },
-        { resource: "department", action: "manage" },
-        { resource: "department", action: "read_company" }
+        { resource: "user", action: "manage" },
+        { resource: "role", action: "manage" }
     ]);

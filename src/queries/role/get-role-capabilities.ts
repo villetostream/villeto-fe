@@ -38,9 +38,9 @@ export const useGetAllRoleCapabilitiesApi = (
         queryKey: ["role-capabilities-all"],
         queryFn: async () => {
             const response = await axiosInstance.get<Response>(API_KEYS.ROLE.ROLES_CAPABILITY_CATALOG);
-            return response.data.data ?? [];
+            return (response.data.data as CapabilityGroup[]) ?? [];
         },
         staleTime: STALE_TIMES.STATIC,
-        enabled,
+        enabled: !!enabled,
     });
 };

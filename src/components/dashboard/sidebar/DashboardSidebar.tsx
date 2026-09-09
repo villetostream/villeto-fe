@@ -43,6 +43,7 @@ import { useGetPurchaseRequests } from "@/queries/procurement/purchase-requests"
 import { usePurchaseOrders } from "@/queries/procurement/purchase-orders";
 import { useCompanyExpenses } from "@/lib/react-query/expenses";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { logoutAndRedirect } from "@/lib/logout";
 import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 
 function CollapsedNavTooltip({
@@ -581,8 +582,7 @@ export function DashboardSidebar({ isProfileLoading = false }: { isProfileLoadin
             <AlertDialogAction
               className="rounded-[8px] bg-red-500 hover:bg-red-600 text-white text-[13px]"
               onClick={() => {
-                logout();
-                window.location.href = "/login";
+                logoutAndRedirect();
               }}
             >
               Log Out

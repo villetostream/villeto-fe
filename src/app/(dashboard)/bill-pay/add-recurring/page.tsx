@@ -345,5 +345,5 @@ function AddRecurringBillPage() {
 }
 
 export default withPermissions(AddRecurringBillPage, [
-  { resource: "bill_pay.invoice", action: "create" },
+    { resource: "bill_pay.invoice", action: "create" },
 ]);

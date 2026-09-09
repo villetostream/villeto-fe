@@ -377,6 +377,6 @@ function AddBillPage() {
 }
 
 export default withPermissions(AddBillPage, [
-  { resource: "bill_pay.intake", action: "create" },
-  { resource: "bill_pay.invoice", action: "create" },
+    { resource: "bill_pay.invoice", action: "create" },
+    { resource: "bill_pay.intake", action: "create" },
 ]);
