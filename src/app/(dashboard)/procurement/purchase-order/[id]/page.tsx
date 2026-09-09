@@ -1010,4 +1010,3 @@ export default withPermissions(PODetailPage, [
   { resource: "procurement.purchase_order", action: "read_department" },
   { resource: "procurement.purchase_order", action: "read_company" },
 ]);
-

@@ -35,7 +35,7 @@ export const columns = [
     columnHelper.accessor("manager", {
         header: "REPORTS TO",
         cell: (info) => {
-            const manager: any = info.getValue();
+            const manager = info.getValue();
             const managerName = manager ? `${manager?.firstName || ""} ${manager?.lastName || ""}`.trim() : "-";
             return <p className="capitalize">{managerName}</p>;
         },
@@ -63,7 +63,7 @@ export const columns = [
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-none shadow-lg">
-                            <PermissionGuard anyOf={["department.read_company", "department.manage"]}>
+                            <PermissionGuard resource="department" action="read_company">
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#F0FDF4] text-[#475467]"
                                     onClick={() => logger.log("View department:", data.row.original.departmentId)}
@@ -75,7 +75,7 @@ export const columns = [
                             
                             <div className="h-[1px] bg-[#F2F4F7] my-1 mx-2" />
                             
-                            <PermissionGuard anyOf={["department.manage"]}>
+                            <PermissionGuard resource="department" action="manage">
                                 <DropdownMenuItem 
                                     className="flex items-center gap-3 py-3 px-4 rounded-lg cursor-pointer hover:bg-[#FEF2F2] text-[#B42318]"
                                     onClick={() => logger.log("Deactivate department:", data.row.original.departmentId)}

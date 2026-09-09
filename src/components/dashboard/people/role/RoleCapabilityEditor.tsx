@@ -25,7 +25,6 @@ import {
   removeCapability,
   changeCapabilityScope,
   toggleScopeResource,
-  newlySelectedSensitiveCapabilities,
 } from "@/features/auth/role-capability-form";
 import { cn, formatPermissionName } from "@/lib/utils";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
@@ -69,7 +68,38 @@ export function RoleCapabilityEditor({
   isEditDisabled = false,
 }: RoleCapabilityEditorProps) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
-  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+  
+  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(() => {
+    const mods = new Set<string>();
+    for (const group of catalog) {
+      mods.add(group.module);
+    }
+    const sortedModNames = Array.from(mods).sort((a, b) => a.localeCompare(b));
+    
+    const valueSet = new Set(value.map(v => v.key));
+    const collapsed = new Set<string>();
+    
+    // We consider it "Edit Mode" if they have any explicit capabilities selected
+    const hasAnySelection = value.length > 0;
+    
+    sortedModNames.forEach((modName, index) => {
+      if (hasAnySelection) {
+        // Edit mode: Expand if it has selected capabilities, otherwise collapse
+        const hasSelectionInModule = catalog.some(g => g.module === modName && valueSet.has(g.key));
+        if (!hasSelectionInModule) {
+          collapsed.add(modName);
+        }
+      } else {
+        // Create mode: Expand ONLY the first module
+        if (index > 0) {
+          collapsed.add(modName);
+        }
+      }
+    });
+    
+    return collapsed;
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingSensitiveGroup, setPendingSensitiveGroup] = useState<CapabilityGroup | null>(null);
 
@@ -204,7 +234,7 @@ export function RoleCapabilityEditor({
                     const currentValue = valueByKey.get(group.key);
                     const isExpanded = expandedKeys.has(group.key);
                     const risk = group.riskLevel || "standard";
-                    const riskStyles = RISK_CONFIG[risk];
+                    const riskStyles = RISK_CONFIG[risk as keyof typeof RISK_CONFIG] || RISK_CONFIG.standard;
 
                     return (
                       <div

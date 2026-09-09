@@ -13,6 +13,7 @@ import type { PurchaseRequest } from "@/queries/procurement/purchase-requests";
 
 import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
 import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -135,7 +136,6 @@ function RejectModal({
 function PRActionMenu({
   pr,
   canApprove,
-  canConvert,
   onApprove,
   onReject,
   onConvert,
@@ -143,7 +143,6 @@ function PRActionMenu({
 }: {
   pr: PurchaseRequest;
   canApprove: boolean;
-  canConvert: boolean;
   onApprove: () => void;
   onReject: () => void;
   onConvert?: () => void;
@@ -164,7 +163,7 @@ function PRActionMenu({
 
   const showApprove = canApprove && pr.currentUserActionRequired && pr.status === "submitted";
   const showReject  = canApprove && pr.currentUserActionRequired && pr.status === "submitted";
-  const showConvert = canConvert && pr.status === "approved";
+  const showConvert = !!onConvert && pr.status === "approved";
 
   if (!showApprove && !showReject && !showConvert) {
     // Read-only eye button
@@ -327,9 +326,9 @@ function PRTable({
   const router         = useRouter();
   const showRequester  = scope !== "own";
 
-  const can         = useAuthStore(s => s.can);
-  const canApprove  = scope !== "own" && can("procurement.purchase_request", "approve");
-  const canConvert  = scope !== "own" && can("procurement.purchase_request", "convert_to_po");
+  const policies    = useAuthorizationPolicies();
+  const canApprove  = scope !== "own" && policies.purchaseRequests.canApprove;
+  const canConvert  = scope !== "own" && policies.purchaseRequests.canConvertToPurchaseOrder;
 
   const statusTabs  = scope === "own"
     ? OWN_STATUS_TABS
@@ -392,7 +391,7 @@ function PRTable({
   const requiresMyConversion = isActionTab && activeTabCfg?.actionType === "convert";
 
   const user        = useAuthStore(s => s.user);
-  const canChangeDept = can("department", "manage") || can("procurement.purchase_request", "manage");
+  const canChangeDept = policies.people.canManageDepartments;
   const { data: deptData } = useGetAllDepartmentsApi({ enabled: canChangeDept });
   const departments = deptData?.data || [];
 
@@ -694,7 +693,6 @@ function PRTable({
                       <PRActionMenu
                         pr={pr}
                         canApprove={canApprove}
-                        canConvert={canConvert}
                         onView={() => router.push(`/procurement/purchase-request/${pr.purchaseRequestId}?outerTab=${scope}&innerTab=${activeTab}`)}
                         onApprove={() => handleApproveRow(pr.purchaseRequestId)}
                         onReject={() => setRejectTarget(pr.purchaseRequestId)}
@@ -736,10 +734,9 @@ function PurchaseRequestPage() {
   const router                   = useRouter();
   const searchParams             = useSearchParams();
   const { setAction, clearAction } = useHeaderActionStore();
-  const can                      = useAuthStore(s => s.can);
-
-  const hasTeamScope    = can("procurement.purchase_request", "read_department");
-  const hasCompanyScope = can("procurement.purchase_request", "read_company");
+  const policies                 = useAuthorizationPolicies();
+  const hasTeamScope    = policies.purchaseRequests.listScope === "team" || policies.purchaseRequests.listScope === "company";
+  const hasCompanyScope = policies.purchaseRequests.listScope === "company";
 
   // Build outer tab list based on permissions
   const tabs = [
@@ -758,9 +755,13 @@ function PurchaseRequestPage() {
   const innerTabFromUrl = searchParams.get("innerTab") ?? undefined;
 
   useEffect(() => {
-    setAction({ label: "Create Request", onClick: () => router.push("/procurement/purchase-request/new") });
+    if (policies.purchaseRequests.canCreate) {
+      setAction({ label: "Create Request", onClick: () => router.push("/procurement/purchase-request/new") });
+    } else {
+      clearAction();
+    }
     return () => clearAction();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clearAction, policies.purchaseRequests.canCreate, router, setAction]);
 
   // Single outer tab — no outer switcher
   if (tabs.length === 1) {

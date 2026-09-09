@@ -15,6 +15,7 @@ import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { ProcurementPolicyCheckModal } from "@/components/procurement/ProcurementPolicyCheckModal";
 import { format } from "date-fns";
 import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 import { useAxios } from "@/hooks/useAxios";
 import { PROCUREMENT_KEYS } from "@/lib/constants/apis";
 import {
@@ -607,8 +608,7 @@ function EditHeaderModal({ pr, onClose, onSave, loading, departments }: {
   loading: boolean;
   departments: { label: string; value: string }[];
 }) {
-  const can = useAuthStore(s => s.can);
-  const canChangeDept = can("procurement.purchase_request", "manage") || can("department", "manage");
+  const canChangeDept = useAuthorizationPolicies().people.canManageDepartments;
 
   const [title, setTitle] = useState(pr.title);
   const [description, setDescription] = useState(pr.description || "");
@@ -1276,7 +1276,7 @@ function PRDetailPage() {
   const id           = params.id as string;
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const can          = useAuthStore(s => s.can);
+  const policies     = useAuthorizationPolicies();
   const user         = useAuthStore(s => s.user);
   const axiosInstance = useAxios();
 
@@ -1284,8 +1284,8 @@ function PRDetailPage() {
   // A user could manually type ?scope=company to try to elevate their view.
   // We re-validate the requested scope against the same permission gates used
   // on the list page before honouring it.
-  const hasTeamScopePermission    = can("procurement.purchase_request", "read_department");
-  const hasCompanyScopePermission = can("procurement.purchase_request", "read_company");
+  const hasTeamScopePermission    = policies.purchaseRequests.listScope === "team" || policies.purchaseRequests.listScope === "company";
+  const hasCompanyScopePermission = policies.purchaseRequests.listScope === "company";
   const rawScope  = searchParams.get("scope") || searchParams.get("outerTab") || "own";
   const scope = (
     rawScope === "company" && hasCompanyScopePermission ? "company" :
@@ -1307,9 +1307,9 @@ function PRDetailPage() {
   const rejectPR = useRejectPurchaseRequest(id);
   const convertToPO = useConvertToPO(id);
   const deletePR = useDeletePurchaseRequest(id);
-  const canChangeDept = can("procurement.purchase_request", "manage") || can("department", "manage");
+  const canChangeDept = policies.people.canManageDepartments;
   const { data: deptData } = useGetAllDepartmentsApi({ enabled: canChangeDept });
-  const canCreatePOAccess = can("procurement.purchase_request", "convert_to_po") || can("procurement.purchase_order", "create");
+  const canCreatePOAccess = policies.purchaseRequests.canConvertToPurchaseOrder;
   const { data: vendorData } = useGetVendors({ enabled: canCreatePOAccess });
   const { data: catData } = useGetProcurementCategories();
 
@@ -1367,19 +1367,18 @@ function PRDetailPage() {
   const isOwnRequest = !!user?.userId && !!pr?.requesterId && user.userId === pr.requesterId;
 
   // Edit/manage own draft — only meaningful on own scope
-  const canEdit   = isOwnRequest && isDraft && can("procurement.purchase_request", "update_own_draft");
-  const canSubmit = isOwnRequest && isDraft && (pr?.lineItems?.length || 0) > 0 && can("procurement.purchase_request", "submit");
+  const canEdit   = isOwnRequest && isDraft && policies.purchaseRequests.canUpdateOwnDraft;
+  const canDelete = isOwnRequest && isDraft && policies.purchaseRequests.canDeleteOwnDraft;
+  const canSubmit = isOwnRequest && isDraft && (pr?.lineItems?.length || 0) > 0 && policies.purchaseRequests.canSubmit;
 
   // Approve/Reject base permission
-  const hasApprovePermission = can("procurement.purchase_request", "approve") ||
-    can("procurement.purchase_request", "approve_department") ||
-    can("procurement.purchase_request", "approve_company");
+  const hasApprovePermission = policies.purchaseRequests.canApprove;
 
   // Withdraw: owner can withdraw their own submitted or approved request. 
   // (Drafts cannot be withdrawn, and company scope overrides cannot withdraw).
-  const hasWithdrawPermission = can("procurement.purchase_request", "withdraw");
+  const hasWithdrawPermission = policies.purchaseRequests.canCancelOwn;
   const canWithdraw = (isSubmitted || isApproved) && (
-    (isOwnScope && isOwnRequest && (hasWithdrawPermission || can("procurement.purchase_request", "submit")))
+    isOwnScope && isOwnRequest && hasWithdrawPermission
   );
 
   // On own scope — never show approve/reject
@@ -1390,10 +1389,7 @@ function PRDetailPage() {
   const _canReject  = canApprove;
 
   // Create PO: available on team/company scope regardless of override state
-  const canCreatePO = !isOwnScope && isApproved && (
-    can("procurement.purchase_request", "convert_to_po") ||
-    can("procurement.purchase_order", "create")
-  );
+  const canCreatePO = !isOwnScope && isApproved && policies.purchaseRequests.canConvertToPurchaseOrder;
 
   // Whether to show the lock/unlock override banner.
   // Never show it on the requester's own request — there is nothing to override.
@@ -1835,7 +1831,7 @@ function PRDetailPage() {
             </div>
 
             {/* Action buttons — permission gated */}
-            {(canEdit || canSubmit || canApprove || canWithdraw || canCreatePO) && (
+            {(canEdit || canDelete || canSubmit || canApprove || canWithdraw || canCreatePO) && (
               <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
                 {canEdit && (
                   <>
@@ -1843,11 +1839,13 @@ function PRDetailPage() {
                       className="h-9 px-4 rounded-lg border border-black/[0.06] text-[#0b100e] text-sm font-medium hover:bg-[#f9faf9] transition-colors flex items-center gap-2">
                       <Pencil className="w-3.5 h-3.5" /> Edit Request
                     </button>
-                    <button onClick={() => setModal("delete_pr")}
-                      className="h-9 px-4 rounded-lg border border-[#d33d44]/20 text-[#d33d44] text-sm font-medium hover:bg-[#fff5f5] hover:border-red-300 transition-colors flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5" /> Delete Draft
-                    </button>
                   </>
+                )}
+                {canDelete && (
+                  <button onClick={() => setModal("delete_pr")}
+                    className="h-9 px-4 rounded-lg border border-[#d33d44]/20 text-[#d33d44] text-sm font-medium hover:bg-[#fff5f5] hover:border-red-300 transition-colors flex items-center gap-2">
+                    <Trash2 className="w-3.5 h-3.5" /> Delete Draft
+                  </button>
                 )}
                 {canSubmit && (
                   <button onClick={() => {

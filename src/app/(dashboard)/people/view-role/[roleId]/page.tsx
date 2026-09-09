@@ -1,8 +1,7 @@
-"use client"
+"use client";
 
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, ChevronRight, Edit2, ShieldCheck, Lock } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useGetARoleApi } from "@/queries/role/get-a-role";
 import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
@@ -18,6 +17,7 @@ import { useDeleteRoleApi } from "@/queries/role/delete-role";
 import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
 import { useLegalEntities } from "@/queries/legal-entities";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/types/api-error";
 
 const SCOPE_LABELS: Record<CapabilityScopeType, string> = {
   own: "Own",
@@ -184,8 +184,8 @@ function ViewRolePage() {
             toast.success("Role deleted successfully.");
             setDeleteModalOpen(false);
             router.push("/people?tab=roles");
-        } catch (_error) {
-            toast.error("Failed to delete the role.");
+        } catch (error: unknown) {
+            toast.error(getApiErrorMessage(error, "This role could not be deleted."));
             setDeleteModalOpen(false);
         }
     };
@@ -232,14 +232,12 @@ function ViewRolePage() {
         );
     }
 
-    const roleName = role.name?.replace(/_/g, ' ') || "Role";
+    const roleName = role.name?.replace(/_/g, " ") || "Role";
     const totalUsers = role.totalAssignedUsers || 0;
 
     const isViewedRoleOwner = role.templateKey === "owner";
     const isCurrentUserOwner = (currentUser?.companyRole?.templateKey || (currentUser as any)?.villetoRole?.templateKey) === "owner";
     const isEditDisabled = isViewedRoleOwner && !isCurrentUserOwner;
-
-
 
     return (
         <div className="p-3 sm:p-5 lg:p-6 pt-0 sm:pt-0 lg:pt-0 space-y-6">
@@ -247,7 +245,7 @@ function ViewRolePage() {
                 <h1 className="text-2xl font-semibold">Role details</h1>
                 
                 <div className="flex items-center gap-3 shrink-0">
-                    <PermissionGuard anyOf={["role.manage"]}>
+                    <PermissionGuard resource="role" action="manage">
                         <Button
                             variant="destructive"
                             size="sm"
@@ -259,7 +257,7 @@ function ViewRolePage() {
                         </Button>
                     </PermissionGuard>
 
-                    <PermissionGuard anyOf={["role.manage"]}>
+                    <PermissionGuard resource="role" action="manage">
                         <Button
                             variant="outline"
                             size="sm"
@@ -364,8 +362,8 @@ function ViewRolePage() {
                         </>
                     ) : (
                         <div className="border border-dashed border-black/[0.08] rounded-[12px] p-10 text-center bg-white">
-                            <p className="text-[13px] text-[#84908a] mb-4">No capabilities assigned to this role.</p>
-                            <PermissionGuard anyOf={["role.manage"]}>
+                            <p className="text-[13px] text-[#84908a] mb-4">No optional capabilities selected.</p>
+                            <PermissionGuard resource="role" action="manage">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -397,4 +395,6 @@ function ViewRolePage() {
     );
 }
 
-export default withPermissions(ViewRolePage, [{ resource: "user", action: "manage" }, { resource: "user", action: "read" }]);
+export default withPermissions(ViewRolePage, [
+  { resource: "role", action: "manage" }
+]);

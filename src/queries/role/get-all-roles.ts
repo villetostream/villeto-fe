@@ -1,4 +1,5 @@
 import { UseQueryOptions, UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { AxiosInstance } from "axios";
 import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import { QUERY_KEYS } from "@/shared/lib/query/keys";
@@ -122,7 +123,7 @@ export interface GetRolesParams {
  * Fetches a paginated list of all roles.
  * GET /roles?page=1&limit=20
  */
-async function fetchAllRolesLoop(axiosInstance: any, apiUrl: string, page: number, limit: number) {
+async function fetchAllRolesLoop(axiosInstance: AxiosInstance, apiUrl: string, page: number, limit: number) {
     if (limit !== 1000) {
         const response = await axiosInstance.get(apiUrl);
         return response.data;

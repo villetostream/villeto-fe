@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AppUser } from "@/queries/departments/get-all-departments";
 import { logger } from "@/lib/logger";
-import { isRecord } from "@/lib/types/api-error";
 
 import {
     DropdownMenu,
@@ -13,11 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Close as PopoverClose } from "@radix-ui/react-popover";
-import { Eye, Lock, MoreHorizontal, UserCheck, Mail, X } from "lucide-react";
+import { Eye, Lock, MoreHorizontal, Mail, X } from "lucide-react";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import { useAuthStore } from "@/stores/auth-stores";
-
-
 
 
 function formatName(value: string | null | undefined): string {
@@ -171,7 +168,6 @@ export const columns = (
         cell: (info) => {
             const status = info.getValue() as string;
             // Status is a string: "Active" or "Inactive"
-            const isActive = status?.toLowerCase() === "active";
             const statusText = status?.toLowerCase() || "inactive";
             return <StatusBadge status={statusText} />;
         },

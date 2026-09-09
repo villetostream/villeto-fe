@@ -3,19 +3,25 @@
 import Link from "next/link";
 import { ArrowRight, CalendarClock, CircleCheck, FileText, PackageCheck, Plus, ShoppingCart, Truck, Users } from "lucide-react";
 import { ProcurementMetric, ProcurementSection, ProcurementWorkspaceHeader } from "@/components/procurement/ProcurementWorkspace";
-import { useAuthStore } from "@/stores/auth-stores";
 import { useGetPurchaseRequests } from "@/queries/procurement/purchase-requests";
 import { usePurchaseOrders } from "@/queries/procurement/purchase-orders";
 import withPermissions from "@/components/permissions/permission-protected-routes";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 
 const money = (value: number, code = "USD") => new Intl.NumberFormat(undefined, { style: "currency", currency: code, maximumFractionDigits: 0 }).format(value);
 
 function ProcurementOverviewPage() {
-  const can = useAuthStore((state) => state.can);
-  const prScope = can("procurement.purchase_request", "read_company") ? "company" : can("procurement.purchase_request", "read_department") ? "team" : "own";
-  const poScope = can("procurement.purchase_order", "read_company") ? "company" : can("procurement.purchase_order", "read_department") ? "team" : "own";
-  const { data: prResponse, isLoading: loadingPr } = useGetPurchaseRequests({ scope: prScope, page: 1, limit: 100 });
-  const { data: poResponse, isLoading: loadingPo } = usePurchaseOrders(1, 100, undefined, undefined, undefined, poScope);
+  const policies = useAuthorizationPolicies();
+  const prScope = policies.purchaseRequests.listScope ?? "own";
+  const poScope = policies.purchaseOrders.listScope ?? "own";
+  const { data: prResponse, isLoading: loadingPr } = useGetPurchaseRequests(
+    { scope: prScope, page: 1, limit: 100 },
+    { enabled: policies.purchaseRequests.canView },
+  );
+  const { data: poResponse, isLoading: loadingPo } = usePurchaseOrders(
+    1, 100, undefined, undefined, undefined, poScope,
+    { enabled: policies.purchaseOrders.canView },
+  );
   const requests = prResponse?.data || [];
   const orders = poResponse?.data || [];
   const currency = requests[0]?.currency || orders[0]?.currency || "USD";
@@ -27,7 +33,7 @@ function ProcurementOverviewPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      <ProcurementWorkspaceHeader title="Control spend before it happens." description="Move every request from business need to approved order and confirmed delivery—with ownership, entity, and currency controls visible at every step." action={{ label: "Create request", href: "/procurement/purchase-request/new" }} />
+      <ProcurementWorkspaceHeader title="Control spend before it happens." description="Move every request from business need to approved order and confirmed delivery—with ownership, entity, and currency controls visible at every step." action={policies.purchaseRequests.canCreate ? { label: "Create request", href: "/procurement/purchase-request/new" } : undefined} />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <ProcurementMetric label="Requests awaiting action" value={approvals.length} detail="Submitted into approval" icon={<CalendarClock className="size-4" />} tone="amber" isLoading={loadingPr || loadingPo} />
         <ProcurementMetric label="Ready for conversion" value={conversion.length} detail="Approved requests without a PO" icon={<CircleCheck className="size-4" />} isLoading={loadingPr || loadingPo} />
@@ -47,9 +53,9 @@ function ProcurementOverviewPage() {
 
         <ProcurementSection title="Start something" description="Create or configure the next step">
           <div className="space-y-2 p-4">
-            <ActionLink href="/procurement/purchase-request/new" icon={<Plus />} title="Create a purchase request" detail="Capture a business need and route it" />
-            <ActionLink href="/procurement/purchase-order/new" icon={<ShoppingCart />} title="Create a direct PO" detail="Order without converting a request" />
-            <ActionLink href="/vendors" icon={<Users />} title="Manage suppliers" detail="Review readiness and onboarding" />
+            {policies.purchaseRequests.canCreate && <ActionLink href="/procurement/purchase-request/new" icon={<Plus />} title="Create a purchase request" detail="Capture a business need and route it" />}
+            {policies.purchaseOrders.canCreate && <ActionLink href="/procurement/purchase-order/new" icon={<ShoppingCart />} title="Create a direct PO" detail="Order without converting a request" />}
+            {policies.vendors.canViewSensitive && <ActionLink href="/vendors" icon={<Users />} title="Manage suppliers" detail="Review readiness and onboarding" />}
           </div>
         </ProcurementSection>
       </div>
@@ -76,4 +82,7 @@ export default withPermissions(ProcurementOverviewPage, [
   { resource: "procurement.purchase_request", action: "read_own" },
   { resource: "procurement.purchase_request", action: "read_department" },
   { resource: "procurement.purchase_request", action: "read_company" },
+  { resource: "procurement.purchase_order", action: "read_own" },
+  { resource: "procurement.purchase_order", action: "read_department" },
+  { resource: "procurement.purchase_order", action: "read_company" },
 ]);

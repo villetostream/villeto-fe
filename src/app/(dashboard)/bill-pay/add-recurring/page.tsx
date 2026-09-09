@@ -13,6 +13,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 import { useEffect } from "react";
 import { useHeaderBackStore } from "@/stores/useHeaderBackStore";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 function formatNumberInput(value: string) {
   let numeric = value.replace(/[^0-9.]/g, '');
@@ -23,7 +24,6 @@ function formatNumberInput(value: string) {
   const formattedInt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return dec !== undefined ? `${formattedInt}.${dec}` : formattedInt;
 }
-import withPermissions from "@/components/permissions/permission-protected-routes";
 
 function AddRecurringBillPage() {
   const router = useRouter();

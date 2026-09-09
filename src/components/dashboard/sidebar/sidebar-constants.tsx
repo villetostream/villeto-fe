@@ -64,13 +64,22 @@ export const navigationItems: NavItem[] = [
     icon: <HugeiconsIcon icon={MoneySendSquareFreeIcons} />,
     label: "Expenses",
     href: "/expenses",
-    permissions: [], // Always visible — personal tab is the minimum
+    permissions: [
+      { resource: "expense.report", action: "read_own" },
+      { resource: "expense.report", action: "read_department" },
+      { resource: "expense.report", action: "read_company" },
+      { resource: "expense.report", action: "create" },
+    ],
     section: "MAIN MENU",
     subItems: [
       {
         label: "All Expenses",
         href: "/expenses",
-        permissions: [],
+        permissions: [
+          { resource: "expense.report", action: "read_own" },
+          { resource: "expense.report", action: "read_department" },
+          { resource: "expense.report", action: "read_company" },
+        ],
       },
       {
         label: "Card Transactions",
@@ -81,7 +90,7 @@ export const navigationItems: NavItem[] = [
       {
         label: "Reimbursements",
         href: "/expenses/reimbursements",
-        permissions: [],
+        permissions: [{ resource: "expense.report", action: "read_own" }],
       },
       {
         label: "Travel",
@@ -312,4 +321,3 @@ export const navigationItems: NavItem[] = [
     ],
   },
 ];
-

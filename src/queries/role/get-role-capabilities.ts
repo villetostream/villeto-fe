@@ -10,11 +10,8 @@ interface Response {
     status: number;
 }
 
-export const SUPPORTED_MODULES = ["expense", "procurement", "company", "vendor", "policy", "department"] as const;
-export type SupportedModule = typeof SUPPORTED_MODULES[number];
-
 export const useGetRoleCapabilitiesApi = (
-    module: SupportedModule,
+    module: string,
     options?: Omit<UseQueryOptions<Response, Error>, "queryKey" | "queryFn">
 ): UseQueryResult<Response, Error> => {
     const axiosInstance = useAxios();

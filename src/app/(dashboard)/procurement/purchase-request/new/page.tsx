@@ -14,6 +14,7 @@ import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { useAuthStore } from "@/stores/auth-stores";
+import { useAuthorizationPolicies } from "@/features/auth/use-authorization-policies";
 import {
   useCreatePurchaseRequest,
   useAddLineItem,
@@ -442,10 +443,7 @@ function NewPurchaseRequestPage() {
   // need to raise a request on behalf of another department) see the
   // department dropdown. All other requesters get their own department
   // auto-filled (read-only) from their login/profile record.
-  const can = useAuthStore(s => s.can);
-  const canChangeDept =
-    can("procurement.purchase_request", "convert_to_po") ||
-    can("procurement.purchase_order", "create");
+  const canChangeDept = useAuthorizationPolicies().people.canManageDepartments;
 
   // Step state
   const [step, setStep] = useState<1 | 2>(1);

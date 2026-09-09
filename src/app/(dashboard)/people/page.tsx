@@ -1,16 +1,15 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, UserCog, UserCheck } from "lucide-react";
+import { Users, UserCog, UserCheck } from "lucide-react";
 import { AllUsersTab } from "@/components/dashboard/people/users/AllUsersTab";
 import { RolesTab } from "@/components/dashboard/people/role/RoleTab";
 import { DirectoryTab } from "@/components/dashboard/people/directory/DirectoryTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import PermissionGuard from "@/components/permissions/permission-protected-components";
 import withPermissions from "@/components/permissions/permission-protected-routes";
-import { useGetAllUsersApi, useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
-import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
+import { useGetDirectoryUsersApi, useGetInvitedUsersApi } from "@/queries/users/get-all-users";
 import { useGetAllRolesApi } from "@/queries/role/get-all-roles";
 import { StatsCard } from "@/components/dashboard/landing/StatCard";
 import { InviteEmployeesWarningModal } from "@/components/dashboard/people/modals/InviteEmployeesWarningModal";
@@ -21,35 +20,42 @@ import { asRecord, isRecord, pickString } from "@/lib/types/api-error";
 
 function People() {
     const policies = useAuthorizationPolicies();
-    const canReadUsers      = policies.people.canViewUsers;
-    const canReadDepts      = policies.people.canViewDepartments;
-    const canReadRoles      = policies.people.canViewRoles;
-    const canManageUsers    = policies.people.canManageUsers;
+    const { canManageUsers, canViewRoles, canViewUsers: canReadDirectory, canManageRoles } = policies.people;
 
-    const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1 } });
-    const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canReadUsers, params: { limit: 1, status: "Active" } });
+    const totalInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1 } });
+    const activeInvitedUsersApi = useGetInvitedUsersApi({ enabled: canManageUsers, params: { limit: 1, status: "Active" } });
     
-    // useGetAllDepartmentsApi and useGetAllRolesApi are called here at page level
-    // so their cache is warm before UserProfileModal opens (which gates them on isOpen).
-    const deptsApi     = useGetAllDepartmentsApi({ enabled: canReadDepts });
-    const rolesApi     = useGetAllRolesApi({ limit: 50 }, { enabled: canReadRoles });
-    const directoryApi = useGetDirectoryUsersApi({ enabled: canReadUsers, params: { status: "all" } });
+    const rolesApi     = useGetAllRolesApi({ limit: 50 }, { enabled: canViewRoles });
+    const directoryApi = useGetDirectoryUsersApi({ enabled: canReadDirectory, params: { status: "all" } });
 
     const directoryTotalCount = directoryApi?.data?.meta?.totalCount ?? 0;
     const hasDirectoryData    = directoryTotalCount > 0;
 
-    const uniqueDeptCount = deptsApi?.data?.meta?.totalCount || "0";
-
     const statCards = [
-        { icon: Users,     label: "Total Users",   value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users",   bgColor: "#384A57" },
-        { icon: UserCheck, label: "Active Users",  value: activeInvitedUsersApi?.data?.meta?.totalCount || "0",                          description: "Currently active members",  bgColor: "#0FA68E" },
-        { icon: UserCog,   label: "Roles",         value: rolesApi?.data?.meta?.totalCount || "0",  description: "View Roles",                 bgColor: "#418341" },
+        ...(canManageUsers ? [
+            { icon: Users, label: "Total Users", value: totalInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Total registered users", bgColor: "#384A57" },
+            { icon: UserCheck, label: "Active Users", value: activeInvitedUsersApi?.data?.meta?.totalCount || "0", description: "Currently active members", bgColor: "#0FA68E" },
+        ] : []),
+        ...(canViewRoles ? [{ icon: UserCog, label: "Roles", value: rolesApi?.data?.meta?.totalCount || "0", description: "View Roles", bgColor: "#418341" }] : []),
     ];
 
     const searchParams = useSearchParams();
     const router       = useRouter();
 
-    const activeTab = searchParams.get("tab") || "all-users";
+    const requestedTab = searchParams.get("tab");
+    const fallbackTab = canManageUsers
+        ? "all-users"
+        : canReadDirectory
+            ? "directory"
+            : "roles";
+            
+    const activeTab =
+        (requestedTab === "all-users" && canManageUsers) ||
+        (requestedTab === "directory" && canReadDirectory) ||
+        (requestedTab === "roles" && canViewRoles)
+            ? requestedTab
+            : fallbackTab;
+            
     const setActiveTab = (tab: string) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab);
@@ -84,7 +90,7 @@ function People() {
                 clearAction();
             }
         } else if (activeTab === "roles") {
-            if (policies.people.canManageRoles) {
+            if (canManageRoles) {
                 setAction({
                     label: "Create Role",
                     onClick: () => router.push("/people/create-role"),
@@ -134,7 +140,7 @@ function People() {
         }
 
         return () => clearAction();
-    }, [activeTab, setAction, clearAction, router, canManageUsers, policies.people]);
+    }, [activeTab, setAction, clearAction, router, canManageRoles, canManageUsers]);
 
     return (
         <div className="flex flex-col space-y-6 h-full pb-2">
@@ -162,7 +168,7 @@ function People() {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                         <TabsList className="bg-[#f5f7f6] p-1 h-10 rounded-[10px] inline-flex border border-black/[0.05]">
-                                <PermissionGuard anyOf={["user.manage", "user.directory.read"]}>
+                                <PermissionGuard anyOf={["user.manage"]}>
                                     <TabsTrigger
                                         value="all-users"
                                         className="data-[state=active]:bg-white data-[state=active]:text-[#0b100e] data-[state=active]:shadow-sm text-[#68726d] rounded-[6px] px-5 text-[13px] font-semibold h-full"
@@ -178,7 +184,7 @@ function People() {
                                         Roles
                                     </TabsTrigger>
                                 </PermissionGuard>
-                                <PermissionGuard anyOf={["user.manage", "user.directory.read"]}>
+                                <PermissionGuard anyOf={["user.directory.read", "user.manage"]}>
                                     <TabsTrigger
                                         value="directory"
                                         data-tour="directory-tab"
@@ -192,17 +198,23 @@ function People() {
                             <div id="tab-actions" className="flex items-center gap-2" />
                         </div>
     
-                        <TabsContent value="all-users" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <AllUsersTab />
-                        </TabsContent>
+                        {canManageUsers && (
+                            <TabsContent value="all-users" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <AllUsersTab />
+                            </TabsContent>
+                        )}
     
-                        <TabsContent value="roles" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <RolesTab />
-                        </TabsContent>
+                        {canViewRoles && (
+                            <TabsContent value="roles" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <RolesTab />
+                            </TabsContent>
+                        )}
     
-                        <TabsContent value="directory" className="mt-2 flex-1 min-h-0 flex flex-col">
-                            <DirectoryTab />
-                        </TabsContent>
+                        {canReadDirectory && (
+                            <TabsContent value="directory" className="mt-2 flex-1 min-h-0 flex flex-col">
+                                <DirectoryTab />
+                            </TabsContent>
+                        )}
                     </Tabs>
     
                 <InviteEmployeesWarningModal
@@ -233,7 +245,5 @@ function People() {
     export default withPermissions(People, [
         { resource: "user.directory", action: "read" },
         { resource: "user", action: "manage" },
-        { resource: "department", action: "manage" },
-        { resource: "department", action: "read_company" },
         { resource: "role", action: "manage" }
     ]);

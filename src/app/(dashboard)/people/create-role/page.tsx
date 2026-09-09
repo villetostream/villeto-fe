@@ -1,327 +1,341 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { logger } from "@/lib/logger";
-import { asRecord, getApiErrorMessage, getOptionalString, isRecord } from "@/lib/types/api-error";
-import { Plus, ChevronRight, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronRight, Loader2, Plus, ShieldAlert } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter, useSearchParams } from "next/navigation";
-import { roleSchema, type RoleFormData } from "@/lib/schemas/schemas";
+
+import { roleSchema } from "@/lib/schemas/schemas";
 import type { z } from "zod";
-import { useCreateRoleApi } from "@/queries/role/create-role";
-import { useUpdateRoleApi } from "@/queries/role/update-role";
-import { useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/shared/lib/query/keys";
-import { useUpdateRoleCapabilitiesApi } from "@/queries/role/update-role-capabilities";
-import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
-import { useLegalEntities } from "@/queries/legal-entities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
+
+import { useCreateRoleApi } from "@/queries/role/create-role";
+import { useUpdateRoleApi } from "@/queries/role/update-role";
+import { useUpdateRoleCapabilitiesApi } from "@/queries/role/update-role-capabilities";
+import { useGetAllRoleCapabilitiesApi } from "@/queries/role/get-role-capabilities";
 import { useGetARoleApi } from "@/queries/role/get-a-role";
-import { useGetAllRolesApi, type RoleCapabilityInput } from "@/queries/role/get-all-roles";
+import type { CapabilityGroup, Role, RoleCapabilityInput } from "@/queries/role/get-all-roles";
 import { useGetAllDepartmentsApi } from "@/queries/departments/get-all-departments";
-import toast from "react-hot-toast";
+import { useLegalEntities } from "@/queries/legal-entities";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/shared/lib/query/keys";
+import { useAuthStore } from "@/stores/auth-stores";
+import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/types/api-error";
+
 import withPermissions from "@/components/permissions/permission-protected-routes";
 import SuccessModal from "@/components/modals/SuccessModal";
-import { useAuthStore } from "@/stores/auth-stores";
 import { RoleCapabilityEditor } from "@/components/dashboard/people/role/RoleCapabilityEditor";
-import { capabilitiesFromRole, capabilitiesEqual } from "@/features/auth/role-capability-form";
+import {
+  capabilitiesEqual,
+  capabilitiesFromRole,
+  newlySelectedSensitiveCapabilities,
+  normalizeCapabilities,
+} from "@/features/auth/role-capability-form";
 
-function CreateRolePage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const roleId = searchParams.get("id");
-    const isEditMode = Boolean(roleId);
+function RoleEditorForm({
+  roleId,
+  role,
+  catalog,
+}: {
+  roleId: string | null;
+  role?: Role;
+  catalog: CapabilityGroup[];
+}) {
+  const router = useRouter();
+  const isEditMode = Boolean(roleId);
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const isCurrentUserOwner = (user?.companyRole?.templateKey || (user as any)?.villetoRole?.templateKey) === "owner";
+  
+  const { data: departmentsData } = useGetAllDepartmentsApi();
+  const { data: legalEntitiesData } = useLegalEntities({ enabled: true });
+  
+  const departments = useMemo(() => departmentsData?.data || [], [departmentsData]);
+  const legalEntities = useMemo(() => legalEntitiesData?.data || [], [legalEntitiesData]);
 
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    
-    const [selectedCapabilities, setSelectedCapabilities] = useState<RoleCapabilityInput[]>([]);
-    const [initialCapabilities, setInitialCapabilities] = useState<RoleCapabilityInput[]>([]);
+  const [initialCapabilities] = useState<RoleCapabilityInput[]>(() =>
+    capabilitiesFromRole(role?.selectedCapabilities, catalog),
+  );
+  
+  const [capabilities, setCapabilities] = useState<RoleCapabilityInput[]>(initialCapabilities);
+  const [confirmedSensitiveAccess, setConfirmedSensitiveAccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    const { user } = useAuthStore();
-    const isCurrentUserOwner = (user?.companyRole?.templateKey || (user as any)?.villetoRole?.templateKey) === "owner";
-    const queryClient = useQueryClient();
+  const createRole = useCreateRoleApi();
+  const updateRole = useUpdateRoleApi();
+  const updateCapabilities = useUpdateRoleCapabilitiesApi();
 
-    // Data fetching
-    const { data: allCapabilities, isLoading: capabilitiesLoading } = useGetAllRoleCapabilitiesApi(true);
-    const { data: departmentsData } = useGetAllDepartmentsApi();
-    const { data: legalEntitiesData } = useLegalEntities({ enabled: true });
-    
-    const departments = useMemo(() => departmentsData?.data || [], [departmentsData]);
-    const legalEntities = useMemo(() => legalEntitiesData?.data || [], [legalEntitiesData]);
+  const {
+    register,
+    formState: { errors, isDirty },
+    getValues,
+    reset,
+    control,
+  } = useForm<z.input<typeof roleSchema>>({
+    resolver: zodResolver(roleSchema),
+    defaultValues: {
+      name: role?.name ?? "",
+      description: role?.description ?? "",
+      isActive: role?.isActive === true || role?.isActive === "Active",
+    },
+  });
 
-    const createRoleMutation = useCreateRoleApi();
-    const updateRoleMutation = useUpdateRoleApi();
-    const updateCapabilitiesMutation = useUpdateRoleCapabilitiesApi();
-    const roleData = useGetARoleApi(roleId ?? "", { enabled: isEditMode });
+  const formValues = useWatch({ control });
 
-    // Form
-    const {
-        register,
-        formState: { errors, isDirty },
-        getValues,
-        reset,
-        control,
-    } = useForm<z.input<typeof roleSchema>>({
-        resolver: zodResolver(roleSchema),
-        defaultValues: { name: "", description: "", isActive: true },
-    });
+  const capabilitiesChanged = !capabilitiesEqual(capabilities, initialCapabilities);
+  const hasChanges = !isEditMode || isDirty || capabilitiesChanged;
+  
+  const newlySensitiveKeys = useMemo(
+    () => newlySelectedSensitiveCapabilities(initialCapabilities, capabilities, catalog),
+    [capabilities, catalog, initialCapabilities],
+  );
+  
+  const isSaving = createRole.isPending || updateRole.isPending || updateCapabilities.isPending;
 
-    const formValues = useWatch({ control });
-    
-    // Unsaved changes guard
-    const hasUnsavedChanges = isDirty || !capabilitiesEqual(selectedCapabilities, initialCapabilities);
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = "";
-            }
-        };
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, [hasUnsavedChanges]);
-
-    // Pre-fill form in edit mode
-    useEffect(() => {
-        if (roleData?.data && isEditMode && allCapabilities) {
-            const r = roleData.data.data;
-            reset({
-                description: r.description ?? "",
-                name: r.name ?? "",
-                isActive: r.isActive === true || r.isActive === "Active",
-            });
-            const loadedCapabilities = capabilitiesFromRole(r.selectedCapabilities, allCapabilities);
-            queueMicrotask(() => {
-                setSelectedCapabilities(loadedCapabilities);
-                setInitialCapabilities(loadedCapabilities);
-            });
-        }
-    }, [roleData?.data, isEditMode, reset, allCapabilities]);
-
-    const handleDirectSubmit = async () => {
-        const data = getValues();
-        if (!data.name?.trim()) { toast.error("Role name is required."); return; }
-
-        try {
-            if (isEditMode && roleId) {
-                if (isDirty) {
-                    await updateRoleMutation.mutateAsync({
-                        id: roleId,
-                        data: {
-                            name: data.name,
-                            isActive: data.isActive,
-                            description: data.description,
-                        }
-                    });
-                }
-                if (!capabilitiesEqual(selectedCapabilities, initialCapabilities)) {
-                    await updateCapabilitiesMutation.mutateAsync({
-                        roleId,
-                        capabilities: selectedCapabilities,
-                    });
-                }
-            } else {
-                const res = await createRoleMutation.mutateAsync({ 
-                    name: data.name,
-                    description: data.description,
-                    capabilities: selectedCapabilities,
-                });
-                const savedRoleId = getOptionalString(asRecord(isRecord(res) ? res.data : res).roleId) ?? null;
-                // create role mutation already sends capabilities, no need to update if it succeeded
-            }
-            
-            // reset pristine state so beforeunload guard passes
-            reset(getValues());
-            setInitialCapabilities(selectedCapabilities);
-            
-            toast.success(`Role ${isEditMode ? "updated" : "created"}!`);
-            setShowSuccessModal(true);
-        } catch (error: unknown) {
-            logger.error("Error submitting role:", error);
-            toast.error(getApiErrorMessage(error, "Something went wrong. Please try again."));
+  // Unsaved changes guard
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = "";
         }
     };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
 
-    const isLoading =
-        createRoleMutation.isPending ||
-        updateRoleMutation.isPending ||
-        updateCapabilitiesMutation.isPending;
+  const handleCancel = () => {
+    if (hasChanges && !window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        return;
+    }
+    const returnPath = sessionStorage.getItem("rolesReturnPath");
+    sessionStorage.removeItem("rolesReturnPath");
+    router.push(returnPath || "/people?tab=roles");
+  };
 
-    const handleCancel = () => {
-        if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
-            return;
-        }
-        
-        const returnPath = sessionStorage.getItem("rolesReturnPath");
-        if (returnPath) {
-            sessionStorage.removeItem("rolesReturnPath");
-            router.push(returnPath);
-        } else {
-            router.push("/people?tab=roles");
-        }
-    };
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.roles });
+    if (roleId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.role(roleId) });
+    }
+    
+    if (!isEditMode) {
+        reset({});
+        handleCancel();
+    }
+  };
 
-    const handleSuccessClose = () => {
-        setShowSuccessModal(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.roles });
-        if (roleId) {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.people.role(roleId) });
-        }
-        
-        if (!isEditMode) {
-            reset({});
-            handleCancel();
-        }
-    };
-
-    if (isEditMode && roleData.isLoading) {
-        return (
-            <div className="p-6">
-                <h1 className="text-[24px] font-bold text-[#0b100e] mb-8">Roles and Permissions</h1>
-                <div className="flex items-center justify-center py-32 text-[#84908a] gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#0ea894]" />
-                    <span className="text-[13px] font-medium">Loading role details...</span>
-                </div>
-            </div>
-        );
+  const handleSubmit = async () => {
+    const data = getValues();
+    if (newlySensitiveKeys.length && !confirmedSensitiveAccess) {
+      toast.error("Confirm the sensitive capabilities before saving this role.");
+      return;
     }
 
-    return (
-        <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-12 items-start">
-                <aside className="sticky top-6 space-y-8 h-fit">
-                    <h1 className="text-[24px] font-bold text-[#0b100e]">Roles and Permissions</h1>
-                    <button
-                        className="w-full flex items-center justify-between p-4 border border-[#0ea894]/25 rounded-[14px] text-[#087f70] bg-[#e7f6f2]/30 hover:bg-[#e7f6f2]/50 transition-colors"
-                        type="button"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Plus className="w-5 h-5" />
-                            <span className="font-semibold text-[15px]">{isEditMode ? "Edit Role" : "Add New Role"}</span>
-                        </div>
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
+    try {
+      if (roleId) {
+        if (isDirty) {
+          await updateRole.mutateAsync({ id: roleId, data });
+        }
+        if (capabilitiesChanged) {
+          await updateCapabilities.mutateAsync({
+            roleId,
+            capabilities: normalizeCapabilities(capabilities),
+          });
+        }
+      } else {
+        await createRole.mutateAsync({
+          name: data.name.trim(),
+          description: data.description?.trim() || undefined,
+          capabilities: normalizeCapabilities(capabilities),
+        });
+      }
+      
+      reset(getValues());
+      setShowSuccessModal(true);
+    } catch (error: unknown) {
+      logger.error("Error saving role", error);
+      toast.error(getApiErrorMessage(error, "The role could not be saved. Please try again."));
+    }
+  };
 
-                    <div className="bg-white rounded-[16px] border border-black/[0.06] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                        <h3 className="text-[13px] font-bold text-[#0b100e] mb-2">How access works</h3>
-                        <p className="text-[12.5px] text-[#68726d] leading-relaxed">
-                            Each capability describes what someone can do (e.g. view invoices, approve purchases). The scope controls whose data they can see — just their own, their team&apos;s, or the entire company.
-                        </p>
-                    </div>
-                </aside>
+  const isTargetOwner = role?.templateKey === "owner";
+  const blockedFromEditing = isTargetOwner && !isCurrentUserOwner;
 
-                <main className="max-w-2xl">
-                    <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-bold text-[#0b100e]">Describe {isEditMode ? "" : "New "}Role</h2>
-                            <div className="space-y-2">
-                                <Label htmlFor="name" className="text-[13px] font-semibold text-[#0b100e]">
-                                    Role Name<span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="name"
-                                    placeholder="Enter role name"
-                                    className="h-[46px] border-black/[0.1] rounded-[10px] text-[13px] focus-visible:ring-[#0ea894] placeholder:text-[#84908a]"
-                                    {...register("name")}
-                                />
-                                {errors.name && <p className="text-[12px] text-red-500">{errors.name.message}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="description" className="text-[13px] font-semibold text-[#0b100e]">
-                                    Description<span className="text-red-500">*</span>
-                                </Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="Describe role"
-                                    className="min-h-[100px] resize-none border-black/[0.1] rounded-[10px] text-[13px] focus-visible:ring-[#0ea894] placeholder:text-[#84908a]"
-                                    {...register("description")}
-                                />
-                                {errors.description && <p className="text-[12px] text-red-500">{errors.description.message}</p>}
-                            </div>
-                        </section>
-
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-bold text-[#0b100e]">Choose what this role can do</h2>
-                            
-                            {capabilitiesLoading ? (
-                                <div className="flex items-center justify-center py-12 gap-2 text-slate-400 border border-dashed border-black/[0.1] rounded-xl">
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span className="text-sm">Loading capabilities…</span>
-                                </div>
-                            ) : (
-                                <RoleCapabilityEditor
-                                    catalog={allCapabilities || []}
-                                    value={selectedCapabilities}
-                                    onChange={setSelectedCapabilities}
-                                    departments={departments}
-                                    legalEntities={legalEntities}
-                                    isEditDisabled={isEditMode && roleData?.data?.data?.templateKey === "owner" && !isCurrentUserOwner}
-                                />
-                            )}
-                        </section>
-
-                        <div className="sticky bottom-0 pb-6 pt-4 mt-8 bg-[#f4f7f5] border-t border-black/[0.08] flex justify-end gap-4 z-20 after:absolute after:top-full after:left-0 after:right-0 after:h-[100px] after:bg-[#f4f7f5]">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="px-8 h-[46px] rounded-[10px] text-[13px] font-semibold border-black/[0.1] text-[#303834] hover:bg-[#f5f7f6]"
-                                onClick={handleCancel}
-                                disabled={isLoading}
-                            >
-                                Cancel
-                            </Button>
-                            
-                            {(() => {
-                                const isTargetOwner = roleData?.data?.data?.templateKey === "owner";
-                                const blockedFromEditing = isTargetOwner && !isCurrentUserOwner;
-                                
-                                if (blockedFromEditing) {
-                                    return (
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm text-red-500 font-medium">Only Owners can modify this role</span>
-                                            <Button
-                                                type="button"
-                                                disabled
-                                                className="px-12 h-[46px] rounded-[10px] text-[13px] font-semibold bg-[#0ea894] hover:bg-[#0c9785] text-white opacity-50"
-                                            >
-                                                Update Role
-                                            </Button>
-                                        </div>
-                                    );
-                                }
-
-                                return (
-                                    <Button
-                                        type="button"
-                                        className="px-12 h-[46px] rounded-[10px] text-[13px] font-semibold bg-[#0ea894] hover:bg-[#0c9785] text-white shadow-[0_8px_20px_-10px_rgba(14,168,148,0.7)] hover:translate-y-[-1px] transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
-                                        disabled={isLoading || !hasUnsavedChanges}
-                                        onClick={handleDirectSubmit}
-                                    >
-                                        {isLoading
-                                            ? (isEditMode ? "Updating…" : "Creating…")
-                                            : (isEditMode ? "Update Role" : "Create Role")
-                                        }
-                                    </Button>
-                                );
-                            })()}
-                        </div>
-                    </form>
-                </main>
+  return (
+    <div className="p-6">
+      <div className="grid grid-cols-1 items-start gap-12 md:grid-cols-[300px_1fr]">
+        <aside className="sticky top-6 h-fit space-y-8">
+          <h1 className="text-[24px] font-bold text-[#0b100e]">Roles and Permissions</h1>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between rounded-[14px] border border-[#0ea894]/25 bg-[#e7f6f2]/30 hover:bg-[#e7f6f2]/50 transition-colors p-4 text-[#087f70]"
+          >
+            <div className="flex items-center gap-3">
+              <Plus className="size-5" />
+              <span className="text-[15px] font-semibold">{isEditMode ? "Edit Role" : "Add New Role"}</span>
             </div>
+            <ChevronRight className="size-5" />
+          </button>
+          <div className="bg-white rounded-[16px] border border-black/[0.06] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <h3 className="text-[13px] font-bold text-[#0b100e] mb-2">How access works</h3>
+            <p className="text-[12.5px] text-[#68726d] leading-relaxed">
+              Each capability describes what someone can do (e.g. view invoices, approve purchases). The scope controls whose data they can see — just their own, their team&apos;s, or the entire company.
+            </p>
+          </div>
+        </aside>
 
-            <SuccessModal
-                isOpen={showSuccessModal}
-                onClose={handleSuccessClose}
-                title={`Role ${isEditMode ? 'Updated' : 'Created'} Successfully`}
-                description={formValues.name || "Role"}
+        <main className="max-w-3xl space-y-8">
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
+            <h2 className="text-[20px] font-bold text-[#0b100e]">Describe {isEditMode ? "" : "New "}Role</h2>
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-[13px] font-semibold text-[#0b100e]">Role Name<span className="text-red-500">*</span></Label>
+              <Input
+                id="name"
+                {...register("name")}
+                placeholder="e.g. Procurement Manager"
+                className="h-[46px] rounded-[10px] border-black/[0.1] text-[13px] focus-visible:ring-[#0ea894]"
+              />
+              {errors.name && <p className="text-[12px] text-red-500">{errors.name.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-[13px] font-semibold">Description</Label>
+              <Textarea
+                id="description"
+                {...register("description")}
+                placeholder="Describe who should receive this role"
+                className="min-h-[96px] resize-none rounded-[10px] border-black/[0.1] text-[13px] focus-visible:ring-[#0ea894]"
+              />
+              {errors.description && <p className="text-[12px] text-red-500">{errors.description.message}</p>}
+            </div>
+            {isEditMode && (
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-black/[0.08] bg-white p-4">
+                <Checkbox
+                  checked={formValues.isActive}
+                  onCheckedChange={(checked) => reset({ ...getValues(), isActive: checked === true })}
+                />
+                <span>
+                  <span className="block text-[13px] font-semibold text-[#303834]">Role is active</span>
+                  <span className="block text-[11px] text-[#66706b]">Inactive roles cannot remain the only active role for an assigned user.</span>
+                </span>
+              </label>
+            )}
+          </form>
+
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-[20px] font-bold text-[#0b100e]">Choose what this role can do</h2>
+            </div>
+            <RoleCapabilityEditor
+              catalog={catalog}
+              value={capabilities}
+              onChange={(next) => {
+                setCapabilities(next);
+                setConfirmedSensitiveAccess(false);
+              }}
+              departments={departments}
+              legalEntities={legalEntities}
+              isEditDisabled={blockedFromEditing}
             />
-        </div>
-    );
+          </section>
+
+          {newlySensitiveKeys.length > 0 && (
+            <Alert className="border-red-200 bg-red-50 text-red-800">
+              <ShieldAlert className="size-4" />
+              <AlertTitle>Sensitive access is being added</AlertTitle>
+              <AlertDescription>
+                <p>Review the scope carefully for: {newlySensitiveKeys.map((key) => catalog.find((group) => group.key === key)?.name ?? key).join(", ")}.</p>
+                <label className="mt-3 flex cursor-pointer items-start gap-2 font-medium text-red-900">
+                  <Checkbox checked={confirmedSensitiveAccess} onCheckedChange={(checked) => setConfirmedSensitiveAccess(checked === true)} />
+                  <span>I confirm this role needs the selected sensitive access.</span>
+                </label>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="sticky bottom-0 pb-6 pt-4 mt-8 bg-[#f4f7f5] border-t border-black/[0.08] flex justify-end gap-4 z-20 after:absolute after:top-full after:left-0 after:right-0 after:h-[100px] after:bg-[#f4f7f5]">
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving} className="px-8 h-[46px] rounded-[10px]">Cancel</Button>
+            
+            {blockedFromEditing ? (
+              <div className="flex items-center gap-3">
+                  <span className="text-sm text-red-500 font-medium">Only Owners can modify this role</span>
+                  <Button type="button" disabled className="px-12 h-[46px] rounded-[10px] bg-[#0ea894] text-white opacity-50">
+                      Update role
+                  </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="px-12 h-[46px] rounded-[10px] text-[13px] font-semibold bg-[#0ea894] hover:bg-[#0c9785] text-white shadow-[0_8px_20px_-10px_rgba(14,168,148,0.7)] hover:translate-y-[-1px] transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
+                disabled={isSaving || !hasChanges}
+                onClick={handleSubmit}
+              >
+                {isSaving ? "Saving…" : isEditMode ? "Update role" : "Create role"}
+              </Button>
+            )}
+          </div>
+        </main>
+      </div>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title={`Role ${isEditMode ? "Updated" : "Created"} Successfully`}
+        description={getValues().name}
+      />
+    </div>
+  );
 }
 
-export default withPermissions(CreateRolePage, [{ resource: "user", action: "manage" }]);
+function CreateRolePage() {
+  const searchParams = useSearchParams();
+  const roleId = searchParams.get("id");
+  const isEditMode = Boolean(roleId);
+  const capabilityCatalog = useGetAllRoleCapabilitiesApi(true);
+  const roleQuery = useGetARoleApi(roleId ?? "", { enabled: isEditMode });
+
+  if (capabilityCatalog.isLoading || (isEditMode && roleQuery.isLoading)) {
+    return (
+      <div className="p-6">
+        <h1 className="text-[24px] font-bold text-[#0b100e] mb-8">Roles and Permissions</h1>
+        <div className="flex items-center justify-center py-32 text-[#84908a] gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-[#0ea894]" />
+            <span className="text-[13px] font-medium">Loading role configuration...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (capabilityCatalog.isError || (isEditMode && (roleQuery.isError || !roleQuery.data?.data))) {
+    return (
+      <div className="p-12">
+        <Alert variant="destructive" className="mx-auto max-w-xl">
+          <ShieldAlert className="size-4" />
+          <AlertTitle>Role configuration unavailable</AlertTitle>
+          <AlertDescription>Refresh the page or try again after the role service is available.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return (
+    <RoleEditorForm
+      key={roleId ?? "new-role"}
+      roleId={roleId}
+      role={roleQuery.data?.data}
+      catalog={capabilityCatalog.data ?? []}
+    />
+  );
+}
+
+export default withPermissions(CreateRolePage, [{ resource: "role", action: "manage" }]);

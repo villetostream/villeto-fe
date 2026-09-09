@@ -189,7 +189,8 @@ export const usePersonalExpenses = (
   limit: number = 10,
   status?: string | null,
   sortBy?: string,
-  sortOrder?: "asc" | "desc"
+  sortOrder?: "asc" | "desc",
+  enabled: boolean = true,
 ) => {
   const axios = useAxios();
   const authReady = useAuthStore((state) => !state.isLoading);
@@ -202,7 +203,7 @@ export const usePersonalExpenses = (
   // error state with a retry action instead of a misleading empty one.
   return useQuery({
     queryKey: [...QUERY_KEYS.expenses.reports("own"), page, limit, status, sortBy, sortOrder],
-    enabled: authReady && !!accessToken,
+    enabled: enabled && authReady && !!accessToken,
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("scope", "own");

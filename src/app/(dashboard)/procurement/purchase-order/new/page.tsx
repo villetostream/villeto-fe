@@ -11,7 +11,6 @@ import LineItemBatchModal from "@/components/procurement/LineItemBatchModal";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { useAuthStore } from "@/stores/auth-stores";
 import {
   useCreatePurchaseOrder,
   useAddPOLineItems,
@@ -649,4 +648,3 @@ function NewPurchaseOrderPage() {
 export default withPermissions(NewPurchaseOrderPage, [
   { resource: "procurement.purchase_order", action: "create" },
 ]);
-

@@ -12,16 +12,15 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     useEffect(() => {
-        if (initialUser) {
-            initialUser.authorization = initialUser.authorization 
-                ? parseAuthorizationSnapshot(initialUser.authorization) 
-                : undefined;
-            useAuthStore.getState().login(initialUser);
-        }
-        
+        const authorization = initialUser?.authorization
+            ? parseAuthorizationSnapshot(initialUser.authorization)
+            : null;
         useAuthStore.setState({
+            user: initialUser ?? null,
+            authorization,
             isLoading: false,
         });
+        useAuthStore.getState().hydrate();
     }, [initialUser]);
 
     return <>{children}</>;

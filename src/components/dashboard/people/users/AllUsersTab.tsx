@@ -1,9 +1,4 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-
-
-
-
-
 import { UserProfileModal } from "../modals/UserProfileModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { columns } from "./column";
@@ -47,7 +42,6 @@ const _mockUsers = [
 
 export function AllUsersTab() {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
-
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [userToToggle, setUserToToggle] = useState<AppUser | null>(null);
 
@@ -251,7 +245,6 @@ export function AllUsersTab() {
 
             {selectedUser && (
                 <>
-
                     <UserProfileModal 
                         isOpen={profileModalOpen}
                         onClose={() => setProfileModalOpen(false)}

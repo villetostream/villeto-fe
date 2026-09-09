@@ -57,6 +57,19 @@ export default function ConfirmReceiptModal({
     setFinalizeBilling(isFinalDeliveryDefault ?? false);
   }, [open, lineItems, isFinalDeliveryDefault]);
 
+  useEffect(() => {
+    if (!open) return;
+    setReceivedAt(new Date());
+    setNotes("");
+    setQuantities(Object.fromEntries((lineItems || []).map((li: any) => [
+      li.vendorDeliveryNoticeLineItemId,
+      li.quantityAwaitingReceipt ?? li.quantityReady ?? li.quantity ?? 1,
+    ])));
+    setReceiptReference(typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `RCV-${Date.now()}`);
+  }, [open, lineItems]);
+
   const handleSubmit = () => {
     if (!receivedAt) return;
 

@@ -20,6 +20,7 @@ import { useAxios } from "@/hooks/useAxios";
 import { API_KEYS } from "@/lib/constants/apis";
 import ValidationSummaryModal from "@/components/dashboard/people/import/ValidationSummaryModal";
 import ReviewImportIssues from "@/components/dashboard/people/import/ReviewImportIssues";
+import withPermissions from "@/components/permissions/permission-protected-routes";
 
 type Step = "directory" | "upload" | "preview" | "review";
 type DuplicateStrategy = "skip_existing" | "update_existing";
@@ -40,7 +41,7 @@ function clearReferrer() {
     if (typeof window !== "undefined") sessionStorage.removeItem("uploadDirReferrer");
 }
 
-export default function InviteEmployeesPage() {
+function InviteEmployeesPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const step = (searchParams.get("step") as Step) || "directory";
@@ -424,3 +425,7 @@ export default function InviteEmployeesPage() {
         </>
     );
 }
+
+export default withPermissions(InviteEmployeesPage, [
+    { resource: "user", action: "manage" },
+]);
