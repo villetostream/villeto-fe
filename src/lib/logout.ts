@@ -25,5 +25,7 @@ export async function logoutAndRedirect() {
     keysToRemove.forEach(k => localStorage.removeItem(k));
   } catch {}
   
+  document.cookie = "villeto_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  
   window.location.href = "/login";
 }

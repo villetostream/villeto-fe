@@ -49,11 +49,25 @@ export default function LoginPage() {
       const response = await login.mutateAsync(data);
       setAccessToken(response.data.accessToken);
       const user = response.data.user as User;
-      const authorization = parseAuthorizationSnapshot(user.authorization);
+      
+      let authorization;
+      if (user.authorization) {
+        try {
+          authorization = parseAuthorizationSnapshot(user.authorization);
+        } catch (e) {
+          console.warn("Failed to parse authorization snapshot:", e);
+        }
+      }
+      
       setUser({ ...user, authorization });
+      
       // Start proactive refresh so the token is renewed 5 min before expiry
       const expiresInMs = response.data.accessTokenExpiresInMs ?? 3600000;
       scheduleTokenRefresh(expiresInMs);
+      
+      // Set an auth cookie so Next.js middleware knows we are authenticated
+      document.cookie = `villeto_auth=true; path=/; max-age=${Math.floor(expiresInMs / 1000)}`;
+      
       router.push("/dashboard");
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Invalid email or password"));
